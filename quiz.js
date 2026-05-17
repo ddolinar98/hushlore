@@ -90,7 +90,6 @@ document.querySelectorAll('.quiz-option.multi').forEach((btn) => {
       btn.classList.add('selected');
     }
 
-    // Enable / disable Continue based on selection count
     const continueBtn = questionEl.querySelector('[data-continue]');
     if (continueBtn) {
       const has = multiAnswers[qNumber].length > 0;
@@ -128,7 +127,6 @@ function advance() {
     updateProgress();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Trigger stat bar animation when stats interstitial becomes active
     if (next.dataset.type === 'interstitial') {
       animateStats(next);
     }
@@ -143,7 +141,6 @@ function animateStats(container) {
   const fills = container.querySelectorAll('.stat-bar-fill');
   const numbers = container.querySelectorAll('[data-stat-target]');
 
-  // Small delay so the user sees the bars start at 0
   setTimeout(() => {
     fills.forEach((el) => {
       const target = parseInt(el.dataset.statFill, 10);
@@ -156,7 +153,7 @@ function animateStats(container) {
       const start = performance.now();
       function tick(now) {
         const t = Math.min(1, (now - start) / duration);
-        const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+        const eased = 1 - Math.pow(1 - t, 3);
         el.textContent = Math.round(target * eased) + '%';
         if (t < 1) requestAnimationFrame(tick);
       }
@@ -190,7 +187,6 @@ function calculateOutcome() {
     'midnight-surrender': 0,
   };
 
-  // Single-answer questions
   for (const qNum in answers) {
     const ans = answers[qNum];
     const points = scoring[ans] || {};
@@ -199,7 +195,6 @@ function calculateOutcome() {
     }
   }
 
-  // Multi-answer questions
   for (const qNum in multiAnswers) {
     multiAnswers[qNum].forEach((ans) => {
       const points = scoring[ans] || {};
@@ -238,7 +233,18 @@ function submitEmail(e) {
     localStorage.setItem('hushlore_answers', JSON.stringify({ single: answers, multi: multiAnswers }));
   } catch (_) {}
 
-  // TODO: replace with real email integration (MailerLite / ConvertKit webhook)
+  fetch('https://connect.mailerlite.com/api/subscribers', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI0IiwianRpIjoiZTk5YzJmMWFiYWU4ZjAyOTAzYWMzZmNiNTY1OGYwMmNhOTc0MWQ1MGE1MWE1ODI4OGY3MDQ1YWQ3MDM0ZDJlYjgxODg5ODdmODk2NmE1OWIiLCJpYXQiOjE3NzkwNDA5NjUuNjYwNTcsIm5iZiI6MTc3OTA0MDk2NS42NjA1NzUsImV4cCI6NDkzNDcxNDU2NS42NTA5NDEsInN1YiI6IjIzNzQ2MzMiLCJzY29wZXMiOltdfQ.Z31pT73HXComt0iGUSdlU0JzHhGMzjZgpSaMT2jB7T1-syOIglDlraBe-NlhLVNFnMiywEekwvOBlY6bEMzOQqTOyck7KOrJ4D6OpvBTPJMWFtywF0rEjeJqEzothGvV0RZ5JvD35Qqz3H3Am3lZLYhvfhtj9Ob3CPuKHtGyzaBRb0o7nJa90AP7-SE-WCklgQKqU_mBlpzY3BiEEhcxllDuuQfWrC4AekOV_N24gSbxiZXGcT2Hk4sb_yIMtP9oJ2hyuO3bqbtpaX6SET9le49Y4ClHNbVjGU66FI92RBWjZLpgmgZZ5iDzJnBlAt2ZBmDGUxeUUjO9KjswvXqadLl6SOeFZm63IWjQFiXqlaubEorCQCdBZpZoi4izXgaGGVPn3m_izuYgW_IOcyM7zVzPULSgiXROoZsXchOQ_Z_oOvXE7V598ExMGzF5TgCcKZrpTvUHbdnoZ_4Bv-yJNc_sJAksKBVXVDXfXzwUc544PitduBTybR-ZD78__jocr-1fglddmgEEcJNY7OS7zeDwFVrx2ms2EaXJuEjnjArPhyr9eYVQ_LRhJMazGwSAiZVeJs9DiLOtfpoy3QUhH91P6M6OQDW2GIvcMLNtN8TOgbC2ilPBrWdjpuq_leUh5xu6gZXvTUryDo_4YchDjjmLft-QBytvy1ucOfDSK3Y'
+    },
+    body: JSON.stringify({
+      email: email,
+      groups: ['187738021652595766'],
+      fields: { outcome: outcome }
+    })
+  }).catch(() => {});
 
   runLoadingAndRedirect(outcome);
   return false;
@@ -250,12 +256,11 @@ function submitEmail(e) {
 
 const modalAnswers = {};
 
-// Modal mapping: which step index (0-based) shows which modal at ~50% mark
 const STEP_MODALS = [
-  null,           // step 1 — no modal
-  'explicit',     // step 2 — show modal at ~50%
-  'fantasies',    // step 3
-  'relationship'  // step 4
+  null,
+  'explicit',
+  'fantasies',
+  'relationship'
 ];
 
 async function runLoadingAndRedirect(outcome) {
@@ -277,7 +282,6 @@ async function runLoadingAndRedirect(outcome) {
 
     const modalId = STEP_MODALS[i];
     if (modalId) {
-      // Animate to ~50%, pause, show modal, await answer, animate to 100%
       await animateLoadingStep(step, 700, 0, 49);
       const answer = await showModal(modalId);
       modalAnswers[modalId] = answer;
@@ -288,11 +292,9 @@ async function runLoadingAndRedirect(outcome) {
 
     step.classList.remove('animating');
     step.classList.add('done');
-    // Replace % with ✓ on done
     step.querySelector('[data-loading-pct]').textContent = '✓';
   }
 
-  // Persist modal answers
   try {
     localStorage.setItem('hushlore_loading_answers', JSON.stringify(modalAnswers));
   } catch (_) {}
