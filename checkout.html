@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — Secure Checkout</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    .pricing-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 520px;
+      margin: 0 auto 2rem;
+    }
+
+    .pricing-card {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .pricing-card:hover {
+      border-color: rgba(212,175,95,0.5);
+    }
+
+    .pricing-card.selected {
+      border-color: #d4af5f;
+      background: rgba(212,175,95,0.07);
+    }
+
+    .pricing-card.popular {
+      border-color: #d4af5f;
+    }
+
+    .popular-badge {
+      position: absolute;
+      top: -11px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #d4af5f;
+      color: #0a0a0a;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.75rem;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .pricing-radio {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s;
+    }
+
+    .pricing-card.selected .pricing-radio {
+      border-color: #d4af5f;
+      background: #d4af5f;
+    }
+
+    .pricing-radio::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #0a0a0a;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .pricing-card.selected .pricing-radio::after {
+      opacity: 1;
+    }
+
+    .pricing-info {
+      flex: 1;
+    }
+
+    .pricing-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem;
+      font-weight: 500;
+      color: #f5f0e8;
+      margin-bottom: 0.1rem;
+    }
+
+    .pricing-sub {
+      font-size: 0.78rem;
+      color: rgba(245,240,232,0.45);
+      letter-spacing: 0.03em;
+    }
+
+    .pricing-price {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .pricing-amount {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #f5f0e8;
+    }
+
+    .pricing-per {
+      font-size: 0.72rem;
+      color: rgba(245,240,232,0.4);
+    }
+
+    .checkout-note {
+      font-size: 0.78rem;
+      color: rgba(245,240,232,0.4);
+      text-align: center;
+      max-width: 420px;
+      margin: 0 auto 1.5rem;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">Hush<span>lore</span></a>
+      <nav class="nav">
+        <a href="result.html">Back to my match</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="result-hero container">
+      <span class="eyebrow">Secure checkout</span>
+      <h1>Choose your <span class="italic">experience.</span></h1>
+    </section>
+
+    <section class="container">
+
+      <div class="pricing-grid">
+
+        <div class="pricing-card" data-plan="1month" data-price="21.00" data-link="https://buy.stripe.com/14AfZh9l69lZebl0jCfAc00">
+          <div class="pricing-radio"></div>
+          <div class="pricing-info">
+            <div class="pricing-label">1-Month Access</div>
+            <div class="pricing-sub">Full library · Instant access</div>
+          </div>
+          <div class="pricing-price">
+            <div class="pricing-amount">$21</div>
+            <div class="pricing-per">one time</div>
+          </div>
+        </div>
+
+        <div class="pricing-card popular selected" data-plan="3month" data-price="32.99" data-link="https://buy.stripe.com/9B6bJ140M69N1ozeasfAc01">
+          <div class="popular-badge">Most Popular</div>
+          <div class="pricing-radio"></div>
+          <div class="pricing-info">
+            <div class="pricing-label">3-Month Access</div>
+            <div class="pricing-sub">Full library · Best value</div>
+          </div>
+          <div class="pricing-price">
+            <div class="pricing-amount">$32.99</div>
+            <div class="pricing-per">one time</div>
+          </div>
+        </div>
+
+        <div class="pricing-card" data-plan="6month" data-price="49.99" data-link="https://buy.stripe.com/4gM9AT1SE1Tx8R1aYgfAc02">
+          <div class="pricing-radio"></div>
+          <div class="pricing-info">
+            <div class="pricing-label">6-Month Access</div>
+            <div class="pricing-sub">Full library · Maximum immersion</div>
+          </div>
+          <div class="pricing-price">
+            <div class="pricing-amount">$49.99</div>
+            <div class="pricing-per">one time</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="max-width:520px; margin: 0 auto;">
+        <a href="#" id="stripeBtn" class="btn btn-lg btn-block">
+          Pay $32.99 — Unlock now
+        </a>
+      </div>
+
+      <p class="checkout-note mt-2">
+        Powered by Stripe · 256-bit encrypted · 30-day refund guarantee
+      </p>
+
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p>&copy; 2026 Hushlore. Listen with intention.</p>
+      <div class="footer-links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="mailto:hello@hushlore.com">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const cards = document.querySelectorAll('.pricing-card');
+    const btn = document.getElementById('stripeBtn');
+
+    let selectedCard = document.querySelector('.pricing-card.selected');
+
+    function updateBtn(card) {
+      const price = card.dataset.price;
+      const link = card.dataset.link;
+      const params = new URLSearchParams(window.location.search);
+      const match = params.get('match');
+      btn.textContent = `Pay $${price} — Unlock now`;
+      btn.href = match ? `${link}?client_reference_id=${match}` : link;
+    }
+
+    updateBtn(selectedCard);
+
+    cards.forEach((card) => {
+      card.addEventListener('click', () => {
+        cards.forEach((c) => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedCard = card;
+        updateBtn(card);
+      });
+    });
+
+    // Pre-fill match from URL
+    const params = new URLSearchParams(window.location.search);
+    const match = params.get('match');
+    if (match) {
+      const matchNames = {
+        'slow-devotion':       'Slow Devotion',
+        'forbidden-whispers':  'Forbidden Whispers',
+        'commanding-embrace':  'Commanding Embrace',
+        'best-friends-untold': 'Best Friends Untold',
+        'enemys-confession':   "Enemy's Confession",
+        'midnight-surrender':  'Midnight Surrender'
+      };
+      const name = matchNames[match];
+      if (name) {
+        document.querySelector('h1').innerHTML = `Choose your <span class="italic">experience.</span>`;
+      }
+    }
+  </script>
+
+</body>
+</html>

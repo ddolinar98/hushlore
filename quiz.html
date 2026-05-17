@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — Find your story</title>
+  <meta name="description" content="Take the 60-second quiz to discover your perfect audio romance match." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">Hush<span>lore</span></a>
+      <nav class="nav">
+        <a href="index.html">Back home</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="quiz-container">
+
+    <!-- Progress -->
+    <div class="quiz-progress">
+      <div class="quiz-progress-bar">
+        <div class="quiz-progress-fill" id="progressFill"></div>
+      </div>
+      <div class="quiz-progress-text" id="progressText">Step 1 of 10</div>
+    </div>
+
+    <!-- Q1 — Mood -->
+    <div class="quiz-question active" data-question="1" data-type="single">
+      <h2>What mood are you in <span class="italic">tonight?</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="unwind">
+          <span class="option-label">Need to unwind</span>
+          <span class="option-hint">Slow me down. Quiet me.</span>
+        </button>
+        <button class="quiz-option" data-answer="butterflies">
+          <span class="option-label">Craving butterflies</span>
+          <span class="option-hint">Sweet ache. First-time energy.</span>
+        </button>
+        <button class="quiz-option" data-answer="intensity">
+          <span class="option-label">In the mood for intensity</span>
+          <span class="option-hint">Don't be polite.</span>
+        </button>
+        <button class="quiz-option" data-answer="curious">
+          <span class="option-label">Just curious</span>
+          <span class="option-hint">Surprise me.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Q2 — Voice -->
+    <div class="quiz-question" data-question="2" data-type="single">
+      <h2>Which voice <span class="italic">draws you in?</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="deep">
+          <span class="option-label">Deep & commanding</span>
+          <span class="option-hint">Low. Sure of itself. Earned.</span>
+        </button>
+        <button class="quiz-option" data-answer="soft">
+          <span class="option-label">Soft & adoring</span>
+          <span class="option-hint">Spoken like you're the answer.</span>
+        </button>
+        <button class="quiz-option" data-answer="playful">
+          <span class="option-label">Playful & teasing</span>
+          <span class="option-hint">A smile you can hear.</span>
+        </button>
+        <button class="quiz-option" data-answer="smooth">
+          <span class="option-label">Smooth & confident</span>
+          <span class="option-hint">Late-night radio. Velvet.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Q3 — Scene -->
+    <div class="quiz-question" data-question="3" data-type="single">
+      <h2>Pick a <span class="italic">scene.</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="cabin">
+          <span class="option-label">Cozy cabin in winter</span>
+          <span class="option-hint">Firelight. Nowhere to be.</span>
+        </button>
+        <button class="quiz-option" data-answer="office">
+          <span class="option-label">Empty office after hours</span>
+          <span class="option-hint">Locked door. He stays late too.</span>
+        </button>
+        <button class="quiz-option" data-answer="bedroom">
+          <span class="option-label">Candlelit bedroom</span>
+          <span class="option-hint">No words yet. Just intention.</span>
+        </button>
+        <button class="quiz-option" data-answer="beach">
+          <span class="option-label">Sun-drenched coast</span>
+          <span class="option-hint">Salt on skin. The summer that changed you.</span>
+        </button>
+      </div>
+    </div>
+
+    <!--
+      INTERSTITIAL — Testimonial
+      NOTE: This is a placeholder testimonial for the smoke test.
+      Replace with a REAL user quote once you have one.
+    -->
+    <div class="quiz-question quiz-interstitial" data-question="4" data-type="interstitial">
+      <h2>What makes our audio stories <span class="italic">special?</span></h2>
+      <p class="lead">
+        Every story is performed by real voice artists, written to pull you in —
+        and matched so closely to you that the line between story and feeling disappears.
+      </p>
+
+      <div class="testimonial-image-wrap">
+        <img
+          src="https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=900&q=80&auto=format"
+          alt="Listener at night"
+          loading="lazy"
+        />
+        <div class="testimonial-card">
+          <div class="testimonial-top">
+            <span class="testimonial-stars">★★★★★</span>
+            <span class="testimonial-author">— Maya, beta listener</span>
+          </div>
+          <p class="testimonial-text">
+            "I finished my first match in one sitting. I haven't paid attention to anything for that long in months. It felt like the voice was speaking only to me."
+          </p>
+        </div>
+      </div>
+
+      <div class="continue-btn-wrap">
+        <button class="btn btn-lg" data-continue>Continue</button>
+      </div>
+    </div>
+
+    <!-- Q5 — NEW Multi-select: Feel more of -->
+    <div class="quiz-question" data-question="5" data-type="multi">
+      <h2>What do you wish you could <span class="italic">feel more of?</span></h2>
+      <p class="text-center text-muted" style="margin-bottom: 2rem;">Select all that apply.</p>
+
+      <div class="quiz-options-multi">
+        <button class="quiz-option multi" data-answer="desired">
+          <span class="quiz-emoji">🔥</span>
+          <span class="option-label">Desired</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="confident">
+          <span class="quiz-emoji">🦁</span>
+          <span class="option-label">Confident</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="playful-free">
+          <span class="quiz-emoji">🕊️</span>
+          <span class="option-label">Playful and free</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="emotionally-connected">
+          <span class="quiz-emoji">💕</span>
+          <span class="option-label">Emotionally connected</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="seen-understood">
+          <span class="quiz-emoji">👁</span>
+          <span class="option-label">Seen and understood</span>
+          <span class="check-indicator">✓</span>
+        </button>
+      </div>
+
+      <div class="continue-btn-wrap">
+        <button class="btn btn-lg" data-continue id="multiContinueBtn" disabled style="opacity: 0.4; cursor: not-allowed;">Continue</button>
+      </div>
+    </div>
+
+    <!-- Q6 — Story start -->
+    <div class="quiz-question" data-question="6" data-type="single">
+      <h2>How does the <span class="italic">story start?</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="strangers">
+          <span class="option-label">Strangers, locked eyes</span>
+          <span class="option-hint">You weren't supposed to look back.</span>
+        </button>
+        <button class="quiz-option" data-answer="friends">
+          <span class="option-label">Friends, finally admitting</span>
+          <span class="option-hint">Years of almost.</span>
+        </button>
+        <button class="quiz-option" data-answer="enemies">
+          <span class="option-label">Enemies, forced together</span>
+          <span class="option-hint">Every argument was a touch in disguise.</span>
+        </button>
+        <button class="quiz-option" data-answer="secret">
+          <span class="option-label">A whispered secret</span>
+          <span class="option-hint">A door that shouldn't open.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Q7 — Heat level -->
+    <div class="quiz-question" data-question="7" data-type="single">
+      <h2>Heat <span class="italic">level?</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="sweet">
+          <span class="option-label">Sweet & tender</span>
+          <span class="option-hint">Cherished. Held. Adored.</span>
+        </button>
+        <button class="quiz-option" data-answer="slowburn">
+          <span class="option-label">Slow burn</span>
+          <span class="option-hint">Make me wait.</span>
+        </button>
+        <button class="quiz-option" data-answer="steamy">
+          <span class="option-label">Steamy</span>
+          <span class="option-hint">Don't be subtle.</span>
+        </button>
+        <button class="quiz-option" data-answer="intense">
+          <span class="option-label">Don't hold back</span>
+          <span class="option-hint">All of it.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Q8 — When -->
+    <div class="quiz-question" data-question="8" data-type="single">
+      <h2>When will <span class="italic">you listen?</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="sleep">
+          <span class="option-label">Falling asleep</span>
+          <span class="option-hint">Pillow. Headphones. Dark.</span>
+        </button>
+        <button class="quiz-option" data-answer="bath">
+          <span class="option-label">Long bath</span>
+          <span class="option-hint">Candles. Steam. Time.</span>
+        </button>
+        <button class="quiz-option" data-answer="drive">
+          <span class="option-label">Late-night drive</span>
+          <span class="option-hint">Empty road. Low lights.</span>
+        </button>
+        <button class="quiz-option" data-answer="quiet">
+          <span class="option-label">A quiet moment, just for me</span>
+          <span class="option-hint">Door locked. Phone off.</span>
+        </button>
+      </div>
+    </div>
+
+    <!--
+      INTERSTITIAL — Stats checkpoint
+      NOTE: These percentages are placeholders for the smoke test.
+      Replace with REAL data once you have it. Until then, keep copy
+      aspirational (not medical / sexual claims) to stay clear of false-claim risk.
+    -->
+    <div class="quiz-question quiz-interstitial" data-question="9" data-type="interstitial">
+      <h2>You're not <span class="italic">alone.</span></h2>
+      <p class="lead">
+        Early Hushlore listeners are reporting the same thing — a kind of quiet,
+        full-body attention they didn't know they were missing.
+      </p>
+
+      <div class="stats-checkpoint">
+        <div class="stat-row">
+          <span class="stat-number-big" data-stat-target="94">0%</span>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill" data-stat-fill="94"></div>
+          </div>
+          <p class="stat-label">finished their first match in one sitting</p>
+        </div>
+
+        <div class="stat-row">
+          <span class="stat-number-big" data-stat-target="91">0%</span>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill" data-stat-fill="91"></div>
+          </div>
+          <p class="stat-label">said the match felt accurate to their mood</p>
+        </div>
+
+        <div class="stat-row">
+          <span class="stat-number-big" data-stat-target="83">0%</span>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill" data-stat-fill="83"></div>
+          </div>
+          <p class="stat-label">returned to their match category within a week</p>
+        </div>
+      </div>
+
+      <div class="continue-btn-wrap">
+        <button class="btn btn-lg" data-continue>Reveal my match</button>
+      </div>
+    </div>
+
+    <!-- Q10 — Email capture -->
+    <div class="quiz-question quiz-email" data-question="10" data-type="email">
+      <h2>Your match is <span class="italic">ready.</span></h2>
+      <p>Tell us where to send it. We'll never share your email.</p>
+      <form class="email-form" id="emailForm" onsubmit="return submitEmail(event);">
+        <input
+          type="email"
+          class="email-input"
+          placeholder="your@email.com"
+          id="emailInput"
+          required
+          autocomplete="email"
+        />
+        <button type="submit" class="btn btn-lg btn-block">Reveal my match</button>
+      </form>
+    </div>
+
+    <!--
+      Q11 — Loading / analysis screen
+      Shown after email submit. Animates 4 steps sequentially (~6s total)
+      then redirects to result.html.
+      NOTE: "Enjoyed by listeners worldwide" + Mark L. testimonial are
+      placeholders for the smoke test. Replace with real data once you have it.
+    -->
+    <div class="quiz-question quiz-loading" data-question="11" data-type="loading">
+      <h2>We are creating your <span class="loading-accent">personalized experience...</span></h2>
+
+      <div class="loading-steps">
+        <div class="loading-step" data-loading-step="1">
+          <div class="loading-step-row">
+            <span class="loading-step-label">Reading your preferences</span>
+            <span class="loading-step-pct" data-loading-pct>0%</span>
+          </div>
+          <div class="loading-step-bar"><div class="loading-step-fill"></div></div>
+        </div>
+
+        <div class="loading-step" data-loading-step="2">
+          <div class="loading-step-row">
+            <span class="loading-step-label">Matching voice and mood</span>
+            <span class="loading-step-pct" data-loading-pct>0%</span>
+          </div>
+          <div class="loading-step-bar"><div class="loading-step-fill"></div></div>
+        </div>
+
+        <div class="loading-step" data-loading-step="3">
+          <div class="loading-step-row">
+            <span class="loading-step-label">Curating your stories</span>
+            <span class="loading-step-pct" data-loading-pct>0%</span>
+          </div>
+          <div class="loading-step-bar"><div class="loading-step-fill"></div></div>
+        </div>
+
+        <div class="loading-step" data-loading-step="4">
+          <div class="loading-step-row">
+            <span class="loading-step-label">Finishing setup</span>
+            <span class="loading-step-pct" data-loading-pct>0%</span>
+          </div>
+          <div class="loading-step-bar"><div class="loading-step-fill"></div></div>
+        </div>
+      </div>
+
+      <div class="loading-banner">
+        <h3>Enjoyed by <span class="italic loading-accent">listeners worldwide</span></h3>
+      </div>
+
+      <div class="loading-testimonial-box">
+        <div class="loading-stars">★★★★★</div>
+        <p class="loading-testimonial-text">
+          "I didn't expect audio stories to hit this deep. It's now part of how I unwind — I feel more confident, more grounded, and way more in touch with what I want."
+        </p>
+        <p class="loading-testimonial-author">— Mark L., beta listener</p>
+      </div>
+    </div>
+
+    <!--
+      Yes/No micro-modals shown during loading.
+      Copy softened to stay Stripe-TOS friendly.
+    -->
+    <div class="quiz-modal" data-modal="explicit" hidden>
+      <div class="quiz-modal-backdrop"></div>
+      <div class="quiz-modal-card">
+        <span class="quiz-modal-eyebrow">To move forward, specify</span>
+        <h3 class="quiz-modal-question">Would you like more intense, unfiltered stories?</h3>
+        <div class="quiz-modal-actions">
+          <button class="quiz-modal-btn" data-modal-answer="no">No</button>
+          <button class="quiz-modal-btn" data-modal-answer="yes">Yes</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-modal" data-modal="fantasies" hidden>
+      <div class="quiz-modal-backdrop"></div>
+      <div class="quiz-modal-card">
+        <span class="quiz-modal-eyebrow">To move forward, specify</span>
+        <h3 class="quiz-modal-question">Are you curious about exploring different characters or fantasies from time to time?</h3>
+        <div class="quiz-modal-actions">
+          <button class="quiz-modal-btn" data-modal-answer="no">No</button>
+          <button class="quiz-modal-btn" data-modal-answer="yes">Yes</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-modal" data-modal="relationship" hidden>
+      <div class="quiz-modal-backdrop"></div>
+      <div class="quiz-modal-card">
+        <span class="quiz-modal-eyebrow">To move forward, specify</span>
+        <h3 class="quiz-modal-question">Are you in a relationship?</h3>
+        <div class="quiz-modal-actions">
+          <button class="quiz-modal-btn" data-modal-answer="no">No</button>
+          <button class="quiz-modal-btn" data-modal-answer="yes">Yes</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="quiz.js"></script>
+</body>
+</html>
