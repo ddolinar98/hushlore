@@ -24,9 +24,7 @@
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     html { scroll-behavior: smooth; }
-
     body {
       font-family: 'Inter', sans-serif;
       background: #0d0d14;
@@ -34,7 +32,6 @@
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
     }
-
     body::before {
       content: '';
       position: fixed;
@@ -43,7 +40,7 @@
       z-index: -1;
     }
 
-    /* ─── HEADER ─── */
+    /* HEADER */
     .qhdr {
       display: flex;
       align-items: center;
@@ -80,27 +77,14 @@
       background: linear-gradient(90deg, transparent 0%, rgba(192,51,88,0.5) 30%, rgba(192,51,88,0.5) 70%, transparent 100%);
     }
 
-    /* ─── PROGRESS ─── */
-    .qprog {
-      height: 3px;
-      background: rgba(255,255,255,0.07);
-      display: none;
-    }
-    .qprog-fill {
-      height: 100%;
-      background: #c03358;
-      transition: width 0.45s ease;
-      width: 0%;
-    }
+    /* PROGRESS */
+    .qprog { height: 3px; background: rgba(255,255,255,0.07); display: none; }
+    .qprog-fill { height: 100%; background: #c03358; transition: width 0.45s ease; width: 0%; }
 
-    /* ─── MAIN CONTAINER ─── */
-    .qmain {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 1.5rem 1.25rem 8rem;
-    }
+    /* MAIN */
+    .qmain { max-width: 600px; margin: 0 auto; padding: 1.5rem 1.25rem 8rem; }
 
-    /* ─── SPLASH ─── */
+    /* SPLASH */
     .splash {
       min-height: calc(100vh - 80px);
       display: flex;
@@ -121,23 +105,29 @@
       font-size: clamp(2.25rem, 7vw, 3.75rem);
       font-weight: 300;
       line-height: 1.15;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
     }
     .splash-h1 em { font-style: italic; color: #c03358; }
-    .splash-p {
-      font-size: 0.9375rem;
-      color: rgba(255,255,255,0.5);
-      max-width: 340px;
-      line-height: 1.7;
-      margin-bottom: 3rem;
+    .splash-sub {
+      font-size: 0.875rem;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 1.5rem;
     }
-    .splash-trust {
-      font-size: 0.75rem;
-      color: rgba(255,255,255,0.3);
-      margin-top: 1rem;
+    .splash-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 50px;
+      padding: 0.4rem 1rem;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 2.5rem;
     }
+    .splash-badge .stars { color: #f5c842; }
 
-    /* ─── QUESTION ─── */
+    /* QUESTION */
     .q-text {
       font-family: 'Cormorant Garamond', serif;
       font-size: clamp(1.35rem, 5vw, 2rem);
@@ -157,9 +147,8 @@
       text-transform: uppercase;
     }
 
-    /* ─── OPTION CARDS ─── */
+    /* OPTIONS */
     .opts { display: flex; flex-direction: column; gap: 0.5rem; }
-
     .opt {
       display: flex;
       align-items: center;
@@ -169,32 +158,15 @@
       border: 1.5px solid rgba(255,255,255,0.08);
       border-radius: 12px;
       cursor: pointer;
-      transition: background 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
+      transition: background 0.12s, border-color 0.12s, transform 0.1s;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
     .opt:active { transform: scale(0.985); }
-    .opt:hover {
-      background: rgba(255,255,255,0.07);
-      border-color: rgba(192,51,88,0.3);
-    }
-    .opt.sel {
-      background: rgba(192,51,88,0.12);
-      border-color: #c03358;
-    }
-    .opt-e {
-      font-size: 1.15rem;
-      width: 1.75rem;
-      text-align: center;
-      flex-shrink: 0;
-      line-height: 1;
-    }
-    .opt-t {
-      flex: 1;
-      font-size: 0.9rem;
-      line-height: 1.45;
-      color: rgba(255,255,255,0.88);
-    }
+    .opt:hover { background: rgba(255,255,255,0.07); border-color: rgba(192,51,88,0.3); }
+    .opt.sel { background: rgba(192,51,88,0.12); border-color: #c03358; }
+    .opt-e { font-size: 1.15rem; width: 1.75rem; text-align: center; flex-shrink: 0; line-height: 1; }
+    .opt-t { flex: 1; font-size: 0.9rem; line-height: 1.45; color: rgba(255,255,255,0.88); }
     .opt-chk {
       width: 1.25rem;
       height: 1.25rem;
@@ -208,49 +180,73 @@
       transition: all 0.12s;
       color: transparent;
     }
-    .opt.sel .opt-chk {
-      background: #c03358;
-      border-color: #c03358;
-      color: #fff;
-    }
+    .opt.sel .opt-chk { background: #c03358; border-color: #c03358; color: #fff; }
     .opts.single .opt-chk { display: none; }
 
-    /* ─── INTERSTITIAL ─── */
+    /* INTERSTITIAL — stats bars */
     .inter-h {
       font-family: 'Cormorant Garamond', serif;
       font-size: clamp(1.3rem, 4.5vw, 1.85rem);
       line-height: 1.3;
       margin-bottom: 2rem;
     }
-    .stat-row {
-      padding: 1rem 0;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-    }
+    .stat-row { padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
     .stat-row:last-child { border-bottom: none; }
-    .stat-num {
-      font-size: 2.25rem;
-      font-weight: 300;
-      color: #c03358;
-      line-height: 1;
-      margin-bottom: 0.25rem;
-    }
+    .stat-num { font-size: 2.25rem; font-weight: 300; color: #c03358; line-height: 1; margin-bottom: 0.25rem; }
     .stat-lbl { font-size: 0.875rem; color: rgba(255,255,255,0.6); }
-    .stat-bar {
-      height: 2px;
-      background: rgba(255,255,255,0.07);
-      border-radius: 2px;
-      margin-top: 0.625rem;
+    .stat-bar { height: 2px; background: rgba(255,255,255,0.07); border-radius: 2px; margin-top: 0.625rem; overflow: hidden; }
+    .stat-bar-inner { height: 100%; background: #c03358; border-radius: 2px; width: 0; transition: width 1.4s ease; }
+
+    /* INTERSTITIAL — image/quote style (Men first interstitial) */
+    .inter-img-wrap { text-align: center; padding: 0.5rem 0; }
+    .inter-img-h {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.3rem, 4.5vw, 1.85rem);
+      line-height: 1.3;
+      margin-bottom: 0.75rem;
+    }
+    .inter-img-p {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.65;
+      margin-bottom: 1.5rem;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .inter-img-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      overflow: hidden;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .inter-img-visual {
+      height: 220px;
+      background: linear-gradient(135deg, #1a0a14 0%, #2d0d20 40%, #1a0818 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
       overflow: hidden;
     }
-    .stat-bar-inner {
-      height: 100%;
-      background: #c03358;
-      border-radius: 2px;
-      width: 0;
-      transition: width 1.4s ease;
+    .inter-img-visual::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 60% 40%, rgba(192,51,88,0.15) 0%, transparent 70%);
     }
+    .inter-img-icon { font-size: 4rem; opacity: 0.6; }
+    .inter-img-quote {
+      padding: 1rem 1.25rem;
+      text-align: left;
+    }
+    .inter-img-qstars { color: #f5c842; font-size: 0.9rem; margin-bottom: 0.375rem; }
+    .inter-img-qtext { font-size: 0.825rem; color: rgba(255,255,255,0.7); line-height: 1.6; font-style: italic; }
+    .inter-img-qauth { font-size: 0.775rem; color: #c03358; margin-top: 0.375rem; }
 
-    /* ─── LOADING ─── */
+    /* LOADING */
     .loading-wrap {
       min-height: calc(100vh - 120px);
       display: flex;
@@ -260,18 +256,9 @@
       text-align: center;
       padding: 2rem 0;
     }
-    .loading-h {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.5rem, 5vw, 2.25rem);
-      line-height: 1.25;
-      margin-bottom: 2rem;
-    }
+    .loading-h { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.5rem, 5vw, 2.25rem); line-height: 1.25; margin-bottom: 2rem; }
     .loading-h span { color: #c03358; }
-    .loading-items {
-      width: 100%;
-      max-width: 420px;
-      text-align: left;
-    }
+    .loading-items { width: 100%; max-width: 420px; text-align: left; }
     .ld-item {
       display: flex;
       align-items: center;
@@ -284,21 +271,20 @@
     }
     .ld-item.active { color: rgba(255,255,255,0.88); }
     .ld-item.done { color: rgba(255,255,255,0.45); }
-    .ld-st {
-      font-size: 0.8rem;
-      color: #c03358;
-      min-width: 2.75rem;
-      text-align: right;
-      flex-shrink: 0;
+    .ld-st { font-size: 0.8rem; color: #c03358; min-width: 2.75rem; text-align: right; flex-shrink: 0; }
+    .loading-enjoyed {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem;
+      margin-top: 1.75rem;
+      color: rgba(255,255,255,0.7);
     }
-
-    /* Testimonial card */
+    .loading-enjoyed span { color: #c03358; font-style: italic; }
     .test-card {
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 14px;
-      padding: 1.25rem 1.25rem;
-      margin-top: 2rem;
+      padding: 1.25rem;
+      margin-top: 1.25rem;
       max-width: 420px;
       text-align: left;
     }
@@ -306,7 +292,7 @@
     .test-body { font-size: 0.825rem; color: rgba(255,255,255,0.65); line-height: 1.65; font-style: italic; }
     .test-author { font-size: 0.775rem; color: #c03358; margin-top: 0.625rem; }
 
-    /* ─── MODAL ─── */
+    /* MODAL */
     .modal-ov {
       position: fixed;
       inset: 0;
@@ -330,19 +316,8 @@
       animation: slideUp 0.3s cubic-bezier(.16,1,.3,1);
     }
     @keyframes slideUp { from { transform: translateY(24px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
-    .modal-tag {
-      font-size: 0.675rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.3);
-      margin-bottom: 0.625rem;
-    }
-    .modal-q {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.3rem;
-      line-height: 1.35;
-      margin-bottom: 1.375rem;
-    }
+    .modal-tag { font-size: 0.675rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 0.625rem; }
+    .modal-q { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; line-height: 1.35; margin-bottom: 1.375rem; }
     .modal-btns { display: flex; gap: 0.75rem; }
     .mbtn {
       flex: 1;
@@ -360,33 +335,12 @@
     .mbtn.yes { background: #c03358; border-color: #c03358; }
     .mbtn.yes:hover { background: #e0456e; }
 
-    /* ─── EMAIL ─── */
+    /* EMAIL */
     .email-wrap { text-align: center; padding: 1rem 0; }
-    .email-h {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.65rem, 5.5vw, 2.25rem);
-      margin-bottom: 0.5rem;
-    }
-    .email-sub {
-      font-size: 0.875rem;
-      color: rgba(255,255,255,0.45);
-      margin-bottom: 1.75rem;
-    }
-    .email-field {
-      position: relative;
-      max-width: 400px;
-      margin: 0 auto 0.5rem;
-    }
-    .email-field svg {
-      position: absolute;
-      left: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 1rem;
-      height: 1rem;
-      fill: rgba(255,255,255,0.3);
-      pointer-events: none;
-    }
+    .email-h { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.65rem, 5.5vw, 2.25rem); margin-bottom: 0.5rem; }
+    .email-sub { font-size: 0.875rem; color: rgba(255,255,255,0.45); margin-bottom: 1.75rem; }
+    .email-field { position: relative; max-width: 400px; margin: 0 auto 0.5rem; }
+    .email-field svg { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; fill: rgba(255,255,255,0.3); pointer-events: none; }
     .email-inp {
       width: 100%;
       padding: 0.9375rem 1rem 0.9375rem 2.75rem;
@@ -402,28 +356,12 @@
     }
     .email-inp:focus { border-color: rgba(192,51,88,0.65); }
     .email-inp::placeholder { color: rgba(255,255,255,0.28); }
-    .email-privacy {
-      font-size: 0.725rem;
-      color: rgba(255,255,255,0.25);
-      max-width: 300px;
-      margin: 0 auto 2rem;
-      line-height: 1.5;
-    }
+    .email-privacy { font-size: 0.725rem; color: rgba(255,255,255,0.25); max-width: 300px; margin: 0 auto 2rem; line-height: 1.5; }
 
-    /* ─── STICKY CTA ─── */
-    .qfooter {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 0.75rem 1.25rem 1.5rem;
-      background: linear-gradient(transparent, rgba(13,13,20,0.97) 38%);
-      pointer-events: none;
-      display: none;
-    }
+    /* STICKY FOOTER */
+    .qfooter { position: fixed; bottom: 0; left: 0; right: 0; padding: 0.75rem 1.25rem 1.5rem; background: linear-gradient(transparent, rgba(13,13,20,0.97) 38%); pointer-events: none; display: none; }
     .qfooter.show { display: block; }
     .qfooter .btn-c { pointer-events: all; }
-
     .btn-c {
       display: block;
       width: 100%;
@@ -444,70 +382,55 @@
     .btn-c:hover { background: #e0456e; }
     .btn-c:disabled { opacity: 0.3; cursor: default; }
 
-    /* ─── ERROR SHAKE ─── */
     @keyframes shake {
       0%,100% { transform: translateX(0) }
-      20%      { transform: translateX(-6px) }
-      40%      { transform: translateX(6px) }
-      60%      { transform: translateX(-4px) }
-      80%      { transform: translateX(4px) }
+      20% { transform: translateX(-6px) }
+      40% { transform: translateX(6px) }
+      60% { transform: translateX(-4px) }
+      80% { transform: translateX(4px) }
     }
     .shake { animation: shake 0.35s ease; }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
-  <div id="qhdr"></div>
-  <div id="qhdr-line" class="qhdr-line" style="display:none"></div>
-
-  <!-- Progress bar -->
-  <div class="qprog" id="qprog">
-    <div class="qprog-fill" id="qprog-fill"></div>
-  </div>
-
-  <!-- Main content -->
-  <div class="qmain" id="qmain"></div>
-
-  <!-- Sticky footer CTA -->
-  <div class="qfooter" id="qfooter"></div>
+<div id="qhdr"></div>
+<div id="qhdr-line" class="qhdr-line" style="display:none"></div>
+<div class="qprog" id="qprog"><div class="qprog-fill" id="qprog-fill"></div></div>
+<div class="qmain" id="qmain"></div>
+<div class="qfooter" id="qfooter"></div>
 
 <script>
-/* ═══════════════════════════════════════════════════
+/* ════════════════════════════════════════
    STATE
-═══════════════════════════════════════════════════ */
+════════════════════════════════════════ */
 var step = 0;
 var branch = null; // 'men' | 'women'
 var answers = {};
 
-/* ═══════════════════════════════════════════════════
-   QUESTION DATA
-═══════════════════════════════════════════════════ */
-
+/* ════════════════════════════════════════
+   SHARED QUESTIONS (steps 1-3)
+════════════════════════════════════════ */
 var SHARED = [
-  // step 1
   {
     id: 'q1', type: 'single',
-    text: 'I am a…',
+    text: 'First things first — I am a…',
     opts: [
       { e: '👩', t: 'Woman' },
       { e: '👨', t: 'Man' },
-      { e: '🌈', t: 'Non-binary' },
-      { e: '✨', t: 'Other / prefer not to say' }
+      { e: '🌈', t: 'Non-binary / Other' }
     ]
   },
-  // step 2 — BRANCH POINT
   {
     id: 'q2', type: 'single', branch: true,
-    text: "I'm most attracted to…",
+    text: "And I'm most attracted to…",
     opts: [
       { e: '👨', t: 'Men',            v: 'men'   },
       { e: '👩', t: 'Women',          v: 'women' },
-      { e: '💫', t: 'Both',           v: 'women' },
-      { e: '✨', t: 'Something else', v: 'women' }
+      { e: '👥', t: 'Both',           v: 'women' },
+      { e: '🌈', t: 'Something else', v: 'women' }
     ]
   },
-  // step 3
   {
     id: 'q3', type: 'single',
     text: 'How old are you?',
@@ -521,8 +444,11 @@ var SHARED = [
   }
 ];
 
+/* ════════════════════════════════════════
+   WOMEN BRANCH (10 items)
+════════════════════════════════════════ */
 var WOMEN = [
-  // step 4
+  // [0] Q4
   {
     id: 'q4', type: 'single',
     text: 'Imagine her leaning in close.\nWhat does her voice sound like?',
@@ -534,7 +460,7 @@ var WOMEN = [
       { e: '✨', t: "I'll know it when I hear it" }
     ]
   },
-  // step 5
+  // [1] Q5
   {
     id: 'q5', type: 'single',
     text: 'Now — who is she?',
@@ -549,22 +475,22 @@ var WOMEN = [
       { e: '🎲', t: 'Surprise me' }
     ]
   },
-  // step 6
+  // [2] Q6
   {
     id: 'q6', type: 'single',
     text: 'Which of these makes your pulse quicken?',
     opts: [
       { e: '👀', t: 'Her eyes across a room — she already knows' },
-      { e: '📱', t: 'A late-night message: "Are you awake?"' },
+      { e: '📱', t: '"Are you awake?" — late night, no context needed' },
       { e: '🤫', t: 'Her whispering something that makes you go still' },
       { e: '🖐️', t: 'Her hand on the small of your back — steering you somewhere private' },
       { e: '⚡', t: 'The moment the tension finally breaks' },
       { e: '🌙', t: 'A slow build — days of almost-touching' },
       { e: '🪞', t: "Her watching you — and not pretending she isn't" },
-      { e: '🗝️', t: 'Forbidden — you both know you shouldn\'t' }
+      { e: '🗝️', t: "Forbidden — you both know you shouldn't" }
     ]
   },
-  // step 7
+  // [3] Q7
   {
     id: 'q7', type: 'single',
     text: 'Where does it happen?',
@@ -575,14 +501,14 @@ var WOMEN = [
       { e: '🚗', t: 'A car at night — nowhere to go, everywhere to be' },
       { e: '🌍', t: "A city you've never been — no one knows your name" },
       { e: '☀️', t: 'A vacation with no plan and no rules' },
-      { e: '🌆', t: 'Somewhere public, where you absolutely shouldn\'t' },
+      { e: '🌆', t: "Somewhere public, where you absolutely shouldn't" },
       { e: '🍳', t: 'Her kitchen at 2am — soft light, no rush' }
     ]
   },
-  // step 8
+  // [4] Q8
   {
     id: 'q8', type: 'single',
-    text: 'And when it starts — what\'s the dynamic?',
+    text: "And when it starts — what's the dynamic?",
     opts: [
       { e: '👑', t: 'I lead' },
       { e: '🔱', t: 'She takes complete control' },
@@ -592,7 +518,7 @@ var WOMEN = [
       { e: '🔄', t: 'We switch — depends on the mood' }
     ]
   },
-  // step 9 — multi
+  // [5] Q9 multi
   {
     id: 'q9', type: 'multi',
     text: 'Which of these fantasies live in your head rent-free?',
@@ -614,9 +540,9 @@ var WOMEN = [
       { e: '✨', t: 'Surprise me — I want to discover something new' }
     ]
   },
-  // step 10 — interstitial
+  // [6] interstitial
   { id: 'inter', type: 'interstitial' },
-  // step 11 — multi
+  // [7] Q10 multi
   {
     id: 'q10', type: 'multi',
     text: 'What do you want to feel with each experience?',
@@ -631,7 +557,7 @@ var WOMEN = [
       { e: '🌀', t: "I'll know it when I feel it" }
     ]
   },
-  // step 12 — multi
+  // [8] Q11 multi
   {
     id: 'q11', type: 'multi',
     text: 'What do you think would turn you on most?',
@@ -647,10 +573,10 @@ var WOMEN = [
       { e: '✨', t: "I'll know it when I hear it" }
     ]
   },
-  // step 13 — single
+  // [9] Q12
   {
     id: 'q12', type: 'single',
-    text: "Do you want the voice to tell you what to do?\nLike ‘touch yourself… slowly’?",
+    text: "Do you want the voice to tell you what to do?\nLike 'touch yourself… slowly'?",
     opts: [
       { e: '🔥', t: 'Yes — guide me through it, tell me exactly what to do' },
       { e: '⏰', t: "Sometimes — at the right moment, when I'm close" },
@@ -661,108 +587,181 @@ var WOMEN = [
   }
 ];
 
+/* ════════════════════════════════════════
+   MEN BRANCH (16 items)
+════════════════════════════════════════ */
 var MEN = [
-  // step 4
+  // [0] Q4
   {
     id: 'q4', type: 'single',
     text: 'Imagine him leaning in close.\nWhat does his voice sound like?',
     opts: [
-      { e: '🌑', t: 'Deep and commanding' },
-      { e: '🔥', t: 'Confident and warm' },
-      { e: '🌬️', t: 'Smooth and low' },
-      { e: '😏', t: 'Playful and teasing' },
+      { e: '🌑', t: "Deep and commanding — like he's used to getting what he wants" },
+      { e: '🔥', t: 'Warm and teasing — like he already knows what you need' },
+      { e: '💋', t: "Low and rough — like he's barely holding himself back" },
+      { e: '🌙', t: 'Soft and close — like a confession whispered at 2am' },
       { e: '✨', t: "I'll know it when I hear it" }
     ]
   },
-  // step 5
+  // [1] Q5
   {
     id: 'q5', type: 'single',
     text: 'Now — who is he?',
     opts: [
-      { e: '🧊', t: 'The quiet intense one who sees right through you' },
-      { e: '🔱', t: 'The dominant one who takes what he wants' },
-      { e: '🥂', t: 'The older experienced man who knows exactly what to do' },
-      { e: '😂', t: 'The playful one who makes you laugh then stops your breath' },
-      { e: '💼', t: 'The powerful executive type' },
-      { e: '🔥', t: "The dangerous one you know you shouldn't want" },
-      { e: '🌑', t: 'The dark supernatural being' },
-      { e: '🎲', t: 'Surprise me' }
+      { e: '🔧', t: 'The blue-collar guy with rough hands and no filter' },
+      { e: '🦊', t: 'The silver fox — older, experienced, knows exactly what he\'s doing' },
+      { e: '🏆', t: 'The athlete — stamina, strength, sweat' },
+      { e: '🎨', t: "The quiet artist who's secretly filthy in bed" },
+      { e: '🌑', t: 'The dark immortal — dangerous, centuries old, and he\'s chosen you' },
+      { e: '😈', t: "The bad boy you know is trouble — and you don't care" },
+      { e: '💼', t: 'The CEO who fucks like he runs a boardroom' },
+      { e: '🎲', t: "Surprise me — I'm open" }
     ]
   },
-  // step 6
+  // [2] interstitial-image (after Q5, before Q6)
+  { id: 'inter1', type: 'interstitial-image' },
+  // [3] Q6
   {
     id: 'q6', type: 'single',
     text: 'Which of these makes your pulse quicken?',
     opts: [
-      { e: '👀', t: 'Him watching you from across the room — slow, deliberate' },
-      { e: '📱', t: '"Come over." — you know exactly what it means' },
-      { e: '🤫', t: 'Him saying something low in your ear that makes you stop breathing' },
-      { e: '🖐️', t: "His hand at the back of your neck — not moving, just there" },
-      { e: '⚡', t: 'The moment the argument turns into something else entirely' },
-      { e: '🌙', t: 'A slow build — days of almost-touching before he finally moves' },
-      { e: '🪞', t: 'Him describing exactly what he wants to do to you' },
-      { e: '🗝️', t: "Forbidden — you both know this is a terrible idea" }
+      { e: '🖐️', t: 'He pins you against the wall and tells you not to move' },
+      { e: '🥂', t: 'A stranger at a hotel bar buys you a drink — by midnight, you\'re in his room' },
+      { e: '💼', t: 'Your boss keeps you late… and what happens on that desk stays between you two' },
+      { e: '🌑', t: "A powerful, dark creature claims you — and you don't want to resist" },
+      { e: '🔥', t: 'Two men. One wants your body. The other wants your mind. You get both.' },
+      { e: '🔒', t: 'He blindfolds you, ties your wrists, and whispers "you\'re mine tonight"' },
+      { e: '👁️', t: "You catch him watching you — and instead of stopping, you let him look" },
+      { e: '✨', t: "All of the above — don't make me choose" }
     ]
   },
-  // step 7
+  // [4] Q7
   {
     id: 'q7', type: 'single',
     text: 'Where does it happen?',
     opts: [
-      { e: '🛏️', t: "His bedroom — slow, unhurried, nowhere to be" },
-      { e: '🏨', t: 'A hotel room — anonymous, no consequences' },
-      { e: '🏢', t: "The office after everyone's gone" },
-      { e: '🚗', t: 'A car at night — windows fogged, no plan' },
-      { e: '🌍', t: "A city you've never been — no one knows your name" },
-      { e: '☀️', t: "A vacation that wasn't supposed to go this way" },
-      { e: '🌆', t: 'Somewhere public, where you absolutely shouldn\'t' },
-      { e: '🍳', t: 'His kitchen at 2am — low light, no rush, nowhere else to be' }
+      { e: '🏨', t: 'A hotel room — anonymous, one night, no strings' },
+      { e: '🏠', t: "My own bed — but tonight, everything's different" },
+      { e: '🚿', t: 'The shower — steam, skin, no space between us' },
+      { e: '🏰', t: 'A fantasy world — castles, dark forests, anything goes' },
+      { e: '🚗', t: 'Somewhere risky — a car, a fitting room, someone might catch us' },
+      { e: '💼', t: "An office after hours — the door's locked, the desk is cleared" },
+      { e: '☀️', t: 'On vacation — a stranger, a sunset, no consequences' },
+      { e: '🌀', t: 'It changes — depends on the fantasy' }
     ]
   },
-  // step 8
+  // [5] Q8
   {
     id: 'q8', type: 'single',
-    text: 'And when it starts — what\'s the dynamic?',
+    text: "And when it starts — what's your role?",
     opts: [
-      { e: '👑', t: 'I take the lead' },
-      { e: '🔱', t: 'He takes complete control' },
-      { e: '🌊', t: 'We flow together — back and forth' },
-      { e: '🕊️', t: 'I want to surrender to him' },
-      { e: '🙏', t: 'I want him to worship me' },
-      { e: '🔄', t: 'We switch — depends on the mood' }
+      { e: '🧠', t: 'He takes charge — grabs me, positions me, tells me what to do' },
+      { e: '👑', t: 'I run the show — he does what I say, when I say it' },
+      { e: '🥊', t: 'We fight for it — push, pull, flip, switch' },
+      { e: '🔒', t: 'I submit completely — restrained, obedient, his to use' },
+      { e: '🙏', t: 'I want to be worshipped — on his knees, devoted to my pleasure' },
+      { e: '🔄', t: 'Depends on the night — sometimes I want to be taken, sometimes I take' }
     ]
   },
-  // step 9 — multi
+  // [6] Q9
   {
-    id: 'q9', type: 'multi',
-    text: 'Which of these fantasies live in your head rent-free?',
+    id: 'q9', type: 'single',
+    text: 'How fast do you want clothes coming off?',
+    opts: [
+      { e: '🔥', t: 'Immediately — skip the plot, get to the good part' },
+      { e: '⏳', t: "Tease me first — but don't make me wait too long" },
+      { e: '📚', t: 'Slow burn — I want to ache for it before anything happens' },
+      { e: '📖', t: 'Give me a full story — I want to care before I come' },
+      { e: '🌀', t: 'Depends on the mood — sometimes fast, sometimes slow' }
+    ]
+  },
+  // [7] Q10
+  {
+    id: 'q10', type: 'single',
+    text: 'How dirty do you want the words and scenes to be?',
+    opts: [
+      { e: '🌶️', t: 'Filthy — I want to hear every explicit detail, nothing held back' },
+      { e: '🔥', t: 'Explicit — graphic, but with some art to it' },
+      { e: '💋', t: 'Suggestive — describe enough that my imagination does the rest' },
+      { e: '🌸', t: 'Soft — more feeling than fucking' },
+      { e: '🎲', t: 'Mix it up — some nights I want sweet, some nights I want nasty' }
+    ]
+  },
+  // [8] Q11
+  {
+    id: 'q11', type: 'single',
+    text: 'What kind of dirty talk makes you lose it?',
+    opts: [
+      { e: '🔒', t: 'Possessive — "you\'re mine, say it"' },
+      { e: '💦', t: 'Desperate — "I need you so fucking bad"' },
+      { e: '📖', t: 'Descriptive — narrating exactly what he\'s doing to my body' },
+      { e: '💝', t: 'Praising — "you feel so good, you\'re perfect"' },
+      { e: '👊', t: 'Commanding — "get on your knees"' },
+      { e: '😈', t: 'Degrading — "look at you, you love this"' },
+      { e: '✨', t: "I don't know yet — I want to find out" }
+    ]
+  },
+  // [9] Q12 multi
+  {
+    id: 'q12', type: 'multi',
+    text: 'What makes you squeeze your thighs together?',
     sub: 'Select all that apply',
     opts: [
-      { e: '🔥', t: 'Best friends who finally cross the line — years of tension snapping' },
-      { e: '💍', t: "Forbidden — he's your roommate, your ex's brother, \"we shouldn't\"" },
-      { e: '🎓', t: 'Professor, boss, someone with authority — he crosses the line first' },
-      { e: '🎭', t: 'A stranger — a bar, a party, eye contact that turns into everything' },
-      { e: '💝', t: 'Slow burn — months of almost-touching before it finally happens' },
-      { e: '🌑', t: 'Supernatural — vampires, warlocks, fae, dark creatures' },
-      { e: '👁️', t: "Being watched — or watching him when he doesn't know" },
-      { e: '🎭', t: 'Roleplay — becoming someone else makes it hotter' },
-      { e: '🙏', t: "Worship — he's devoted to every inch of me" },
-      { e: '🔒', t: 'He takes me completely — rough, intense, no hesitation' },
-      { e: '⚡', t: 'Power exchange — I do everything he says' },
-      { e: '🌙', t: 'The ex who still knows my body — one more night, no strings' },
-      { e: '🔮', t: "Dark desires — things I've never said out loud" },
+      { e: '✋', t: 'Being pinned down — wrists above my head' },
+      { e: '💇', t: 'Hair pulling — firm, not gentle' },
+      { e: '🫁', t: 'Hands around my throat while he whispers to me' },
+      { e: '💋', t: 'Neck kissing that turns into biting' },
+      { e: '🍑', t: 'Being bent over and taken from behind' },
+      { e: '⏳', t: 'Being edged until I beg him to let me finish' },
+      { e: '💋', t: 'His mouth — everywhere, taking his time' },
+      { e: '✋', t: 'Spanking — hard enough to feel it after' },
+      { e: '✨', t: 'Surprise me' }
+    ]
+  },
+  // [10] Q13
+  {
+    id: 'q13', type: 'single',
+    text: 'How rough should it be?',
+    opts: [
+      { e: '💥', t: 'The rougher the better — throw me around' },
+      { e: '🔥', t: 'A little rough — hair pulling, pinning, grabbing' },
+      { e: '⚡', t: 'Intense but not painful — I want to feel it, not hurt' },
+      { e: '🌊', t: 'Gentle and slow is what gets me there' },
+      { e: '🔄', t: 'Start soft, finish rough — build into it' },
+      { e: '✨', t: "I'm not sure yet — I want to explore" }
+    ]
+  },
+  // [11] Q14 multi
+  {
+    id: 'q14', type: 'multi',
+    text: 'Which of these fantasies live in your head rent-free?\nNo judgment.',
+    sub: 'Select all that apply',
+    opts: [
+      { e: '💍', t: 'Forbidden affair — "we shouldn\'t be doing this"' },
+      { e: '💼', t: 'Boss, professor, someone with authority over me' },
+      { e: '💕', t: 'Best friends who finally snap and cross the line' },
+      { e: '👥', t: 'Threesome — two people focused on me, or me joining two others' },
+      { e: '🔥', t: 'Enemies to lovers — hate-fucking that turns into something real' },
+      { e: '🌑', t: 'Supernatural — vampires, werewolves, dark fae, creatures' },
+      { e: '👁️', t: "Being watched — or watching someone who doesn't know I'm there" },
+      { e: '🎭', t: 'Roleplay — pretending to be someone else makes it hotter' },
+      { e: '🙏', t: 'Worship — someone on their knees, obsessed with my pleasure' },
+      { e: '🍑', t: 'Anal — the taboo, the stretch, the surrender' },
+      { e: '🌙', t: 'The ex who still knows my body — second chance, one more night' },
+      { e: '🌱', t: 'Breeding — "I\'m going to fill you up" — the risk is the fantasy' },
+      { e: '🖤', t: 'Consensual non-consent' },
       { e: '✨', t: 'Surprise me — I want to discover something new' }
     ]
   },
-  // step 10 — interstitial
-  { id: 'inter', type: 'interstitial' },
-  // step 11 — multi
+  // [12] interstitial-stats (after Q14)
+  { id: 'inter2', type: 'interstitial' },
+  // [13] Q15 multi
   {
-    id: 'q10', type: 'multi',
+    id: 'q15', type: 'multi',
     text: 'What do you want to feel with each experience?',
     sub: 'Select all that apply',
     opts: [
-      { e: '🔥', t: "Desired — like he can't stop looking at me" },
+      { e: '🔥', t: "Desired — like he can't keep his hands off me" },
       { e: '🧠', t: "Powerful — like I'm the one in control" },
       { e: '🌊', t: 'Release — stress gone, just pure pleasure' },
       { e: '💗', t: "Intimate — like he knows my body better than I do" },
@@ -771,9 +770,9 @@ var MEN = [
       { e: '🌀', t: "I'll know it when I feel it" }
     ]
   },
-  // step 12 — multi
+  // [14] Q16 multi
   {
-    id: 'q11', type: 'multi',
+    id: 'q16', type: 'multi',
     text: 'What do you think would turn you on most?',
     sub: 'Select all that apply',
     opts: [
@@ -787,10 +786,10 @@ var MEN = [
       { e: '✨', t: "I'll know it when I hear it" }
     ]
   },
-  // step 13 — single
+  // [15] Q17
   {
-    id: 'q12', type: 'single',
-    text: "Do you want the voice to tell you what to do?\nLike ‘touch yourself… slowly’?",
+    id: 'q17', type: 'single',
+    text: "Do you want the voice to tell you what to do?\nLike 'touch yourself… slowly'?",
     opts: [
       { e: '🔥', t: 'Yes — guide me through it, tell me exactly what to do' },
       { e: '⏰', t: "Sometimes — at the right moment, when I'm close" },
@@ -801,12 +800,15 @@ var MEN = [
   }
 ];
 
-var INTER_DATA = {
-  heading: "Here’s what 4,200+ Hushlore listeners told us",
+/* ════════════════════════════════════════
+   STATIC DATA
+════════════════════════════════════════ */
+var INTER_STATS = {
+  heading: "Here's what 4,200+ Hushlore listeners told us",
   stats: [
     { num: '94%', label: 'discovered a new kind of pleasure', pct: 94 },
     { num: '92%', label: 'felt more confident and in tune with themselves', pct: 92 },
-    { num: '83%', label: "discovered fantasies they didn’t know turned them on", pct: 83 },
+    { num: '83%', label: "discovered fantasies they didn't know turned them on", pct: 83 },
     { num: '77%', label: 'in relationships said their intimate life improved', pct: 77 }
   ]
 };
@@ -819,39 +821,45 @@ var MODALS = [
 ];
 
 var TESTIMONIALS = [
-  { text: "I thought stories would be cheesy. First story, ten minutes in — eyes closed, headphones on, completely gone. I listen almost every night now.", author: "Claire M." },
-  { text: "After my divorce I didn’t want any of it. But the first slow-burn story I tried, I actually felt something again. Not just turned on — emotionally cracked open.", author: "Julia T." },
-  { text: "There’s this one voice — confident and warm — my body reacts before my brain catches up. I’ve explored things I’d never say out loud. No judgment.", author: "Olivia K." },
-  { text: "I always thought I was weird for wanting more. This made me feel like I’m not broken — I’m just specific. It’s the most ‘me’ thing on my phone.", author: "Charlotte R." }
+  { text: "I thought stories would be cheesy. First story, ten minutes in — eyes closed, headphones on, completely gone. I listen almost every night now. My husband has no idea why I've been in such a good mood.", author: "Claire M." },
+  { text: "After my divorce I didn't want any of it. But the first slow-burn story I tried, I actually felt something again. Not just turned on — emotionally cracked open.", author: "Julia T." },
+  { text: "There's this one voice — confident and warm — my body reacts before my brain catches up. I've explored things I'd never say out loud. No judgment, just me and my headphones.", author: "Olivia K." },
+  { text: "I always thought I was weird for wanting more. This made me feel like I'm not broken — I'm just specific. It's the most 'me' thing on my phone and nobody knows it's there.", author: "Charlotte R." }
 ];
 
-/* ═══════════════════════════════════════════════════
-   STEP LOOKUP
-═══════════════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   STEP LOGIC
+════════════════════════════════════════ */
+function branchArr() { return branch === 'men' ? MEN : WOMEN; }
+function loadingStep() { return 4 + branchArr().length; }
+function emailStep()   { return loadingStep() + 1; }
 
 function getStep(s) {
   if (s === 0) return { type: 'splash' };
   if (s >= 1 && s <= 3) return SHARED[s - 1];
-  var branchArr = (branch === 'men') ? MEN : WOMEN;
-  if (s >= 4 && s <= 13) return branchArr[s - 4];
-  if (s === 14) return { type: 'loading' };
-  if (s === 15) return { type: 'email' };
+  var bi = s - 4;
+  var arr = branchArr();
+  if (bi >= 0 && bi < arr.length) return arr[bi];
+  if (s === loadingStep()) return { type: 'loading' };
+  if (s === emailStep())   return { type: 'email' };
   return null;
 }
 
-/* ═══════════════════════════════════════════════════
-   NAVIGATION
-═══════════════════════════════════════════════════ */
+function goNext() {
+  if (step < emailStep()) { step++; render(); }
+}
 
-function goNext() { if (step < 15) { step++; render(); } }
-function goBack() { if (step > 0) { step--; render(); } }
+function goBack() {
+  if (step > 0) { step--; render(); }
+}
 
-/* ═══════════════════════════════════════════════════
-   MAIN RENDER
-═══════════════════════════════════════════════════ */
-
+/* ════════════════════════════════════════
+   RENDER
+════════════════════════════════════════ */
 function render() {
   var data = getStep(step);
+  if (!data) return;
+
   var hdr  = document.getElementById('qhdr');
   var line = document.getElementById('qhdr-line');
   var prog = document.getElementById('qprog');
@@ -864,28 +872,30 @@ function render() {
   // Header
   if (step === 0) {
     hdr.innerHTML = '<div class="qhdr"><a href="/" class="qhdr-logo">Hush<span>lore</span></a></div>';
-    line.style.display = 'block';
   } else {
     hdr.innerHTML = '<div class="qhdr"><button class="qhdr-back" onclick="goBack()">&#8592;</button><a href="/" class="qhdr-logo">Hush<span>lore</span></a></div>';
-    line.style.display = 'block';
   }
+  line.style.display = 'block';
 
-  // Progress bar (visible for steps 1–13)
-  if (step >= 1 && step <= 13) {
+  // Progress bar
+  var ld = loadingStep();
+  if (step >= 1 && step < ld) {
     prog.style.display = 'block';
-    fill.style.width = Math.round((step / 13) * 100) + '%';
+    var totalQ = ld - 1; // steps 1 to ld-1
+    fill.style.width = Math.round((step / totalQ) * 100) + '%';
   } else {
     prog.style.display = 'none';
   }
 
-  // Render
+  // Render step type
   switch (data.type) {
-    case 'splash':       renderSplash(main, foot); break;
-    case 'single':       renderQ(main, foot, data, false); break;
-    case 'multi':        renderQ(main, foot, data, true);  break;
-    case 'interstitial': renderInter(main, foot);  break;
-    case 'loading':      renderLoading(main, foot); break;
-    case 'email':        renderEmail(main, foot);  break;
+    case 'splash':            renderSplash(main, foot); break;
+    case 'single':            renderQ(main, foot, data, false); break;
+    case 'multi':             renderQ(main, foot, data, true);  break;
+    case 'interstitial':      renderInter(main, foot);  break;
+    case 'interstitial-image':renderInterImage(main, foot); break;
+    case 'loading':           renderLoading(main, foot); break;
+    case 'email':             renderEmail(main, foot);  break;
   }
 }
 
@@ -895,7 +905,8 @@ function renderSplash(main, foot) {
     '<div class="splash">' +
       '<div class="splash-eyebrow">Personalized audio romance</div>' +
       '<h1 class="splash-h1">Create Your<br><em>Perfect Fantasy</em></h1>' +
-      '<p class="splash-p">A short quiz. A story matched to your desires. A voice that feels like it was made for you alone.</p>' +
+      '<p class="splash-sub">Your answers shape the story. 100% private.</p>' +
+      '<div class="splash-badge"><span class="stars">★★★★★</span><span>4.9 &nbsp;|&nbsp; 4,200+ listeners</span></div>' +
     '</div>';
   foot.className = 'qfooter show';
   foot.innerHTML = '<button class="btn-c" onclick="goNext()">Start — it takes 60 seconds</button>';
@@ -958,33 +969,45 @@ function contMulti() {
   goNext();
 }
 
-/* ─── INTERSTITIAL ─── */
+/* ─── INTERSTITIAL (stats bars) ─── */
 function renderInter(main, foot) {
-  var statsHtml = INTER_DATA.stats.map(function(s) {
+  var statsHtml = INTER_STATS.stats.map(function(s) {
     return '<div class="stat-row">' +
       '<div class="stat-num">' + s.num + '</div>' +
       '<div class="stat-lbl">' + s.label + '</div>' +
       '<div class="stat-bar"><div class="stat-bar-inner" data-pct="' + s.pct + '"></div></div>' +
     '</div>';
   }).join('');
-
-  main.innerHTML =
-    '<div class="inter-h">' + INTER_DATA.heading + '</div>' +
-    statsHtml;
-
+  main.innerHTML = '<div class="inter-h">' + INTER_STATS.heading + '</div>' + statsHtml;
   foot.className = 'qfooter show';
   foot.innerHTML = '<button class="btn-c" onclick="goNext()">Continue</button>';
-
   setTimeout(function() {
-    document.querySelectorAll('.stat-bar-inner').forEach(function(b) {
-      b.style.width = b.dataset.pct + '%';
-    });
+    document.querySelectorAll('.stat-bar-inner').forEach(function(b) { b.style.width = b.dataset.pct + '%'; });
   }, 120);
+}
+
+/* ─── INTERSTITIAL (image + quote, Men path) ─── */
+function renderInterImage(main, foot) {
+  main.innerHTML =
+    '<div class="inter-img-wrap">' +
+      "<div class=\"inter-img-h\">You're not the only one thinking about this</div>" +
+      "<p class=\"inter-img-p\">87% of our listeners discovered a fantasy they didn't know they had — and 93% said it made them experience pleasure like never before.</p>" +
+      '<div class="inter-img-card">' +
+        '<div class="inter-img-visual"><span class="inter-img-icon">🎧</span></div>' +
+        '<div class="inter-img-quote">' +
+          '<div class="inter-img-qstars">★★★★★</div>' +
+          '<div class="inter-img-qtext">"This is by far the best experience I\'ve ever had. The stories are so passionate and immersive, I sometimes forget it\'s a story. It makes my toes curl, if you know what I mean!"</div>' +
+          '<div class="inter-img-qauth">@lucy</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  foot.className = 'qfooter show';
+  foot.innerHTML = '<button class="btn-c" onclick="goNext()">Continue</button>';
 }
 
 /* ─── LOADING ─── */
 function renderLoading(main, foot) {
-  if (typeof fbq !== 'undefined') fbq('track', 'InitiateCheckout', { content_name: 'Hushlore Quiz2 Complete', currency: 'USD', value: 32.99 });
+  if (typeof fbq !== 'undefined') fbq('track', 'InitiateCheckout', { content_name: 'Hushlore Quiz2', currency: 'USD', value: 32.99 });
 
   var items = [
     'Setting up your private profile…',
@@ -992,29 +1015,24 @@ function renderLoading(main, foot) {
     'Selecting voices and storylines for you…',
     'Finishing your personalized experience…'
   ];
-
   var t = TESTIMONIALS[0];
   main.innerHTML =
     '<div class="loading-wrap">' +
       '<h2 class="loading-h" id="ld-title">Building your <span>perfect match</span>…</h2>' +
       '<div class="loading-items">' +
         items.map(function(it, i) {
-          return '<div class="ld-item" id="ld-' + i + '">' +
-            '<span>' + it + '</span>' +
-            '<span class="ld-st" id="ld-st-' + i + '">0%</span>' +
-          '</div>';
+          return '<div class="ld-item" id="ld-' + i + '"><span>' + it + '</span><span class="ld-st" id="ld-st-' + i + '">0%</span></div>';
         }).join('') +
       '</div>' +
-      '<div class="test-card" id="test-card">' +
+      '<div class="loading-enjoyed">Enjoyed by <span>12M+ people</span></div>' +
+      '<div class="test-card">' +
         '<div class="test-stars">★★★★★</div>' +
-        '<div class="test-body" id="test-body">“' + t.text + '”</div>' +
+        '<div class="test-body" id="test-body">"' + t.text + '"</div>' +
         '<div class="test-author" id="test-auth">— ' + t.author + '</div>' +
       '</div>' +
     '</div>';
-
   foot.className = 'qfooter';
   foot.innerHTML = '';
-
   startLoading();
 }
 
@@ -1043,7 +1061,7 @@ function swapTest(idx) {
   var t = TESTIMONIALS[idx % TESTIMONIALS.length];
   var b = document.getElementById('test-body');
   var a = document.getElementById('test-auth');
-  if (b) b.textContent = '“' + t.text + '”';
+  if (b) b.textContent = '"' + t.text + '"';
   if (a) a.textContent = '— ' + t.author;
 }
 
@@ -1087,8 +1105,7 @@ function startLoading() {
                     animLd(3, 0, 49, 1000, function() {
                       showModal(3, function() {
                         animLd(3, 49, 100, 700, function() {
-                          doneLd(3);
-                          loadingDone();
+                          doneLd(3); loadingDone();
                         });
                       });
                     });
@@ -1121,12 +1138,10 @@ function renderEmail(main, foot) {
         '<svg viewBox="0 0 20 16" xmlns="http://www.w3.org/2000/svg"><path d="M18 0H2C.9 0 0 .9 0 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V2c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V2l8 5 8-5v2z"/></svg>' +
         '<input class="email-inp" type="email" id="email-inp" placeholder="your@email.com" autocomplete="email" />' +
       '</div>' +
-      '<p class="email-privacy">We’ll never share your email. Your fantasies stay between us.</p>' +
+      "<p class=\"email-privacy\">We'll never share your email. Your fantasies stay between us.</p>" +
     '</div>';
-
   foot.className = 'qfooter show';
   foot.innerHTML = '<button class="btn-c" onclick="submitEmail()">Unlock My Stories</button>';
-
   setTimeout(function() {
     var inp = document.getElementById('email-inp');
     if (inp) inp.addEventListener('keypress', function(e) { if (e.key === 'Enter') submitEmail(); });
@@ -1144,38 +1159,26 @@ function submitEmail() {
     setTimeout(function() { inp.classList.remove('shake'); }, 400);
     return;
   }
-
-  // FB event
   if (typeof fbq !== 'undefined') fbq('track', 'Lead', { content_name: 'Hushlore Quiz2 Email', currency: 'USD', value: 32.99 });
-
-  // MailerLite
   fetch('https://connect.mailerlite.com/api/subscribers', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI0IiwianRpIjoiZTk5YzJmMWFiYWU4ZjAyOTAzYWMzZmNiNTY1OGYwMmNhOTc0MWQ1MGE1MWE1ODI4OGY3MDQ1YWQ3MDM0ZDJlYjgxODg5ODdmODk2NmE1OWIiLCJpYXQiOjE3NzkwNDA5NjUuNjYwNTcsIm5iZiI6MTc3OTA0MDk2NS42NjA1NzUsImV4cCI6NDkzNDcxNDU2NS42NTA5NDEsInN1YiI6IjIzNzQ2MzMiLCJzY29wZXMiOltdfQ.Z31pT73HXComt0iGUSdlU0JzHhGMzjZgpSaMT2jB7T1-syOIglDlraBe-NlhLVNFnMiywEekwvOBlY6bEMzOQqTOyck7KOrJ4D6OpvBTPJMWFtywF0rEjeJqEzothGvV0RZ5JvD35Qqz3H3Am3lZLYhvfhtj9Ob3CPuKHtGyzaBRb0o7nJa90AP7-SE-WCklgQKqU_mBlpzY3BiEEhcxllDuuQfWrC4AekOV_N24gSbxiZXGcT2Hk4sb_yIMtP9oJ2hyuO3bqbtpaX6SET9le49Y4ClHNbVjGU66FI92RBWjZLpgmgZZ5iDzJnBlAt2ZBmDGUxeUUjO9KjswvXqadLl6SOeFZm63IWjQFiXqlaubEorCQCdBZpZoi4izXgaGGVPn3m_izuYgW_IOcyM7zVzPULSgiXROoZsXchOQ_Z_oOvXE7V598ExMGzF5TgCcKZrpTvUHbdnoZ_4Bv-yJNc_sJAksKBVXVDXfXzwUc544PitduBTybR-ZD78__jocr-1fglddmgEEcJNY7OS7zeDwFVrx2ms2EaXJuEjnjArPhyr9eYVQ_LRhJMazGwSAiZVeJs9DiLOtfpoy3QUhH91P6M6OQDW2GIvcMLNtN8TOgbC2ilPBrWdjpuq_leUh5xu6gZXvTUryDo_4YchDjjmLft-QBytvy1ucOfDSK3Y'
     },
-    body: JSON.stringify({
-      email: email,
-      groups: ['187738021652595766'],
-      fields: { quiz_source: 'quiz2', branch: branch || 'women' }
-    })
+    body: JSON.stringify({ email: email, groups: ['187738021652595766'], fields: { quiz_source: 'quiz2', branch: branch || 'women' } })
   }).catch(function() {});
-
-  // Save + redirect
   try {
     localStorage.setItem('hl_quiz2_branch', branch || 'women');
     localStorage.setItem('hl_email', email);
   } catch(e) {}
-
   window.location.href = 'result.html?match=your-match&src=quiz2';
 }
 
-/* ═══════════════════════════════════════════════════
+/* ════════════════════════════════════════
    INIT
-═══════════════════════════════════════════════════ */
+════════════════════════════════════════ */
 render();
 </script>
-
 </body>
 </html>
