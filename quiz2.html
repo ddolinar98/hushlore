@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — Find Your Perfect Match</title>
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Facebook Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1813144372979449');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1813144372979449&ev=PageView&noscript=1"/></noscript>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0d0d14;
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(160deg, #0d0d14 0%, #160d1a 35%, #1e0a16 65%, #280c14 100%);
+      z-index: -1;
+    }
+
+    /* ─── HEADER ─── */
+    .qhdr {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 0.875rem 1.25rem;
+    }
+    .qhdr-back {
+      position: absolute;
+      left: 1.25rem;
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.45);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0;
+    }
+    .qhdr-back:hover { color: rgba(255,255,255,0.75); }
+    .qhdr-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem;
+      color: #fff;
+      text-decoration: none;
+      letter-spacing: 0.03em;
+    }
+    .qhdr-logo span { color: #c03358; }
+    .qhdr-line {
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(192,51,88,0.5) 30%, rgba(192,51,88,0.5) 70%, transparent 100%);
+    }
+
+    /* ─── PROGRESS ─── */
+    .qprog {
+      height: 3px;
+      background: rgba(255,255,255,0.07);
+      display: none;
+    }
+    .qprog-fill {
+      height: 100%;
+      background: #c03358;
+      transition: width 0.45s ease;
+      width: 0%;
+    }
+
+    /* ─── MAIN CONTAINER ─── */
+    .qmain {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 8rem;
+    }
+
+    /* ─── SPLASH ─── */
+    .splash {
+      min-height: calc(100vh - 80px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .splash-eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #c03358;
+      margin-bottom: 1rem;
+    }
+    .splash-h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.25rem, 7vw, 3.75rem);
+      font-weight: 300;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+    }
+    .splash-h1 em { font-style: italic; color: #c03358; }
+    .splash-p {
+      font-size: 0.9375rem;
+      color: rgba(255,255,255,0.5);
+      max-width: 340px;
+      line-height: 1.7;
+      margin-bottom: 3rem;
+    }
+    .splash-trust {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.3);
+      margin-top: 1rem;
+    }
+
+    /* ─── QUESTION ─── */
+    .q-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.35rem, 5vw, 2rem);
+      font-weight: 400;
+      text-align: center;
+      line-height: 1.3;
+      margin-bottom: 1.75rem;
+      padding: 0 0.25rem;
+    }
+    .q-sub {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.3);
+      text-align: center;
+      margin-top: -1.25rem;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* ─── OPTION CARDS ─── */
+    .opts { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .opt {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      padding: 0.875rem 1rem;
+      background: rgba(255,255,255,0.04);
+      border: 1.5px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .opt:active { transform: scale(0.985); }
+    .opt:hover {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(192,51,88,0.3);
+    }
+    .opt.sel {
+      background: rgba(192,51,88,0.12);
+      border-color: #c03358;
+    }
+    .opt-e {
+      font-size: 1.15rem;
+      width: 1.75rem;
+      text-align: center;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .opt-t {
+      flex: 1;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      color: rgba(255,255,255,0.88);
+    }
+    .opt-chk {
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 4px;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      transition: all 0.12s;
+      color: transparent;
+    }
+    .opt.sel .opt-chk {
+      background: #c03358;
+      border-color: #c03358;
+      color: #fff;
+    }
+    .opts.single .opt-chk { display: none; }
+
+    /* ─── INTERSTITIAL ─── */
+    .inter-h {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.3rem, 4.5vw, 1.85rem);
+      line-height: 1.3;
+      margin-bottom: 2rem;
+    }
+    .stat-row {
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-num {
+      font-size: 2.25rem;
+      font-weight: 300;
+      color: #c03358;
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+    .stat-lbl { font-size: 0.875rem; color: rgba(255,255,255,0.6); }
+    .stat-bar {
+      height: 2px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 2px;
+      margin-top: 0.625rem;
+      overflow: hidden;
+    }
+    .stat-bar-inner {
+      height: 100%;
+      background: #c03358;
+      border-radius: 2px;
+      width: 0;
+      transition: width 1.4s ease;
+    }
+
+    /* ─── LOADING ─── */
+    .loading-wrap {
+      min-height: calc(100vh - 120px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem 0;
+    }
+    .loading-h {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.5rem, 5vw, 2.25rem);
+      line-height: 1.25;
+      margin-bottom: 2rem;
+    }
+    .loading-h span { color: #c03358; }
+    .loading-items {
+      width: 100%;
+      max-width: 420px;
+      text-align: left;
+    }
+    .ld-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 0.875rem;
+      color: rgba(255,255,255,0.35);
+      transition: color 0.4s;
+    }
+    .ld-item.active { color: rgba(255,255,255,0.88); }
+    .ld-item.done { color: rgba(255,255,255,0.45); }
+    .ld-st {
+      font-size: 0.8rem;
+      color: #c03358;
+      min-width: 2.75rem;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* Testimonial card */
+    .test-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 1.25rem 1.25rem;
+      margin-top: 2rem;
+      max-width: 420px;
+      text-align: left;
+    }
+    .test-stars { color: #f5c842; font-size: 0.9rem; margin-bottom: 0.5rem; }
+    .test-body { font-size: 0.825rem; color: rgba(255,255,255,0.65); line-height: 1.65; font-style: italic; }
+    .test-author { font-size: 0.775rem; color: #c03358; margin-top: 0.625rem; }
+
+    /* ─── MODAL ─── */
+    .modal-ov {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.78);
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+    .modal-box {
+      background: #1b1228;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      padding: 1.75rem 1.5rem;
+      max-width: 340px;
+      width: 100%;
+      text-align: center;
+      animation: slideUp 0.3s cubic-bezier(.16,1,.3,1);
+    }
+    @keyframes slideUp { from { transform: translateY(24px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+    .modal-tag {
+      font-size: 0.675rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 0.625rem;
+    }
+    .modal-q {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      line-height: 1.35;
+      margin-bottom: 1.375rem;
+    }
+    .modal-btns { display: flex; gap: 0.75rem; }
+    .mbtn {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      background: transparent;
+      color: #fff;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: background 0.15s;
+    }
+    .mbtn:hover { background: rgba(255,255,255,0.08); }
+    .mbtn.yes { background: #c03358; border-color: #c03358; }
+    .mbtn.yes:hover { background: #e0456e; }
+
+    /* ─── EMAIL ─── */
+    .email-wrap { text-align: center; padding: 1rem 0; }
+    .email-h {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.65rem, 5.5vw, 2.25rem);
+      margin-bottom: 0.5rem;
+    }
+    .email-sub {
+      font-size: 0.875rem;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 1.75rem;
+    }
+    .email-field {
+      position: relative;
+      max-width: 400px;
+      margin: 0 auto 0.5rem;
+    }
+    .email-field svg {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1rem;
+      height: 1rem;
+      fill: rgba(255,255,255,0.3);
+      pointer-events: none;
+    }
+    .email-inp {
+      width: 100%;
+      padding: 0.9375rem 1rem 0.9375rem 2.75rem;
+      background: rgba(255,255,255,0.06);
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1rem;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    .email-inp:focus { border-color: rgba(192,51,88,0.65); }
+    .email-inp::placeholder { color: rgba(255,255,255,0.28); }
+    .email-privacy {
+      font-size: 0.725rem;
+      color: rgba(255,255,255,0.25);
+      max-width: 300px;
+      margin: 0 auto 2rem;
+      line-height: 1.5;
+    }
+
+    /* ─── STICKY CTA ─── */
+    .qfooter {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 0.75rem 1.25rem 1.5rem;
+      background: linear-gradient(transparent, rgba(13,13,20,0.97) 38%);
+      pointer-events: none;
+      display: none;
+    }
+    .qfooter.show { display: block; }
+    .qfooter .btn-c { pointer-events: all; }
+
+    .btn-c {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 0.9375rem 1rem;
+      background: #c03358;
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: background 0.2s, opacity 0.2s;
+      letter-spacing: 0.01em;
+    }
+    .btn-c:hover { background: #e0456e; }
+    .btn-c:disabled { opacity: 0.3; cursor: default; }
+
+    /* ─── ERROR SHAKE ─── */
+    @keyframes shake {
+      0%,100% { transform: translateX(0) }
+      20%      { transform: translateX(-6px) }
+      40%      { transform: translateX(6px) }
+      60%      { transform: translateX(-4px) }
+      80%      { transform: translateX(4px) }
+    }
+    .shake { animation: shake 0.35s ease; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div id="qhdr"></div>
+  <div id="qhdr-line" class="qhdr-line" style="display:none"></div>
+
+  <!-- Progress bar -->
+  <div class="qprog" id="qprog">
+    <div class="qprog-fill" id="qprog-fill"></div>
+  </div>
+
+  <!-- Main content -->
+  <div class="qmain" id="qmain"></div>
+
+  <!-- Sticky footer CTA -->
+  <div class="qfooter" id="qfooter"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════ */
+var step = 0;
+var branch = null; // 'men' | 'women'
+var answers = {};
+
+/* ═══════════════════════════════════════════════════
+   QUESTION DATA
+═══════════════════════════════════════════════════ */
+
+var SHARED = [
+  // step 1
+  {
+    id: 'q1', type: 'single',
+    text: 'I am a…',
+    opts: [
+      { e: '👩', t: 'Woman' },
+      { e: '👨', t: 'Man' },
+      { e: '🌈', t: 'Non-binary' },
+      { e: '✨', t: 'Other / prefer not to say' }
+    ]
+  },
+  // step 2 — BRANCH POINT
+  {
+    id: 'q2', type: 'single', branch: true,
+    text: "I'm most attracted to…",
+    opts: [
+      { e: '👨', t: 'Men',            v: 'men'   },
+      { e: '👩', t: 'Women',          v: 'women' },
+      { e: '💫', t: 'Both',           v: 'women' },
+      { e: '✨', t: 'Something else', v: 'women' }
+    ]
+  },
+  // step 3
+  {
+    id: 'q3', type: 'single',
+    text: 'How old are you?',
+    opts: [
+      { e: '🌱', t: '18–24' },
+      { e: '🌸', t: '25–34' },
+      { e: '🌺', t: '35–44' },
+      { e: '🌻', t: '45–54' },
+      { e: '🌹', t: '55+' }
+    ]
+  }
+];
+
+var WOMEN = [
+  // step 4
+  {
+    id: 'q4', type: 'single',
+    text: 'Imagine her leaning in close.\nWhat does her voice sound like?',
+    opts: [
+      { e: '🌑', t: 'Low and steady' },
+      { e: '🔥', t: 'Confident and warm' },
+      { e: '🌬️', t: 'Soft and breathy' },
+      { e: '🍃', t: 'Gentle and slow' },
+      { e: '✨', t: "I'll know it when I hear it" }
+    ]
+  },
+  // step 5
+  {
+    id: 'q5', type: 'single',
+    text: 'Now — who is she?',
+    opts: [
+      { e: '💄', t: 'The femme who surprises you' },
+      { e: '🔒', t: 'The butch who pins you down' },
+      { e: '🥂', t: 'The confident older woman' },
+      { e: '🎨', t: 'The soft creative type' },
+      { e: '💼', t: 'The power woman who runs the room' },
+      { e: '🔥', t: "The one who's trouble — and knows it" },
+      { e: '🌑', t: 'The dark supernatural being' },
+      { e: '🎲', t: 'Surprise me' }
+    ]
+  },
+  // step 6
+  {
+    id: 'q6', type: 'single',
+    text: 'Which of these makes your pulse quicken?',
+    opts: [
+      { e: '👀', t: 'Her eyes across a room — she already knows' },
+      { e: '📱', t: 'A late-night message: "Are you awake?"' },
+      { e: '🤫', t: 'Her whispering something that makes you go still' },
+      { e: '🖐️', t: 'Her hand on the small of your back — steering you somewhere private' },
+      { e: '⚡', t: 'The moment the tension finally breaks' },
+      { e: '🌙', t: 'A slow build — days of almost-touching' },
+      { e: '🪞', t: "Her watching you — and not pretending she isn't" },
+      { e: '🗝️', t: 'Forbidden — you both know you shouldn\'t' }
+    ]
+  },
+  // step 7
+  {
+    id: 'q7', type: 'single',
+    text: 'Where does it happen?',
+    opts: [
+      { e: '🛏️', t: 'Her bedroom — slow, unhurried, every light on' },
+      { e: '🏨', t: 'A hotel room — anonymous, no consequences' },
+      { e: '🏢', t: "The office after everyone's gone" },
+      { e: '🚗', t: 'A car at night — nowhere to go, everywhere to be' },
+      { e: '🌍', t: "A city you've never been — no one knows your name" },
+      { e: '☀️', t: 'A vacation with no plan and no rules' },
+      { e: '🌆', t: 'Somewhere public, where you absolutely shouldn\'t' },
+      { e: '🍳', t: 'Her kitchen at 2am — soft light, no rush' }
+    ]
+  },
+  // step 8
+  {
+    id: 'q8', type: 'single',
+    text: 'And when it starts — what\'s the dynamic?',
+    opts: [
+      { e: '👑', t: 'I lead' },
+      { e: '🔱', t: 'She takes complete control' },
+      { e: '🌊', t: 'We flow together — back and forth' },
+      { e: '🕊️', t: 'I want to surrender to her' },
+      { e: '🙏', t: 'I want to be worshipped' },
+      { e: '🔄', t: 'We switch — depends on the mood' }
+    ]
+  },
+  // step 9 — multi
+  {
+    id: 'q9', type: 'multi',
+    text: 'Which of these fantasies live in your head rent-free?',
+    sub: 'Select all that apply',
+    opts: [
+      { e: '🔥', t: 'Best friends who finally cross the line — years of tension snapping' },
+      { e: '💍', t: "Forbidden — she's your roommate, your ex's sister, \"we shouldn't\"" },
+      { e: '🎓', t: 'Professor, boss, someone with authority — she crosses the line first' },
+      { e: '🎭', t: 'A stranger — a bar, a party, eye contact that turns into everything' },
+      { e: '💝', t: 'Slow burn — months of almost-touching before it finally happens' },
+      { e: '👥', t: 'Threesome — two women focused on me, or joining a couple' },
+      { e: '🌑', t: 'Supernatural — vampires, witches, fae, dark creatures' },
+      { e: '👁️', t: "Being watched — or watching her when she doesn't know" },
+      { e: '🎭', t: 'Roleplay — becoming someone else makes it hotter' },
+      { e: '🙏', t: "Worship — she's devoted to every inch of me" },
+      { e: '⚡', t: 'Power exchange — she owns me, I do everything she says' },
+      { e: '🌙', t: 'The ex who still knows my body — one more night, no strings' },
+      { e: '🔮', t: "Dark desires — things I've never said out loud" },
+      { e: '✨', t: 'Surprise me — I want to discover something new' }
+    ]
+  },
+  // step 10 — interstitial
+  { id: 'inter', type: 'interstitial' },
+  // step 11 — multi
+  {
+    id: 'q10', type: 'multi',
+    text: 'What do you want to feel with each experience?',
+    sub: 'Select all that apply',
+    opts: [
+      { e: '🔥', t: "Desired — like she can't stop looking at me" },
+      { e: '🧠', t: "Powerful — like I'm the one in control" },
+      { e: '🌊', t: 'Release — stress gone, just pure pleasure' },
+      { e: '💗', t: "Intimate — like she knows my body better than I do" },
+      { e: '⚡', t: 'Reckless — like I just broke every rule I have' },
+      { e: '😌', t: 'Satisfied — drained, smiling, ready to sleep' },
+      { e: '🌀', t: "I'll know it when I feel it" }
+    ]
+  },
+  // step 12 — multi
+  {
+    id: 'q11', type: 'multi',
+    text: 'What do you think would turn you on most?',
+    sub: 'Select all that apply',
+    opts: [
+      { e: '🎧', t: "A voice in my ear, talking to ME — telling me what she'd do to me" },
+      { e: '📖', t: 'A full erotic story — characters, tension, a climax worth waiting for' },
+      { e: '🌶️', t: 'Raw dirty talk — filthy, explicit, meant to make me finish' },
+      { e: '🎭', t: "A roleplay I'm part of — I'm a character in the fantasy" },
+      { e: '🕯️', t: 'A guided session — a voice walking me through my own pleasure' },
+      { e: '🔊', t: 'Just sounds — moans, breathing, skin on skin' },
+      { e: '👥', t: 'Two (or more) people going at it while I listen in' },
+      { e: '✨', t: "I'll know it when I hear it" }
+    ]
+  },
+  // step 13 — single
+  {
+    id: 'q12', type: 'single',
+    text: "Do you want the voice to tell you what to do?\nLike ‘touch yourself… slowly’?",
+    opts: [
+      { e: '🔥', t: 'Yes — guide me through it, tell me exactly what to do' },
+      { e: '⏰', t: "Sometimes — at the right moment, when I'm close" },
+      { e: '🎧', t: 'No — I want to just listen and get lost in it' },
+      { e: '💥', t: 'Only at the end — tell me when to let go' },
+      { e: '✨', t: "I've never experienced that — I'm curious" }
+    ]
+  }
+];
+
+var MEN = [
+  // step 4
+  {
+    id: 'q4', type: 'single',
+    text: 'Imagine him leaning in close.\nWhat does his voice sound like?',
+    opts: [
+      { e: '🌑', t: 'Deep and commanding' },
+      { e: '🔥', t: 'Confident and warm' },
+      { e: '🌬️', t: 'Smooth and low' },
+      { e: '😏', t: 'Playful and teasing' },
+      { e: '✨', t: "I'll know it when I hear it" }
+    ]
+  },
+  // step 5
+  {
+    id: 'q5', type: 'single',
+    text: 'Now — who is he?',
+    opts: [
+      { e: '🧊', t: 'The quiet intense one who sees right through you' },
+      { e: '🔱', t: 'The dominant one who takes what he wants' },
+      { e: '🥂', t: 'The older experienced man who knows exactly what to do' },
+      { e: '😂', t: 'The playful one who makes you laugh then stops your breath' },
+      { e: '💼', t: 'The powerful executive type' },
+      { e: '🔥', t: "The dangerous one you know you shouldn't want" },
+      { e: '🌑', t: 'The dark supernatural being' },
+      { e: '🎲', t: 'Surprise me' }
+    ]
+  },
+  // step 6
+  {
+    id: 'q6', type: 'single',
+    text: 'Which of these makes your pulse quicken?',
+    opts: [
+      { e: '👀', t: 'Him watching you from across the room — slow, deliberate' },
+      { e: '📱', t: '"Come over." — you know exactly what it means' },
+      { e: '🤫', t: 'Him saying something low in your ear that makes you stop breathing' },
+      { e: '🖐️', t: "His hand at the back of your neck — not moving, just there" },
+      { e: '⚡', t: 'The moment the argument turns into something else entirely' },
+      { e: '🌙', t: 'A slow build — days of almost-touching before he finally moves' },
+      { e: '🪞', t: 'Him describing exactly what he wants to do to you' },
+      { e: '🗝️', t: "Forbidden — you both know this is a terrible idea" }
+    ]
+  },
+  // step 7
+  {
+    id: 'q7', type: 'single',
+    text: 'Where does it happen?',
+    opts: [
+      { e: '🛏️', t: "His bedroom — slow, unhurried, nowhere to be" },
+      { e: '🏨', t: 'A hotel room — anonymous, no consequences' },
+      { e: '🏢', t: "The office after everyone's gone" },
+      { e: '🚗', t: 'A car at night — windows fogged, no plan' },
+      { e: '🌍', t: "A city you've never been — no one knows your name" },
+      { e: '☀️', t: "A vacation that wasn't supposed to go this way" },
+      { e: '🌆', t: 'Somewhere public, where you absolutely shouldn\'t' },
+      { e: '🍳', t: 'His kitchen at 2am — low light, no rush, nowhere else to be' }
+    ]
+  },
+  // step 8
+  {
+    id: 'q8', type: 'single',
+    text: 'And when it starts — what\'s the dynamic?',
+    opts: [
+      { e: '👑', t: 'I take the lead' },
+      { e: '🔱', t: 'He takes complete control' },
+      { e: '🌊', t: 'We flow together — back and forth' },
+      { e: '🕊️', t: 'I want to surrender to him' },
+      { e: '🙏', t: 'I want him to worship me' },
+      { e: '🔄', t: 'We switch — depends on the mood' }
+    ]
+  },
+  // step 9 — multi
+  {
+    id: 'q9', type: 'multi',
+    text: 'Which of these fantasies live in your head rent-free?',
+    sub: 'Select all that apply',
+    opts: [
+      { e: '🔥', t: 'Best friends who finally cross the line — years of tension snapping' },
+      { e: '💍', t: "Forbidden — he's your roommate, your ex's brother, \"we shouldn't\"" },
+      { e: '🎓', t: 'Professor, boss, someone with authority — he crosses the line first' },
+      { e: '🎭', t: 'A stranger — a bar, a party, eye contact that turns into everything' },
+      { e: '💝', t: 'Slow burn — months of almost-touching before it finally happens' },
+      { e: '🌑', t: 'Supernatural — vampires, warlocks, fae, dark creatures' },
+      { e: '👁️', t: "Being watched — or watching him when he doesn't know" },
+      { e: '🎭', t: 'Roleplay — becoming someone else makes it hotter' },
+      { e: '🙏', t: "Worship — he's devoted to every inch of me" },
+      { e: '🔒', t: 'He takes me completely — rough, intense, no hesitation' },
+      { e: '⚡', t: 'Power exchange — I do everything he says' },
+      { e: '🌙', t: 'The ex who still knows my body — one more night, no strings' },
+      { e: '🔮', t: "Dark desires — things I've never said out loud" },
+      { e: '✨', t: 'Surprise me — I want to discover something new' }
+    ]
+  },
+  // step 10 — interstitial
+  { id: 'inter', type: 'interstitial' },
+  // step 11 — multi
+  {
+    id: 'q10', type: 'multi',
+    text: 'What do you want to feel with each experience?',
+    sub: 'Select all that apply',
+    opts: [
+      { e: '🔥', t: "Desired — like he can't stop looking at me" },
+      { e: '🧠', t: "Powerful — like I'm the one in control" },
+      { e: '🌊', t: 'Release — stress gone, just pure pleasure' },
+      { e: '💗', t: "Intimate — like he knows my body better than I do" },
+      { e: '⚡', t: 'Reckless — like I just broke every rule I have' },
+      { e: '😌', t: 'Satisfied — drained, smiling, ready to sleep' },
+      { e: '🌀', t: "I'll know it when I feel it" }
+    ]
+  },
+  // step 12 — multi
+  {
+    id: 'q11', type: 'multi',
+    text: 'What do you think would turn you on most?',
+    sub: 'Select all that apply',
+    opts: [
+      { e: '🎧', t: "A voice in my ear, talking to ME — telling me what he'd do to me" },
+      { e: '📖', t: 'A full erotic story — characters, tension, a climax worth waiting for' },
+      { e: '🌶️', t: 'Raw dirty talk — filthy, explicit, meant to make me finish' },
+      { e: '🎭', t: "A roleplay I'm part of — I'm a character in the fantasy" },
+      { e: '🕯️', t: 'A guided session — a voice walking me through my own pleasure' },
+      { e: '🔊', t: 'Just sounds — moans, breathing, skin on skin' },
+      { e: '👥', t: 'Two (or more) people going at it while I listen in' },
+      { e: '✨', t: "I'll know it when I hear it" }
+    ]
+  },
+  // step 13 — single
+  {
+    id: 'q12', type: 'single',
+    text: "Do you want the voice to tell you what to do?\nLike ‘touch yourself… slowly’?",
+    opts: [
+      { e: '🔥', t: 'Yes — guide me through it, tell me exactly what to do' },
+      { e: '⏰', t: "Sometimes — at the right moment, when I'm close" },
+      { e: '🎧', t: 'No — I want to just listen and get lost in it' },
+      { e: '💥', t: 'Only at the end — tell me when to let go' },
+      { e: '✨', t: "I've never experienced that — I'm curious" }
+    ]
+  }
+];
+
+var INTER_DATA = {
+  heading: "Here’s what 4,200+ Hushlore listeners told us",
+  stats: [
+    { num: '94%', label: 'discovered a new kind of pleasure', pct: 94 },
+    { num: '92%', label: 'felt more confident and in tune with themselves', pct: 92 },
+    { num: '83%', label: "discovered fantasies they didn’t know turned them on", pct: 83 },
+    { num: '77%', label: 'in relationships said their intimate life improved', pct: 77 }
+  ]
+};
+
+var MODALS = [
+  { q: 'Do you want storylines with emotional build-up?' },
+  { q: 'Would you like completely uncensored content?' },
+  { q: 'Want us to push your boundaries — stories outside your comfort zone?' },
+  { q: 'Are you in a relationship?' }
+];
+
+var TESTIMONIALS = [
+  { text: "I thought stories would be cheesy. First story, ten minutes in — eyes closed, headphones on, completely gone. I listen almost every night now.", author: "Claire M." },
+  { text: "After my divorce I didn’t want any of it. But the first slow-burn story I tried, I actually felt something again. Not just turned on — emotionally cracked open.", author: "Julia T." },
+  { text: "There’s this one voice — confident and warm — my body reacts before my brain catches up. I’ve explored things I’d never say out loud. No judgment.", author: "Olivia K." },
+  { text: "I always thought I was weird for wanting more. This made me feel like I’m not broken — I’m just specific. It’s the most ‘me’ thing on my phone.", author: "Charlotte R." }
+];
+
+/* ═══════════════════════════════════════════════════
+   STEP LOOKUP
+═══════════════════════════════════════════════════ */
+
+function getStep(s) {
+  if (s === 0) return { type: 'splash' };
+  if (s >= 1 && s <= 3) return SHARED[s - 1];
+  var branchArr = (branch === 'men') ? MEN : WOMEN;
+  if (s >= 4 && s <= 13) return branchArr[s - 4];
+  if (s === 14) return { type: 'loading' };
+  if (s === 15) return { type: 'email' };
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════ */
+
+function goNext() { if (step < 15) { step++; render(); } }
+function goBack() { if (step > 0) { step--; render(); } }
+
+/* ═══════════════════════════════════════════════════
+   MAIN RENDER
+═══════════════════════════════════════════════════ */
+
+function render() {
+  var data = getStep(step);
+  var hdr  = document.getElementById('qhdr');
+  var line = document.getElementById('qhdr-line');
+  var prog = document.getElementById('qprog');
+  var fill = document.getElementById('qprog-fill');
+  var main = document.getElementById('qmain');
+  var foot = document.getElementById('qfooter');
+
+  window.scrollTo(0, 0);
+
+  // Header
+  if (step === 0) {
+    hdr.innerHTML = '<div class="qhdr"><a href="/" class="qhdr-logo">Hush<span>lore</span></a></div>';
+    line.style.display = 'block';
+  } else {
+    hdr.innerHTML = '<div class="qhdr"><button class="qhdr-back" onclick="goBack()">&#8592;</button><a href="/" class="qhdr-logo">Hush<span>lore</span></a></div>';
+    line.style.display = 'block';
+  }
+
+  // Progress bar (visible for steps 1–13)
+  if (step >= 1 && step <= 13) {
+    prog.style.display = 'block';
+    fill.style.width = Math.round((step / 13) * 100) + '%';
+  } else {
+    prog.style.display = 'none';
+  }
+
+  // Render
+  switch (data.type) {
+    case 'splash':       renderSplash(main, foot); break;
+    case 'single':       renderQ(main, foot, data, false); break;
+    case 'multi':        renderQ(main, foot, data, true);  break;
+    case 'interstitial': renderInter(main, foot);  break;
+    case 'loading':      renderLoading(main, foot); break;
+    case 'email':        renderEmail(main, foot);  break;
+  }
+}
+
+/* ─── SPLASH ─── */
+function renderSplash(main, foot) {
+  main.innerHTML =
+    '<div class="splash">' +
+      '<div class="splash-eyebrow">Personalized audio romance</div>' +
+      '<h1 class="splash-h1">Create Your<br><em>Perfect Fantasy</em></h1>' +
+      '<p class="splash-p">A short quiz. A story matched to your desires. A voice that feels like it was made for you alone.</p>' +
+    '</div>';
+  foot.className = 'qfooter show';
+  foot.innerHTML = '<button class="btn-c" onclick="goNext()">Start — it takes 60 seconds</button>';
+}
+
+/* ─── QUESTION ─── */
+function renderQ(main, foot, data, multi) {
+  var saved = answers[data.id] || (multi ? [] : null);
+
+  var optsHtml = data.opts.map(function(o, i) {
+    var sel = multi
+      ? (Array.isArray(saved) && saved.indexOf(i) !== -1)
+      : (saved === i);
+    return '<div class="opt' + (sel ? ' sel' : '') + '" onclick="pick(this,' + i + ',' + (multi ? 'true' : 'false') + ')">' +
+      '<span class="opt-e">' + o.e + '</span>' +
+      '<span class="opt-t">' + o.t + '</span>' +
+      (multi ? '<span class="opt-chk">✓</span>' : '') +
+    '</div>';
+  }).join('');
+
+  var subHtml = data.sub ? '<div class="q-sub">' + data.sub + '</div>' : '';
+
+  main.innerHTML =
+    '<div class="q-text">' + data.text.replace(/\n/g, '<br>') + '</div>' +
+    subHtml +
+    '<div class="opts ' + (multi ? 'multi' : 'single') + '">' + optsHtml + '</div>';
+
+  if (multi) {
+    var hasSel = Array.isArray(saved) && saved.length > 0;
+    foot.className = 'qfooter show';
+    foot.innerHTML = '<button class="btn-c" id="cont-btn" ' + (hasSel ? '' : 'disabled') + ' onclick="contMulti()">Continue</button>';
+  } else {
+    foot.className = 'qfooter';
+    foot.innerHTML = '';
+  }
+}
+
+function pick(el, idx, multi) {
+  var data = getStep(step);
+  if (multi) {
+    var sel = answers[data.id] ? answers[data.id].slice() : [];
+    var pos = sel.indexOf(idx);
+    if (pos === -1) sel.push(idx); else sel.splice(pos, 1);
+    answers[data.id] = sel;
+    el.classList.toggle('sel');
+    var btn = document.getElementById('cont-btn');
+    if (btn) btn.disabled = (sel.length === 0);
+  } else {
+    answers[data.id] = idx;
+    if (data.branch) { branch = data.opts[idx].v; }
+    document.querySelectorAll('.opt').forEach(function(o) { o.classList.remove('sel'); });
+    el.classList.add('sel');
+    setTimeout(goNext, 200);
+  }
+}
+
+function contMulti() {
+  var data = getStep(step);
+  if (!answers[data.id] || answers[data.id].length === 0) return;
+  goNext();
+}
+
+/* ─── INTERSTITIAL ─── */
+function renderInter(main, foot) {
+  var statsHtml = INTER_DATA.stats.map(function(s) {
+    return '<div class="stat-row">' +
+      '<div class="stat-num">' + s.num + '</div>' +
+      '<div class="stat-lbl">' + s.label + '</div>' +
+      '<div class="stat-bar"><div class="stat-bar-inner" data-pct="' + s.pct + '"></div></div>' +
+    '</div>';
+  }).join('');
+
+  main.innerHTML =
+    '<div class="inter-h">' + INTER_DATA.heading + '</div>' +
+    statsHtml;
+
+  foot.className = 'qfooter show';
+  foot.innerHTML = '<button class="btn-c" onclick="goNext()">Continue</button>';
+
+  setTimeout(function() {
+    document.querySelectorAll('.stat-bar-inner').forEach(function(b) {
+      b.style.width = b.dataset.pct + '%';
+    });
+  }, 120);
+}
+
+/* ─── LOADING ─── */
+function renderLoading(main, foot) {
+  if (typeof fbq !== 'undefined') fbq('track', 'InitiateCheckout', { content_name: 'Hushlore Quiz2 Complete', currency: 'USD', value: 32.99 });
+
+  var items = [
+    'Setting up your private profile…',
+    'Matching your fantasy preferences…',
+    'Selecting voices and storylines for you…',
+    'Finishing your personalized experience…'
+  ];
+
+  var t = TESTIMONIALS[0];
+  main.innerHTML =
+    '<div class="loading-wrap">' +
+      '<h2 class="loading-h" id="ld-title">Building your <span>perfect match</span>…</h2>' +
+      '<div class="loading-items">' +
+        items.map(function(it, i) {
+          return '<div class="ld-item" id="ld-' + i + '">' +
+            '<span>' + it + '</span>' +
+            '<span class="ld-st" id="ld-st-' + i + '">0%</span>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+      '<div class="test-card" id="test-card">' +
+        '<div class="test-stars">★★★★★</div>' +
+        '<div class="test-body" id="test-body">“' + t.text + '”</div>' +
+        '<div class="test-author" id="test-auth">— ' + t.author + '</div>' +
+      '</div>' +
+    '</div>';
+
+  foot.className = 'qfooter';
+  foot.innerHTML = '';
+
+  startLoading();
+}
+
+function animLd(idx, from, to, dur, cb) {
+  var el = document.getElementById('ld-st-' + idx);
+  var item = document.getElementById('ld-' + idx);
+  if (!el) { if (cb) cb(); return; }
+  if (item) item.classList.add('active');
+  var t0 = Date.now();
+  (function tick() {
+    var p = Math.min(from + (to - from) * ((Date.now() - t0) / dur), to);
+    el.textContent = Math.round(p) + '%';
+    if (p < to) requestAnimationFrame(tick);
+    else { el.textContent = to + '%'; if (cb) cb(); }
+  })();
+}
+
+function doneLd(idx) {
+  var el = document.getElementById('ld-st-' + idx);
+  var item = document.getElementById('ld-' + idx);
+  if (el) el.innerHTML = '<span style="color:#c03358">✓</span>';
+  if (item) { item.classList.remove('active'); item.classList.add('done'); }
+}
+
+function swapTest(idx) {
+  var t = TESTIMONIALS[idx % TESTIMONIALS.length];
+  var b = document.getElementById('test-body');
+  var a = document.getElementById('test-auth');
+  if (b) b.textContent = '“' + t.text + '”';
+  if (a) a.textContent = '— ' + t.author;
+}
+
+function showModal(idx, cb) {
+  var m = MODALS[idx];
+  var ov = document.createElement('div');
+  ov.className = 'modal-ov';
+  ov.innerHTML =
+    '<div class="modal-box">' +
+      '<div class="modal-tag">To move forward, specify</div>' +
+      '<div class="modal-q">' + m.q + '</div>' +
+      '<div class="modal-btns">' +
+        '<button class="mbtn" onclick="dismissModal(this)">No</button>' +
+        '<button class="mbtn yes" onclick="dismissModal(this)">Yes</button>' +
+      '</div>' +
+    '</div>';
+  ov._cb = cb;
+  document.body.appendChild(ov);
+}
+
+function dismissModal(btn) {
+  var ov = btn.closest('.modal-ov');
+  var cb = ov._cb;
+  ov.remove();
+  if (cb) cb();
+}
+
+function startLoading() {
+  animLd(0, 0, 49, 1200, function() {
+    showModal(0, function() {
+      animLd(0, 49, 100, 700, function() {
+        doneLd(0); swapTest(1);
+        animLd(1, 0, 49, 1000, function() {
+          showModal(1, function() {
+            animLd(1, 49, 100, 700, function() {
+              doneLd(1); swapTest(2);
+              animLd(2, 0, 49, 1000, function() {
+                showModal(2, function() {
+                  animLd(2, 49, 100, 700, function() {
+                    doneLd(2); swapTest(3);
+                    animLd(3, 0, 49, 1000, function() {
+                      showModal(3, function() {
+                        animLd(3, 49, 100, 700, function() {
+                          doneLd(3);
+                          loadingDone();
+                        });
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+}
+
+function loadingDone() {
+  var title = document.getElementById('ld-title');
+  if (title) title.innerHTML = 'Your stories <span>are waiting</span>';
+  var foot = document.getElementById('qfooter');
+  foot.className = 'qfooter show';
+  foot.innerHTML = '<button class="btn-c" onclick="goNext()">Continue</button>';
+}
+
+/* ─── EMAIL ─── */
+function renderEmail(main, foot) {
+  main.innerHTML =
+    '<div class="email-wrap">' +
+      '<h2 class="email-h">Your stories are waiting</h2>' +
+      '<p class="email-sub">Enter your email to unlock them.</p>' +
+      '<div class="email-field">' +
+        '<svg viewBox="0 0 20 16" xmlns="http://www.w3.org/2000/svg"><path d="M18 0H2C.9 0 0 .9 0 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V2c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V2l8 5 8-5v2z"/></svg>' +
+        '<input class="email-inp" type="email" id="email-inp" placeholder="your@email.com" autocomplete="email" />' +
+      '</div>' +
+      '<p class="email-privacy">We’ll never share your email. Your fantasies stay between us.</p>' +
+    '</div>';
+
+  foot.className = 'qfooter show';
+  foot.innerHTML = '<button class="btn-c" onclick="submitEmail()">Unlock My Stories</button>';
+
+  setTimeout(function() {
+    var inp = document.getElementById('email-inp');
+    if (inp) inp.addEventListener('keypress', function(e) { if (e.key === 'Enter') submitEmail(); });
+  }, 100);
+}
+
+function submitEmail() {
+  var inp = document.getElementById('email-inp');
+  if (!inp) return;
+  var email = inp.value.trim();
+  if (!email || email.indexOf('@') === -1 || email.indexOf('.') === -1) {
+    inp.classList.add('shake');
+    inp.style.borderColor = '#c03358';
+    inp.focus();
+    setTimeout(function() { inp.classList.remove('shake'); }, 400);
+    return;
+  }
+
+  // FB event
+  if (typeof fbq !== 'undefined') fbq('track', 'Lead', { content_name: 'Hushlore Quiz2 Email', currency: 'USD', value: 32.99 });
+
+  // MailerLite
+  fetch('https://connect.mailerlite.com/api/subscribers', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI0IiwianRpIjoiZTk5YzJmMWFiYWU4ZjAyOTAzYWMzZmNiNTY1OGYwMmNhOTc0MWQ1MGE1MWE1ODI4OGY3MDQ1YWQ3MDM0ZDJlYjgxODg5ODdmODk2NmE1OWIiLCJpYXQiOjE3NzkwNDA5NjUuNjYwNTcsIm5iZiI6MTc3OTA0MDk2NS42NjA1NzUsImV4cCI6NDkzNDcxNDU2NS42NTA5NDEsInN1YiI6IjIzNzQ2MzMiLCJzY29wZXMiOltdfQ.Z31pT73HXComt0iGUSdlU0JzHhGMzjZgpSaMT2jB7T1-syOIglDlraBe-NlhLVNFnMiywEekwvOBlY6bEMzOQqTOyck7KOrJ4D6OpvBTPJMWFtywF0rEjeJqEzothGvV0RZ5JvD35Qqz3H3Am3lZLYhvfhtj9Ob3CPuKHtGyzaBRb0o7nJa90AP7-SE-WCklgQKqU_mBlpzY3BiEEhcxllDuuQfWrC4AekOV_N24gSbxiZXGcT2Hk4sb_yIMtP9oJ2hyuO3bqbtpaX6SET9le49Y4ClHNbVjGU66FI92RBWjZLpgmgZZ5iDzJnBlAt2ZBmDGUxeUUjO9KjswvXqadLl6SOeFZm63IWjQFiXqlaubEorCQCdBZpZoi4izXgaGGVPn3m_izuYgW_IOcyM7zVzPULSgiXROoZsXchOQ_Z_oOvXE7V598ExMGzF5TgCcKZrpTvUHbdnoZ_4Bv-yJNc_sJAksKBVXVDXfXzwUc544PitduBTybR-ZD78__jocr-1fglddmgEEcJNY7OS7zeDwFVrx2ms2EaXJuEjnjArPhyr9eYVQ_LRhJMazGwSAiZVeJs9DiLOtfpoy3QUhH91P6M6OQDW2GIvcMLNtN8TOgbC2ilPBrWdjpuq_leUh5xu6gZXvTUryDo_4YchDjjmLft-QBytvy1ucOfDSK3Y'
+    },
+    body: JSON.stringify({
+      email: email,
+      groups: ['187738021652595766'],
+      fields: { quiz_source: 'quiz2', branch: branch || 'women' }
+    })
+  }).catch(function() {});
+
+  // Save + redirect
+  try {
+    localStorage.setItem('hl_quiz2_branch', branch || 'women');
+    localStorage.setItem('hl_email', email);
+  } catch(e) {}
+
+  window.location.href = 'result.html?match=your-match&src=quiz2';
+}
+
+/* ═══════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════ */
+render();
+</script>
+
+</body>
+</html>
