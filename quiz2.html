@@ -1201,6 +1201,10 @@ function submitEmail() {
     return;
   }
   if (typeof fbq !== 'undefined') fbq('track', 'Lead', { content_name: 'Hushlore Quiz2 Email', currency: 'USD', value: 32.99 });
+  try {
+    localStorage.setItem('hl_quiz2_branch', branch || 'women');
+    localStorage.setItem('hl_email', email);
+  } catch(e) {}
   fetch('https://connect.mailerlite.com/api/subscribers', {
     method: 'POST',
     headers: {
@@ -1208,12 +1212,11 @@ function submitEmail() {
       'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI0IiwianRpIjoiZTk5YzJmMWFiYWU4ZjAyOTAzYWMzZmNiNTY1OGYwMmNhOTc0MWQ1MGE1MWE1ODI4OGY3MDQ1YWQ3MDM0ZDJlYjgxODg5ODdmODk2NmE1OWIiLCJpYXQiOjE3NzkwNDA5NjUuNjYwNTcsIm5iZiI6MTc3OTA0MDk2NS42NjA1NzUsImV4cCI6NDkzNDcxNDU2NS42NTA5NDEsInN1YiI6IjIzNzQ2MzMiLCJzY29wZXMiOltdfQ.Z31pT73HXComt0iGUSdlU0JzHhGMzjZgpSaMT2jB7T1-syOIglDlraBe-NlhLVNFnMiywEekwvOBlY6bEMzOQqTOyck7KOrJ4D6OpvBTPJMWFtywF0rEjeJqEzothGvV0RZ5JvD35Qqz3H3Am3lZLYhvfhtj9Ob3CPuKHtGyzaBRb0o7nJa90AP7-SE-WCklgQKqU_mBlpzY3BiEEhcxllDuuQfWrC4AekOV_N24gSbxiZXGcT2Hk4sb_yIMtP9oJ2hyuO3bqbtpaX6SET9le49Y4ClHNbVjGU66FI92RBWjZLpgmgZZ5iDzJnBlAt2ZBmDGUxeUUjO9KjswvXqadLl6SOeFZm63IWjQFiXqlaubEorCQCdBZpZoi4izXgaGGVPn3m_izuYgW_IOcyM7zVzPULSgiXROoZsXchOQ_Z_oOvXE7V598ExMGzF5TgCcKZrpTvUHbdnoZ_4Bv-yJNc_sJAksKBVXVDXfXzwUc544PitduBTybR-ZD78__jocr-1fglddmgEEcJNY7OS7zeDwFVrx2ms2EaXJuEjnjArPhyr9eYVQ_LRhJMazGwSAiZVeJs9DiLOtfpoy3QUhH91P6M6OQDW2GIvcMLNtN8TOgbC2ilPBrWdjpuq_leUh5xu6gZXvTUryDo_4YchDjjmLft-QBytvy1ucOfDSK3Y'
     },
     body: JSON.stringify({ email: email, groups: ['187738021652595766'], fields: { quiz_source: 'quiz2', branch: branch || 'women' } })
-  }).catch(function() {});
-  try {
-    localStorage.setItem('hl_quiz2_branch', branch || 'women');
-    localStorage.setItem('hl_email', email);
-  } catch(e) {}
-  window.location.href = 'result.html?match=your-match&src=quiz2';
+  }).then(function() {
+    window.location.href = 'result.html?match=your-match&src=quiz2';
+  }).catch(function() {
+    window.location.href = 'result.html?match=your-match&src=quiz2';
+  });
 }
 
 /* ════════════════════════════════════════
