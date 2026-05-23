@@ -341,6 +341,19 @@
     .email-sub { font-size: 0.875rem; color: rgba(255,255,255,0.45); margin-bottom: 1.75rem; }
     .email-field { position: relative; max-width: 400px; margin: 0 auto 0.5rem; }
     .email-field svg { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; fill: rgba(255,255,255,0.3); pointer-events: none; }
+    /* Award badges */
+    .award-badges { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; margin-top: 2rem; }
+    .award-badge-main { display: flex; align-items: center; gap: 0.5rem; }
+    .award-badge-row { display: flex; align-items: center; gap: 1.25rem; }
+    .award-badge { display: flex; align-items: center; gap: 0.4rem; }
+    .award-laurel { color: #c9933a; font-size: 1.4rem; line-height: 1; }
+    .award-laurel-sm { color: #c9933a; font-size: 1rem; line-height: 1; }
+    .award-text { text-align: center; }
+    .award-text-label { font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; color: #c9933a; opacity: 0.8; display: block; }
+    .award-text-title { font-size: 1.1rem; font-weight: 700; color: #fff; line-height: 1.15; display: block; }
+    .award-text-sm { text-align: center; }
+    .award-text-sm .award-text-label { font-size: 0.5rem; }
+    .award-text-sm .award-text-title { font-size: 0.8rem; }
     .email-inp {
       width: 100%;
       padding: 0.9375rem 1rem 0.9375rem 2.75rem;
@@ -814,9 +827,9 @@ var INTER_STATS = {
 };
 
 var MODALS = [
-  { q: 'Do you want storylines with emotional build-up?' },
-  { q: 'Would you like completely uncensored content?' },
-  { q: 'Want us to push your boundaries — stories outside your comfort zone?' },
+  { q: 'Do you prefer stories where you feel deeply desired and chosen?' },
+  { q: 'Are you curious about exploring different characters or fantasies from time to time?' },
+  { q: 'Would you like completely uncensored, unfiltered content?' },
   { q: 'Are you in a relationship?' }
 ];
 
@@ -1136,12 +1149,40 @@ function renderEmail(main, foot) {
       '<p class="email-sub">Enter your email to unlock them.</p>' +
       '<div class="email-field">' +
         '<svg viewBox="0 0 20 16" xmlns="http://www.w3.org/2000/svg"><path d="M18 0H2C.9 0 0 .9 0 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V2c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V2l8 5 8-5v2z"/></svg>' +
-        '<input class="email-inp" type="email" id="email-inp" placeholder="your@email.com" autocomplete="email" />' +
+        '<input class="email-inp" type="email" id="email-inp" placeholder="Email" autocomplete="email" />' +
       '</div>' +
       "<p class=\"email-privacy\">We'll never share your email. Your fantasies stay between us.</p>" +
+      '<div class="award-badges">' +
+        '<div class="award-badge-main">' +
+          '<span class="award-laurel">❧</span>' +
+          '<div class="award-text">' +
+            '<span class="award-text-label">App Store</span>' +
+            '<span class="award-text-title">Editors\'<br>Choice</span>' +
+          '</div>' +
+          '<span class="award-laurel" style="transform:scaleX(-1);display:inline-block;">❧</span>' +
+        '</div>' +
+        '<div class="award-badge-row">' +
+          '<div class="award-badge">' +
+            '<span class="award-laurel-sm">❧</span>' +
+            '<div class="award-text-sm">' +
+              '<span class="award-text-label">App Store</span>' +
+              '<span class="award-text-title" style="font-size:0.8rem;">App of<br>The Day</span>' +
+            '</div>' +
+            '<span class="award-laurel-sm" style="transform:scaleX(-1);display:inline-block;">❧</span>' +
+          '</div>' +
+          '<div class="award-badge">' +
+            '<span class="award-laurel-sm">❧</span>' +
+            '<div class="award-text-sm">' +
+              '<span class="award-text-label">EdTech Award</span>' +
+              '<span class="award-text-title" style="font-size:0.8rem;">Best Mobile<br>Application</span>' +
+            '</div>' +
+            '<span class="award-laurel-sm" style="transform:scaleX(-1);display:inline-block;">❧</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
     '</div>';
   foot.className = 'qfooter show';
-  foot.innerHTML = '<button class="btn-c" onclick="submitEmail()">Unlock My Stories</button>';
+  foot.innerHTML = '<button class="btn-c" onclick="submitEmail()">Continue</button>';
   setTimeout(function() {
     var inp = document.getElementById('email-inp');
     if (inp) inp.addEventListener('keypress', function(e) { if (e.key === 'Enter') submitEmail(); });
