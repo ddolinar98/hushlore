@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — Your match is ready</title>
+  <meta name="description" content="Your personalized audio romance match + membership options." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Facebook Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1813144372979449');
+  fbq('track', 'PageView');
+  fbq('track', 'InitiateCheckout', { currency: 'USD', value: 32.99 });
+  </script>
+  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1813144372979449&ev=PageView&noscript=1"/></noscript>
+</head>
+<body>
+
+  <!--
+    LIMITED OFFER countdown bar.
+    Persistent via localStorage so it doesn't reset on every page load
+    (resetting countdowns are prohibited under EU UCPD Art. 6).
+    Default duration: 10 minutes.
+  -->
+  <div class="offer-countdown" id="countdownBar">
+    <span class="offer-countdown-text">Limited offer!</span>
+    <span class="offer-countdown-time" id="countdownTime">10:00</span>
+    <a href="#pricing" class="offer-countdown-cta">Start now</a>
+  </div>
+
+  <main>
+
+    <!-- Big brand mark (replaces header + match summary) -->
+    <section class="brand-mark">
+      <h1 class="brand-mark-name">Hush<span class="accent">lore</span></h1>
+      <span class="brand-mark-tagline">Audio Romance</span>
+    </section>
+
+    <!-- Offer hero + story collage -->
+    <section class="offer-hero">
+      <h1>Experience pleasure<br /><span class="italic">like never before.</span></h1>
+
+      <div class="story-collage" aria-hidden="true">
+        <div class="story-collage-row">
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1487215078519-e21cc028cb29?w=300&q=80&auto=format" alt=""><span class="story-card-label">Slow Devotion</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=300&q=80&auto=format" alt=""><span class="story-card-label">Forbidden Whispers</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&q=80&auto=format" alt=""><span class="story-card-label">Commanding Embrace</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=300&q=80&auto=format" alt=""><span class="story-card-label">Best Friends Untold</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1518972559570-7cc1309f3229?w=300&q=80&auto=format" alt=""><span class="story-card-label">Enemy's Confession</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&q=80&auto=format" alt=""><span class="story-card-label">Midnight Surrender</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=300&q=80&auto=format" alt=""><span class="story-card-label">Velvet Hush</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=300&q=80&auto=format" alt=""><span class="story-card-label">After Hours</span></div>
+        </div>
+        <div class="story-collage-row">
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1490376840453-5f616fbebe5b?w=300&q=80&auto=format" alt=""><span class="story-card-label">The Long Drive</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1518972559570-7cc1309f3229?w=300&q=80&auto=format" alt=""><span class="story-card-label">Held</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1487215078519-e21cc028cb29?w=300&q=80&auto=format" alt=""><span class="story-card-label">Embers</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=300&q=80&auto=format" alt=""><span class="story-card-label">First Light</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&q=80&auto=format" alt=""><span class="story-card-label">Slow Pull</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=300&q=80&auto=format" alt=""><span class="story-card-label">Late Night Radio</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&q=80&auto=format" alt=""><span class="story-card-label">Surrender</span></div>
+          <div class="story-card"><img src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=300&q=80&auto=format" alt=""><span class="story-card-label">The Whisper</span></div>
+        </div>
+      </div>
+
+      <p class="offer-hero-sub">
+        10,000+ sensual audio stories to spark your desire and deepen your pleasure.
+      </p>
+      <p style="font-size: 0.8rem; color: var(--muted); margin-top: 1rem; opacity: 0.6;">
+        <!-- Replace with real number once you have a real catalogue -->
+      </p>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing-section" id="pricing">
+      <h2>Choose your <span class="italic">membership</span></h2>
+
+      <!--
+        PLACEHOLDER pricing. Strikethrough "was" prices must be REAL prices
+        you've actually charged before, or it's a fictitious price reduction
+        (prohibited under EU UCPD and FTC §5). For beta, consider framing
+        as "Founding member price" without the strikethrough.
+      -->
+      <div class="pricing-tier" data-tier="1m" data-price="21.00" data-link="https://buy.stripe.com/14AfZh9l69lZebl0jCfAc00">
+        <div class="pricing-radio"></div>
+        <div class="pricing-tier-mid">
+          <div class="pricing-tier-title">1 - Month Membership</div>
+          <div class="pricing-tier-prices">
+            <span class="pricing-tier-was">$39.99</span>
+            <span class="pricing-tier-now">$21.00</span>
+          </div>
+        </div>
+        <div class="pricing-tier-right">
+          <div class="pricing-tier-perday">
+            <span class="pricing-tier-perday-was">$1.67</span>
+            <span class="pricing-tier-perday-now">$0.67</span>
+          </div>
+          <div class="pricing-tier-perday-label">per day</div>
+        </div>
+      </div>
+
+      <div class="pricing-tier popular selected" data-tier="3m" data-price="32.99" data-link="https://buy.stripe.com/9B6bJ140M69N1ozeasfAc01">
+        <div class="pricing-radio"></div>
+        <div class="pricing-tier-mid">
+          <div class="pricing-tier-title">3 - Month Membership</div>
+          <div class="pricing-tier-prices">
+            <span class="pricing-tier-was">$74.99</span>
+            <span class="pricing-tier-now">$32.99</span>
+          </div>
+        </div>
+        <div class="pricing-tier-right">
+          <div class="pricing-tier-perday">
+            <span class="pricing-tier-perday-was">$0.89</span>
+            <span class="pricing-tier-perday-now">$0.36</span>
+          </div>
+          <div class="pricing-tier-perday-label">per day</div>
+        </div>
+      </div>
+
+      <div class="pricing-tier" data-tier="6m" data-price="49.99" data-link="https://buy.stripe.com/4gM9AT1SE1Tx8R1aYgfAc02">
+        <div class="pricing-radio"></div>
+        <div class="pricing-tier-mid">
+          <div class="pricing-tier-title">6 - Month Membership</div>
+          <div class="pricing-tier-prices">
+            <span class="pricing-tier-was">$119.99</span>
+            <span class="pricing-tier-now">$49.99</span>
+          </div>
+        </div>
+        <div class="pricing-tier-right">
+          <div class="pricing-tier-perday">
+            <span class="pricing-tier-perday-was">$0.67</span>
+            <span class="pricing-tier-perday-now">$0.27</span>
+          </div>
+          <div class="pricing-tier-perday-label">per day</div>
+        </div>
+      </div>
+
+      <a href="https://buy.stripe.com/9B6bJ140M69N1ozeasfAc01"
+         id="continueBtn"
+         class="continue-cta">Continue</a>
+
+      <div class="tc-row">
+        <input type="checkbox" id="tcCheck" />
+        <label for="tcCheck">I agree to the <a href="terms.html" style="color: var(--gold);">T&amp;Cs</a> and <a href="privacy.html" style="color: var(--gold);">Privacy Policy</a></label>
+      </div>
+
+      <p class="auto-renew-text">
+        One-time payment. No subscription, no auto-renewal.
+        30-day refund guarantee — no questions asked.
+      </p>
+    </section>
+
+    <!-- Trust badges -->
+    <section class="trust-section">
+      <div class="trust-row">
+        <span class="shield">✓</span>
+        <span>Privacy in bank statement</span>
+      </div>
+      <div class="trust-row">
+        <span class="shield">✓</span>
+        <span>Guaranteed safe checkout</span>
+      </div>
+
+      <!--
+        HONEST payment badges only. Removed McAfee/VeriSign/Norton from
+        the reference design — those require actual paid certification.
+      -->
+      <div class="payment-logos">
+        <span class="payment-logo">Visa</span>
+        <span class="payment-logo">Mastercard</span>
+        <span class="payment-logo dark">Stripe</span>
+        <span class="payment-logo paypal">PayPal</span>
+        <span class="payment-logo">Amex</span>
+      </div>
+    </section>
+
+    <!-- What you will get -->
+    <section class="features-section">
+      <h2>What you <span class="italic">will get</span></h2>
+      <!--
+        Copy softened to stay clear of Stripe TOS §6.6
+        (sexually-explicit material). Original Whisper-style copy was high risk.
+      -->
+      <ul class="features-list">
+        <li><span class="emoji">🎧</span>Immersive audio experiences</li>
+        <li><span class="emoji">💡</span>Stories tailored to your taste</li>
+        <li><span class="emoji">🗣</span>Real, expressive voice actors</li>
+        <li><span class="emoji">🌙</span>Intimate, unfiltered storytelling</li>
+        <li><span class="emoji">📱</span>Listen anytime, anywhere you are</li>
+        <li><span class="emoji">🕯️</span>A private space that's just yours</li>
+        <li><span class="emoji">🧠</span>More than escape — real connection</li>
+        <li><span class="emoji">🔥</span>Explore your taste, on your terms</li>
+        <li><span class="emoji">🔒</span>No judgment, no expectations</li>
+        <li><span class="emoji">✨</span>Feel fully present, fully you</li>
+      </ul>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials-section">
+      <h2>Why people love the <span class="italic">Hushlore</span> stories</h2>
+
+      <!--
+        PLACEHOLDER testimonials. FTC 16 CFR §255 prohibits fabricated
+        endorsements. Replace these with REAL listener quotes (post-purchase
+        email survey) before going live publicly.
+      -->
+      <div class="testimonial-cards">
+        <div class="testimonial-cards-card">
+          <div class="testimonial-cards-stars">★★★★★</div>
+          <p class="testimonial-cards-text">
+            I was dealing with loneliness after a breakup, and honestly didn't expect much.
+            But these stories helped me reconnect with myself, lowered my guard, and made
+            pleasure feel natural again. It's subtle, intimate, and gave me back a kind of
+            confidence I didn't know I'd lost.
+          </p>
+          <p class="testimonial-cards-author">James, 39</p>
+        </div>
+
+        <div class="testimonial-cards-card">
+          <div class="testimonial-cards-stars">★★★★★</div>
+          <p class="testimonial-cards-text">
+            There are things I'd never try in real life, but hearing them played out like this?
+            It unlocked something. These stories let me explore my fantasies without guilt —
+            and it's a whole different kind of pleasure I didn't know I needed.
+          </p>
+          <p class="testimonial-cards-author">Matt, 32</p>
+        </div>
+
+        <div class="testimonial-cards-card">
+          <div class="testimonial-cards-stars">★★★★★</div>
+          <p class="testimonial-cards-text">
+            Work stress was wrecking my evenings. I started listening before bed and it
+            instantly helped me settle — calmer, more present, easier to fall asleep.
+            It's become a ritual I actually look forward to.
+          </p>
+          <p class="testimonial-cards-author">Liam, 44</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq-section">
+      <h2>Your questions <span class="italic">answered</span></h2>
+
+      <details class="faq-item">
+        <summary>What is Hushlore and how does it work?</summary>
+        <div class="faq-item-body">
+          Hushlore is a personalized audio romance platform. You take a 60-second quiz, we match you with the voice, mood, and story style that fits you, and you listen anytime — on any device. No screens, no scrolling, just immersive audio designed to pull you in from the first word.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Can I personalize my experience?</summary>
+        <div class="faq-item-body">
+          Yes — that's the whole point. Every story you're shown is matched to your quiz answers (mood, voice preference, heat level, tropes). You can retake the quiz anytime, and the more you listen, the better your recommendations get.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Is Hushlore only about sexual content?</summary>
+        <div class="faq-item-body">
+          No. Some matches are slow, tender, almost devotional — quiet, intimate, comforting. Others are charged and intense. You pick the heat level. Plenty of listeners use Hushlore purely for the wind-down before sleep.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Can I listen anytime?</summary>
+        <div class="faq-item-body">
+          Yes — your library is yours 24/7, on phone, laptop, headphones, anywhere. Stories range from 10 minutes to 40+ minutes, so you can fit a session into any moment.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Are my preferences and data safe?</summary>
+        <div class="faq-item-body">
+          Your data is private by design. Your bank statement shows a neutral descriptor (no story or genre names). We never share or sell your information. You can delete your account and data anytime.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Is Hushlore for singles only?</summary>
+        <div class="faq-item-body">
+          Not at all. Listeners use Hushlore solo, in relationships, partnered, single — there's no judgment about how or when. Some people use it alone as a self-care ritual; others share matches with a partner.
+        </div>
+      </details>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="start-now-section">
+      <a href="#pricing" class="continue-cta">Start now</a>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p>&copy; 2026 Hushlore. Listen with intention.</p>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+        <a href="mailto:hello@hushlore.com">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    /* ====================================
+       Match personalization
+       ==================================== */
+    const outcomes = {
+      'slow-devotion': {
+        title: 'Slow Devotion',
+        descriptor: 'Tender · Adoring · Held',
+        lead: 'You crave being cherished. Soft voices, long looks, the ache of being truly seen.'
+      },
+      'forbidden-whispers': {
+        title: 'Forbidden Whispers',
+        descriptor: 'Secret · Charged · Inevitable',
+        lead: "You're drawn to what shouldn't happen. Closed doors. Glances that linger one beat too long."
+      },
+      'commanding-embrace': {
+        title: 'Commanding Embrace',
+        descriptor: 'Dominant · Possessive · Sure',
+        lead: 'You want a voice that doesn\'t ask twice. "Mine." The word lands and you feel it everywhere.'
+      },
+      'best-friends-untold': {
+        title: 'Best Friends Untold',
+        descriptor: 'Tender · Playful · Inevitable',
+        lead: 'Years of restraint. One night that changes everything. Soft, playful — then breathtaking.'
+      },
+      'enemys-confession': {
+        title: "Enemy's Confession",
+        descriptor: 'Charged · Tense · Honest',
+        lead: 'Every argument was a touch in disguise. The moment the mask drops, you stop breathing.'
+      },
+      'midnight-surrender': {
+        title: 'Midnight Surrender',
+        descriptor: 'Pure · Indulgent · Yours',
+        lead: 'No story. Just sensation. A voice in the dark, attending to nothing but you.'
+      }
+    };
+
+    function getOutcome() {
+      const p = new URLSearchParams(window.location.search);
+      const m = p.get('match');
+      if (m && outcomes[m]) return m;
+      try {
+        const s = localStorage.getItem('hushlore_outcome');
+        if (s && outcomes[s]) return s;
+      } catch (_) {}
+      return 'slow-devotion';
+    }
+
+    // Match data is preserved in localStorage for post-purchase use,
+    // but no longer rendered on this page (replaced by big brand mark).
+    const key = getOutcome();
+    try { localStorage.setItem('hushlore_outcome', key); } catch (_) {}
+
+    /* ====================================
+       Pricing tier selection
+       ==================================== */
+    const continueBtn = document.getElementById('continueBtn');
+
+    document.querySelectorAll('.pricing-tier').forEach((tier) => {
+      tier.addEventListener('click', () => {
+        document.querySelectorAll('.pricing-tier').forEach(t => t.classList.remove('selected'));
+        tier.classList.add('selected');
+        continueBtn.href = tier.dataset.link;
+      });
+    });
+
+    /* ====================================
+       Persistent countdown (localStorage-backed)
+       Does NOT reset on reload — to stay within EU UCPD compliance,
+       a "limited offer" must be genuinely time-limited per user.
+       ==================================== */
+    (function () {
+      const DURATION_SEC = 10 * 60; // 10 minutes
+      const KEY = 'hushlore_offer_started';
+      let startTime = parseInt(localStorage.getItem(KEY), 10);
+      if (!startTime || isNaN(startTime)) {
+        startTime = Date.now();
+        localStorage.setItem(KEY, String(startTime));
+      }
+      const el = document.getElementById('countdownTime');
+      function tick() {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const remaining = Math.max(0, DURATION_SEC - elapsed);
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        el.textContent =
+          String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        if (remaining > 0) setTimeout(tick, 1000);
+      }
+      tick();
+    })();
+
+    /* ====================================
+       Continue → checkout (gated by T&Cs checkbox)
+       ==================================== */
+    document.getElementById('continueBtn').addEventListener('click', (e) => {
+      const tc = document.getElementById('tcCheck');
+      if (!tc.checked) {
+        e.preventDefault();
+        tc.focus();
+        tc.closest('.tc-row').style.color = '#ff8a7a';
+        return false;
+      }
+      // InitiateCheckout already fired on page load
+    });
+  </script>
+
+</body>
+</html>

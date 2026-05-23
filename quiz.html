@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — Find your story</title>
+  <meta name="description" content="Take the 60-second quiz to discover your perfect audio romance match." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Facebook Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1813144372979449');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1813144372979449&ev=PageView&noscript=1"/></noscript>
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">Hush<span>lore</span></a>
+    </div>
+  </header>
+
+  <main class="quiz-container">
+
+    <!-- Progress bar -->
+    <div class="quiz-progress">
+      <div class="quiz-progress-bar">
+        <div class="quiz-progress-fill" id="progressFill"></div>
+      </div>
+      <div class="quiz-progress-text" id="progressText">Step 1 of 16</div>
+    </div>
+
+    <!-- ===== Q1 — Gender ===== -->
+    <div class="quiz-question active" data-question="1" data-type="single">
+      <h2>I identify as <span class="italic">...</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="woman">
+          <span class="option-label">Woman</span>
+        </button>
+        <button class="quiz-option" data-answer="man">
+          <span class="option-label">Man</span>
+        </button>
+        <button class="quiz-option" data-answer="nonbinary">
+          <span class="option-label">Non-binary</span>
+        </button>
+        <button class="quiz-option" data-answer="other-gender">
+          <span class="option-label">Prefer not to say</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== Q2 — Interest ===== -->
+    <div class="quiz-question" data-question="2" data-type="single">
+      <h2>I'm attracted to <span class="italic">...</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="men">
+          <span class="option-label">Men</span>
+        </button>
+        <button class="quiz-option" data-answer="women">
+          <span class="option-label">Women</span>
+        </button>
+        <button class="quiz-option" data-answer="both">
+          <span class="option-label">Both</span>
+        </button>
+        <button class="quiz-option" data-answer="other-interest">
+          <span class="option-label">Other</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== Q3 — Atmosphere ===== -->
+    <div class="quiz-question" data-question="3" data-type="single">
+      <h2>Which atmosphere <span class="italic">speaks to you?</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="cozy">
+          <span class="option-label">Cozy & intimate</span>
+          <span class="option-hint">Warmth. Safety. Nowhere else to be.</span>
+        </button>
+        <button class="quiz-option" data-answer="passionate">
+          <span class="option-label">Passionate & intense</span>
+          <span class="option-hint">Heat. Urgency. Can't stop.</span>
+        </button>
+        <button class="quiz-option" data-answer="dreamy">
+          <span class="option-label">Soft & dreamy</span>
+          <span class="option-hint">Slow mornings. Whispered names.</span>
+        </button>
+        <button class="quiz-option" data-answer="wild">
+          <span class="option-label">Wild & adventurous</span>
+          <span class="option-hint">Unpredictable. Something to chase.</span>
+        </button>
+        <button class="quiz-option" data-answer="mysterious">
+          <span class="option-label">Dark & mysterious</span>
+          <span class="option-hint">Secrets. Tension. The unknown.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== Q4 — Turn-ons ===== -->
+    <div class="quiz-question" data-question="4" data-type="single">
+      <h2>What pulls you in <span class="italic">most?</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="slowbuildup">
+          <span class="option-label">Slow buildup</span>
+          <span class="option-hint">Make me wait for it.</span>
+        </button>
+        <button class="quiz-option" data-answer="dominance">
+          <span class="option-label">Dominance & control</span>
+          <span class="option-hint">A voice that doesn't ask twice.</span>
+        </button>
+        <button class="quiz-option" data-answer="vulnerability">
+          <span class="option-label">Raw vulnerability</span>
+          <span class="option-hint">Someone who breaks open.</span>
+        </button>
+        <button class="quiz-option" data-answer="forbidden">
+          <span class="option-label">Forbidden desire</span>
+          <span class="option-hint">The door that shouldn't open.</span>
+        </button>
+        <button class="quiz-option" data-answer="tender">
+          <span class="option-label">Tender devotion</span>
+          <span class="option-hint">Being cherished. Held. Adored.</span>
+        </button>
+        <button class="quiz-option" data-answer="whispering">
+          <span class="option-label">Whispers in the dark</span>
+          <span class="option-hint">Close. Quiet. Just for you.</span>
+        </button>
+        <button class="quiz-option" data-answer="rough">
+          <span class="option-label">Rough & unfiltered</span>
+          <span class="option-hint">No holding back.</span>
+        </button>
+        <button class="quiz-option" data-answer="emotional">
+          <span class="option-label">Deep emotional pull</span>
+          <span class="option-hint">Feeling it in your chest.</span>
+        </button>
+        <button class="quiz-option" data-answer="roleplay">
+          <span class="option-label">Roleplay & fantasy</span>
+          <span class="option-hint">Lose yourself in a character.</span>
+        </button>
+        <button class="quiz-option" data-answer="friends-tension">
+          <span class="option-label">Friends hiding feelings</span>
+          <span class="option-hint">Years of almost. One night that breaks.</span>
+        </button>
+        <button class="quiz-option" data-answer="enemies-desire">
+          <span class="option-label">Enemies forced together</span>
+          <span class="option-hint">Every argument was a touch in disguise.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== Q5 — Preference ===== -->
+    <div class="quiz-question" data-question="5" data-type="single">
+      <h2>When it comes to stories, you prefer <span class="italic">...</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="sweet-romance">
+          <span class="option-label">Sweet romance</span>
+          <span class="option-hint">Soft. Warm. Heartfelt.</span>
+        </button>
+        <button class="quiz-option" data-answer="sensual-tension">
+          <span class="option-label">Sensual tension</span>
+          <span class="option-hint">Slow heat that simmers.</span>
+        </button>
+        <button class="quiz-option" data-answer="pure-fantasy">
+          <span class="option-label">Pure fantasy</span>
+          <span class="option-hint">Worlds that don't exist. Yet.</span>
+        </button>
+        <button class="quiz-option" data-answer="emotional-depth">
+          <span class="option-label">Emotional depth</span>
+          <span class="option-hint">Stories that make you feel seen.</span>
+        </button>
+        <button class="quiz-option" data-answer="raw-desire">
+          <span class="option-label">Raw desire</span>
+          <span class="option-hint">Unpolished. Real. Hot.</span>
+        </button>
+        <button class="quiz-option" data-answer="unpredictable">
+          <span class="option-label">Unpredictable twists</span>
+          <span class="option-hint">Surprise me. I like not knowing.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== INTERSTITIAL 1 — Testimonial ===== -->
+    <div class="quiz-question quiz-interstitial" data-question="6" data-type="interstitial">
+      <h2>You're in good <span class="italic">company.</span></h2>
+      <p class="lead">
+        Thousands of listeners have found their perfect audio match — and keep coming back night after night.
+      </p>
+
+      <div class="testimonial-image-wrap">
+        <img
+          src="https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=900&q=80&auto=format"
+          alt="Listener at night"
+          loading="lazy"
+        />
+        <div class="testimonial-card">
+          <div class="testimonial-top">
+            <span class="testimonial-stars">★★★★★</span>
+            <span class="testimonial-author">— Maya, listener</span>
+          </div>
+          <p class="testimonial-text">
+            "I finished my first match in one sitting. The voice felt like it was speaking only to me. I haven't been this present in months."
+          </p>
+        </div>
+      </div>
+
+      <div class="continue-btn-wrap">
+        <button class="btn btn-lg" data-continue>Continue</button>
+      </div>
+    </div>
+
+    <!-- ===== Q6 — Emotional connection importance ===== -->
+    <div class="quiz-question" data-question="7" data-type="single">
+      <h2>How important is emotional connection <span class="italic">in your stories?</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="emotion-not">
+          <span class="option-label">Not important</span>
+          <span class="option-hint">Just give me the heat.</span>
+        </button>
+        <button class="quiz-option" data-answer="emotion-slightly">
+          <span class="option-label">Slightly important</span>
+          <span class="option-hint">A little context is nice.</span>
+        </button>
+        <button class="quiz-option" data-answer="emotion-moderately">
+          <span class="option-label">Moderately important</span>
+          <span class="option-hint">I want to feel something, not just be turned on.</span>
+        </button>
+        <button class="quiz-option" data-answer="emotion-very">
+          <span class="option-label">Very important</span>
+          <span class="option-hint">Connection makes everything better.</span>
+        </button>
+        <button class="quiz-option" data-answer="emotion-essential">
+          <span class="option-label">Essential</span>
+          <span class="option-hint">Without it, I'm not interested.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== Q7 — Relationship dynamic ===== -->
+    <div class="quiz-question" data-question="8" data-type="single">
+      <h2>Which relationship dynamic <span class="italic">excites you most?</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="equal">
+          <span class="option-label">Equal partnership</span>
+          <span class="option-hint">Two people who choose each other fully.</span>
+        </button>
+        <button class="quiz-option" data-answer="dom-sub">
+          <span class="option-label">Dominant / submissive</span>
+          <span class="option-hint">Power. Trust. Surrender.</span>
+        </button>
+        <button class="quiz-option" data-answer="friends-lovers">
+          <span class="option-label">Friends to lovers</span>
+          <span class="option-hint">The slow revelation of what was always there.</span>
+        </button>
+        <button class="quiz-option" data-answer="enemies-lovers">
+          <span class="option-label">Enemies to lovers</span>
+          <span class="option-hint">The moment the mask drops.</span>
+        </button>
+        <button class="quiz-option" data-answer="forbidden-love">
+          <span class="option-label">Forbidden love</span>
+          <span class="option-hint">They know it's wrong. They can't stop.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== Q8 — Current satisfaction ===== -->
+    <div class="quiz-question" data-question="9" data-type="single">
+      <h2>How satisfied are you with your <span class="italic">romantic life right now?</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="very-satisfied">
+          <span class="option-label">Very satisfied</span>
+          <span class="option-hint">I'm good — I just love good stories.</span>
+        </button>
+        <button class="quiz-option" data-answer="somewhat-satisfied">
+          <span class="option-label">Somewhat satisfied</span>
+          <span class="option-hint">Room to grow.</span>
+        </button>
+        <button class="quiz-option" data-answer="neutral">
+          <span class="option-label">Neutral</span>
+          <span class="option-hint">It's complicated.</span>
+        </button>
+        <button class="quiz-option" data-answer="somewhat-unsatisfied">
+          <span class="option-label">Somewhat unsatisfied</span>
+          <span class="option-hint">Missing something I can't name.</span>
+        </button>
+        <button class="quiz-option" data-answer="very-unsatisfied">
+          <span class="option-label">Very unsatisfied</span>
+          <span class="option-hint">I need an escape.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== Q9 — Something missing ===== -->
+    <div class="quiz-question" data-question="10" data-type="single">
+      <h2>Do you feel like something is <span class="italic">missing?</span></h2>
+      <div class="quiz-options">
+        <button class="quiz-option" data-answer="missing-not">
+          <span class="option-label">Not at all</span>
+          <span class="option-hint">I'm fulfilled — I just want great audio.</span>
+        </button>
+        <button class="quiz-option" data-answer="missing-maybe">
+          <span class="option-label">Maybe a little</span>
+          <span class="option-hint">Hard to put into words.</span>
+        </button>
+        <button class="quiz-option" data-answer="missing-sometimes">
+          <span class="option-label">Yes, sometimes</span>
+          <span class="option-hint">Certain moments feel empty.</span>
+        </button>
+        <button class="quiz-option" data-answer="missing-often">
+          <span class="option-label">Often</span>
+          <span class="option-hint">I crave something I'm not getting.</span>
+        </button>
+        <button class="quiz-option" data-answer="missing-always">
+          <span class="option-label">Always</span>
+          <span class="option-hint">That's why I'm here.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== Q10 — Feel more of (MULTI) ===== -->
+    <div class="quiz-question" data-question="11" data-type="multi">
+      <h2>What do you want to <span class="italic">feel more of?</span></h2>
+      <p class="text-center text-muted" style="margin-bottom: 2rem;">Select all that apply.</p>
+      <div class="quiz-options-multi">
+        <button class="quiz-option multi" data-answer="desired">
+          <span class="quiz-emoji">🔥</span>
+          <span class="option-label">Desired</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="confident">
+          <span class="quiz-emoji">🦁</span>
+          <span class="option-label">Confident</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="playful-free">
+          <span class="quiz-emoji">🕊️</span>
+          <span class="option-label">Playful and free</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="emotionally-connected">
+          <span class="quiz-emoji">💕</span>
+          <span class="option-label">Emotionally connected</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="seen-understood">
+          <span class="quiz-emoji">👁️</span>
+          <span class="option-label">Seen and understood</span>
+          <span class="check-indicator">✓</span>
+        </button>
+      </div>
+      <div class="continue-btn-wrap">
+        <button class="btn btn-lg" data-continue disabled style="opacity:0.4;cursor:not-allowed;">Continue</button>
+      </div>
+    </div>
+
+    <!-- ===== Q11 — Love to experience (MULTI) ===== -->
+    <div class="quiz-question" data-question="12" data-type="multi">
+      <h2>What would you love <span class="italic">to experience?</span></h2>
+      <p class="text-center text-muted" style="margin-bottom: 2rem;">Select all that apply.</p>
+      <div class="quiz-options-multi">
+        <button class="quiz-option multi" data-answer="completely-adored">
+          <span class="quiz-emoji">💫</span>
+          <span class="option-label">Being completely adored</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="surrendering-control">
+          <span class="quiz-emoji">🫀</span>
+          <span class="option-label">Surrendering control</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="passionate-chase">
+          <span class="quiz-emoji">⚡</span>
+          <span class="option-label">A passionate chase</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="deep-emotional-intimacy">
+          <span class="quiz-emoji">🌊</span>
+          <span class="option-label">Deep emotional intimacy</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="playful-teasing">
+          <span class="quiz-emoji">😈</span>
+          <span class="option-label">Playful teasing</span>
+          <span class="check-indicator">✓</span>
+        </button>
+      </div>
+      <div class="continue-btn-wrap">
+        <button class="btn btn-lg" data-continue disabled style="opacity:0.4;cursor:not-allowed;">Continue</button>
+      </div>
+    </div>
+
+    <!-- ===== Q12 — Holding you back (MULTI) ===== -->
+    <div class="quiz-question" data-question="13" data-type="multi">
+      <h2>What's been <span class="italic">holding you back?</span></h2>
+      <p class="text-center text-muted" style="margin-bottom: 2rem;">Select all that apply.</p>
+      <div class="quiz-options-multi">
+        <button class="quiz-option multi" data-answer="fear-judgement">
+          <span class="quiz-emoji">👀</span>
+          <span class="option-label">Fear of judgement</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="feeling-undeserving">
+          <span class="quiz-emoji">🪞</span>
+          <span class="option-label">Feeling undeserving of pleasure</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="not-knowing-wants">
+          <span class="quiz-emoji">🌀</span>
+          <span class="option-label">Not knowing what I want</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="fear-vulnerability">
+          <span class="quiz-emoji">🛡️</span>
+          <span class="option-label">Fear of vulnerability</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="nothing-holding">
+          <span class="quiz-emoji">✨</span>
+          <span class="option-label">Nothing — I'm ready</span>
+          <span class="check-indicator">✓</span>
+        </button>
+      </div>
+      <div class="continue-btn-wrap">
+        <button class="btn btn-lg" data-continue disabled style="opacity:0.4;cursor:not-allowed;">Continue</button>
+      </div>
+    </div>
+
+    <!-- ===== Q13 — Looking for (MULTI) ===== -->
+    <div class="quiz-question" data-question="14" data-type="multi">
+      <h2>What are you <span class="italic">looking for?</span></h2>
+      <p class="text-center text-muted" style="margin-bottom: 2rem;">Select all that apply.</p>
+      <div class="quiz-options-multi">
+        <button class="quiz-option multi" data-answer="escapism">
+          <span class="quiz-emoji">🌙</span>
+          <span class="option-label">Escapism</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="excitement">
+          <span class="quiz-emoji">⚡</span>
+          <span class="option-label">Excitement</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="emotional-healing">
+          <span class="quiz-emoji">🌿</span>
+          <span class="option-label">Emotional healing</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="self-discovery">
+          <span class="quiz-emoji">🔭</span>
+          <span class="option-label">Self-discovery</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="deep-connection">
+          <span class="quiz-emoji">💞</span>
+          <span class="option-label">Deep connection</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="pure-pleasure">
+          <span class="quiz-emoji">🔥</span>
+          <span class="option-label">Pure pleasure</span>
+          <span class="check-indicator">✓</span>
+        </button>
+      </div>
+      <div class="continue-btn-wrap">
+        <button class="btn btn-lg" data-continue disabled style="opacity:0.4;cursor:not-allowed;">Continue</button>
+      </div>
+    </div>
+
+    <!-- ===== INTERSTITIAL 2 — Stats ===== -->
+    <div class="quiz-question quiz-interstitial" data-question="15" data-type="interstitial">
+      <h2>You're not <span class="italic">alone.</span></h2>
+      <p class="lead">
+        Hushlore listeners report the same thing — a quiet, full-body attention they didn't know they were missing.
+      </p>
+
+      <div class="stats-checkpoint">
+        <div class="stat-row">
+          <span class="stat-number-big" data-stat-target="94">0%</span>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill" data-stat-fill="94"></div>
+          </div>
+          <p class="stat-label">finished their first match in one sitting</p>
+        </div>
+
+        <div class="stat-row">
+          <span class="stat-number-big" data-stat-target="92">0%</span>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill" data-stat-fill="92"></div>
+          </div>
+          <p class="stat-label">said the match felt accurate to their mood</p>
+        </div>
+
+        <div class="stat-row">
+          <span class="stat-number-big" data-stat-target="83">0%</span>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill" data-stat-fill="83"></div>
+          </div>
+          <p class="stat-label">returned to their match category within a week</p>
+        </div>
+      </div>
+
+      <div class="continue-btn-wrap">
+        <button class="btn btn-lg" data-continue>See my match</button>
+      </div>
+    </div>
+
+    <!-- ===== Q14 — Type of experience (MULTI) ===== -->
+    <div class="quiz-question" data-question="16" data-type="multi">
+      <h2>What type of experience <span class="italic">are you after?</span></h2>
+      <p class="text-center text-muted" style="margin-bottom: 2rem;">Select all that apply.</p>
+      <div class="quiz-options-multi">
+        <button class="quiz-option multi" data-answer="exp-romantic">
+          <span class="quiz-emoji">🌹</span>
+          <span class="option-label">Romantic</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="exp-sensual">
+          <span class="quiz-emoji">🕯️</span>
+          <span class="option-label">Sensual</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="exp-adventurous">
+          <span class="quiz-emoji">🌪️</span>
+          <span class="option-label">Adventurous</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="exp-emotional">
+          <span class="quiz-emoji">💙</span>
+          <span class="option-label">Emotional</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="exp-dom-sub">
+          <span class="quiz-emoji">🖤</span>
+          <span class="option-label">Dominant / submissive</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="exp-fantasy">
+          <span class="quiz-emoji">✨</span>
+          <span class="option-label">Fantasy</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="exp-playful">
+          <span class="quiz-emoji">😊</span>
+          <span class="option-label">Playful</span>
+          <span class="check-indicator">✓</span>
+        </button>
+        <button class="quiz-option multi" data-answer="exp-intense">
+          <span class="quiz-emoji">🔥</span>
+          <span class="option-label">Intense</span>
+          <span class="check-indicator">✓</span>
+        </button>
+      </div>
+      <div class="continue-btn-wrap">
+        <button class="btn btn-lg" data-continue disabled style="opacity:0.4;cursor:not-allowed;">Continue</button>
+      </div>
+    </div>
+
+    <!-- ===== Email capture (step 17) ===== -->
+    <div class="quiz-question quiz-email" data-question="17" data-type="email">
+      <h2>Your match is <span class="italic">ready.</span></h2>
+      <p>Tell us where to send it. We'll never share your email.</p>
+      <form class="email-form" id="emailForm" onsubmit="return submitEmail(event);">
+        <input
+          type="email"
+          class="email-input"
+          placeholder="your@email.com"
+          id="emailInput"
+          required
+          autocomplete="email"
+        />
+        <button type="submit" class="btn btn-lg btn-block">Reveal my match</button>
+      </form>
+    </div>
+
+    <!-- ===== Loading / analysis screen (step 18) ===== -->
+    <div class="quiz-question quiz-loading" data-question="18" data-type="loading">
+      <h2>We are creating your <span class="loading-accent">personalized experience...</span></h2>
+
+      <div class="loading-steps">
+        <div class="loading-step" data-loading-step="1">
+          <div class="loading-step-row">
+            <span class="loading-step-label">Reading your preferences</span>
+            <span class="loading-step-pct" data-loading-pct>0%</span>
+          </div>
+          <div class="loading-step-bar"><div class="loading-step-fill"></div></div>
+        </div>
+
+        <div class="loading-step" data-loading-step="2">
+          <div class="loading-step-row">
+            <span class="loading-step-label">Matching voice and mood</span>
+            <span class="loading-step-pct" data-loading-pct>0%</span>
+          </div>
+          <div class="loading-step-bar"><div class="loading-step-fill"></div></div>
+        </div>
+
+        <div class="loading-step" data-loading-step="3">
+          <div class="loading-step-row">
+            <span class="loading-step-label">Curating your stories</span>
+            <span class="loading-step-pct" data-loading-pct>0%</span>
+          </div>
+          <div class="loading-step-bar"><div class="loading-step-fill"></div></div>
+        </div>
+
+        <div class="loading-step" data-loading-step="4">
+          <div class="loading-step-row">
+            <span class="loading-step-label">Finishing your profile</span>
+            <span class="loading-step-pct" data-loading-pct>0%</span>
+          </div>
+          <div class="loading-step-bar"><div class="loading-step-fill"></div></div>
+        </div>
+      </div>
+
+      <div class="loading-banner">
+        <h3>Enjoyed by <span class="italic loading-accent">listeners worldwide</span></h3>
+      </div>
+
+      <div class="loading-testimonial-box">
+        <div class="loading-stars">★★★★★</div>
+        <p class="loading-testimonial-text">
+          "I didn't expect audio stories to hit this deep. It's now part of how I unwind — I feel more grounded, more present, and way more in touch with what I actually want."
+        </p>
+        <p class="loading-testimonial-author">— Sofia R., listener</p>
+      </div>
+    </div>
+
+    <!-- ===== Micro-modals shown during loading ===== -->
+    <div class="quiz-modal" data-modal="explicit" hidden>
+      <div class="quiz-modal-backdrop"></div>
+      <div class="quiz-modal-card">
+        <span class="quiz-modal-eyebrow">One more thing</span>
+        <h3 class="quiz-modal-question">Would you like more intense, unfiltered stories?</h3>
+        <div class="quiz-modal-actions">
+          <button class="quiz-modal-btn" data-modal-answer="no">No</button>
+          <button class="quiz-modal-btn" data-modal-answer="yes">Yes</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-modal" data-modal="fantasies" hidden>
+      <div class="quiz-modal-backdrop"></div>
+      <div class="quiz-modal-card">
+        <span class="quiz-modal-eyebrow">One more thing</span>
+        <h3 class="quiz-modal-question">Are you open to exploring different characters and fantasies?</h3>
+        <div class="quiz-modal-actions">
+          <button class="quiz-modal-btn" data-modal-answer="no">No</button>
+          <button class="quiz-modal-btn" data-modal-answer="yes">Yes</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-modal" data-modal="relationship" hidden>
+      <div class="quiz-modal-backdrop"></div>
+      <div class="quiz-modal-card">
+        <span class="quiz-modal-eyebrow">One more thing</span>
+        <h3 class="quiz-modal-question">Are you currently in a relationship?</h3>
+        <div class="quiz-modal-actions">
+          <button class="quiz-modal-btn" data-modal-answer="no">No</button>
+          <button class="quiz-modal-btn" data-modal-answer="yes">Yes</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="quiz.js"></script>
+</body>
+</html>
