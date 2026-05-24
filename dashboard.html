@@ -79,6 +79,37 @@
     .refresh-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; color: rgba(255,255,255,0.5); font-size: 0.75rem; padding: 0.3rem 0.75rem; cursor: pointer; }
     .refresh-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
+    /* Sessions table */
+    .sess-table { width: 100%; border-collapse: collapse; }
+    .sess-table th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.3); text-align: left; padding: 0 0.5rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.07); cursor: pointer; user-select: none; white-space: nowrap; }
+    .sess-table th:hover { color: rgba(255,255,255,0.6); }
+    .sess-table th .sort-arrow { margin-left: 0.25rem; opacity: 0.4; }
+    .sess-table th.sorted .sort-arrow { opacity: 1; color: #c03358; }
+    .sess-table td { font-size: 0.78rem; color: rgba(255,255,255,0.65); padding: 0.45rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    .sess-table tr:hover td { background: rgba(255,255,255,0.03); }
+    .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 20px; font-size: 0.68rem; font-weight: 600; }
+    .badge-email { background: rgba(46,213,115,0.15); color: #2ed573; border: 1px solid rgba(46,213,115,0.25); }
+    .badge-noemail { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.08); }
+    .badge-men { background: rgba(100,140,255,0.12); color: #7ba3ff; border: 1px solid rgba(100,140,255,0.2); }
+    .badge-women { background: rgba(255,100,160,0.12); color: #ff7eb3; border: 1px solid rgba(255,100,160,0.2); }
+    .badge-nodata { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.07); }
+    .step-pill { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-early { background: #ff4757; }
+    .dot-mid { background: #ffa502; }
+    .dot-email { background: #2ed573; }
+    .sess-filter { display: flex; gap: 0.5rem; margin-bottom: 0.875rem; flex-wrap: wrap; align-items: center; }
+    .sess-filter-btn { padding: 0.25rem 0.65rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12); background: transparent; color: rgba(255,255,255,0.45); font-size: 0.72rem; cursor: pointer; }
+    .sess-filter-btn.active { background: rgba(192,51,88,0.2); border-color: rgba(192,51,88,0.5); color: #fff; }
+    .sess-count { font-size: 0.72rem; color: rgba(255,255,255,0.25); margin-left: auto; }
+    .sess-expand { cursor: pointer; }
+    .sess-expand:hover td { background: rgba(255,255,255,0.04) !important; }
+    .sess-detail { display: none; background: rgba(255,255,255,0.02); }
+    .sess-detail td { padding: 0.5rem 0.75rem 0.75rem; }
+    .sess-detail-inner { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .ans-chip { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.08); }
+    .ans-chip strong { color: rgba(255,255,255,0.35); font-weight: 500; margin-right: 0.25rem; }
+
     @media (max-width: 600px) {
       .kpi-val { font-size: 1.5rem; }
       .split-row { flex-direction: column; }
@@ -160,6 +191,20 @@
         <thead><tr><th>Question</th><th>Answer</th><th>Picks</th></tr></thead>
         <tbody id="ansTbody"><tr><td colspan="3" style="text-align:center;padding:1rem;color:rgba(255,255,255,0.2);">Select a question above</td></tr></tbody>
       </table>
+    </div>
+
+    <!-- Individual sessions -->
+    <div class="card">
+      <div class="card-title">Individual sessions</div>
+      <div class="sess-filter">
+        <button class="sess-filter-btn active" onclick="setSessFilter('all', this)">All</button>
+        <button class="sess-filter-btn" onclick="setSessFilter('email', this)">Email ✓</button>
+        <button class="sess-filter-btn" onclick="setSessFilter('noemail', this)">No email</button>
+        <button class="sess-filter-btn" onclick="setSessFilter('women', this)">♀ Women</button>
+        <button class="sess-filter-btn" onclick="setSessFilter('men', this)">♂ Men</button>
+        <span class="sess-count" id="sessCount"></span>
+      </div>
+      <div id="sessionsWrap"><div class="loading">Loading…</div></div>
     </div>
 
   </div>
@@ -250,6 +295,9 @@
 
     // Answer tabs
     renderAnswerTabs(data);
+
+    // Individual sessions
+    renderSessions(data);
   }
 
   function countUniqueSessions(events) {
@@ -368,6 +416,148 @@
     }).join('');
 
     document.getElementById('ansTbody').innerHTML = rows || '<tr><td colspan="3" style="text-align:center;padding:1rem;color:rgba(255,255,255,0.2);">No answers for this question</td></tr>';
+  }
+
+  /* ─── SESSIONS ─── */
+  var STEP_LABELS = {
+    0:'Splash',1:'Q1 — Gender',2:'Q2 — Attraction',3:'Q3 — Age',
+    4:'Q4 — Mood',5:'Q5 — Voice',6:'Q6 — Pulse',7:'Q7 — Setting',
+    8:'Q8 — Dynamic',9:'Q9 — Touch',10:'Interstitial',11:'Q10 — Fantasies',
+    12:'Q11 — Dirty talk',13:'Q12 — Heat level',14:'Loading (women)',
+    15:'Email (women)',16:'Q13 — Roughness',17:'Q14 — Fantasies',
+    18:'Interstitial 2',19:'Q15 — Feel',20:'Q16 — Turn on',
+    21:'Q17 — Voice guidance',22:'Loading (men)',23:'Email (men)'
+  };
+
+  var EMAIL_STEPS = [15, 23];
+
+  var _sessFilter = 'all';
+  var _sessSortKey = 'time';
+  var _sessSortDir = -1; // -1 = desc
+  var _sessionsData = [];
+
+  function buildSessions(data) {
+    var map = {};
+    data.forEach(function(e) {
+      var sid = e.session_id;
+      if (!map[sid]) map[sid] = { sid: sid, events: [], startTime: null, country: null, branch: null, maxStep: 0, submittedEmail: false, answers: [] };
+      map[sid].events.push(e);
+      if (e.event === 'quiz_start') {
+        map[sid].startTime = e.created_at;
+        if (e.country) map[sid].country = e.country;
+      }
+      if (e.branch) map[sid].branch = e.branch;
+      if (e.step !== null && e.step !== undefined && e.step > map[sid].maxStep) map[sid].maxStep = e.step;
+      if (e.event === 'email_submit') map[sid].submittedEmail = true;
+      if (e.event === 'answer' && e.question_id && e.answer_text) {
+        map[sid].answers.push({ q: e.question_id, a: e.answer_text });
+      }
+    });
+    return Object.values(map);
+  }
+
+  function renderSessions(data) {
+    _sessionsData = buildSessions(data);
+    drawSessions();
+  }
+
+  function setSessFilter(f, btn) {
+    _sessFilter = f;
+    document.querySelectorAll('.sess-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    drawSessions();
+  }
+
+  function sessSortBy(key, th) {
+    if (_sessSortKey === key) { _sessSortDir *= -1; }
+    else { _sessSortKey = key; _sessSortDir = -1; }
+    document.querySelectorAll('.sess-table th').forEach(function(t) { t.classList.remove('sorted'); t.querySelector('.sort-arrow') && (t.querySelector('.sort-arrow').textContent = '↕'); });
+    th.classList.add('sorted');
+    if (th.querySelector('.sort-arrow')) th.querySelector('.sort-arrow').textContent = _sessSortDir === -1 ? '↓' : '↑';
+    drawSessions();
+  }
+
+  function drawSessions() {
+    var sessions = _sessionsData.slice();
+
+    // Filter
+    if (_sessFilter === 'email') sessions = sessions.filter(function(s) { return s.submittedEmail; });
+    else if (_sessFilter === 'noemail') sessions = sessions.filter(function(s) { return !s.submittedEmail; });
+    else if (_sessFilter === 'women') sessions = sessions.filter(function(s) { return s.branch === 'women'; });
+    else if (_sessFilter === 'men') sessions = sessions.filter(function(s) { return s.branch === 'men'; });
+
+    // Sort
+    sessions.sort(function(a, b) {
+      var va, vb;
+      if (_sessSortKey === 'time') { va = a.startTime || ''; vb = b.startTime || ''; }
+      else if (_sessSortKey === 'step') { va = a.maxStep; vb = b.maxStep; }
+      else if (_sessSortKey === 'branch') { va = a.branch || ''; vb = b.branch || ''; }
+      else if (_sessSortKey === 'country') { va = a.country || ''; vb = b.country || ''; }
+      else if (_sessSortKey === 'email') { va = a.submittedEmail ? 1 : 0; vb = b.submittedEmail ? 1 : 0; }
+      else { va = ''; vb = ''; }
+      if (va < vb) return _sessSortDir;
+      if (va > vb) return -_sessSortDir;
+      return 0;
+    });
+
+    document.getElementById('sessCount').textContent = sessions.length + ' session' + (sessions.length !== 1 ? 's' : '');
+
+    if (sessions.length === 0) {
+      document.getElementById('sessionsWrap').innerHTML = '<div style="font-size:0.8rem;color:rgba(255,255,255,0.25);padding:1rem 0;">No sessions match this filter</div>';
+      return;
+    }
+
+    var rows = sessions.map(function(s, i) {
+      var shortId = s.sid.substring(0, 8) + '…';
+      var timeStr = s.startTime ? new Date(s.startTime).toLocaleString('sl-SI', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
+      var stepLabel = STEP_LABELS[s.maxStep] || ('Step ' + s.maxStep);
+      var isEmailStep = EMAIL_STEPS.indexOf(s.maxStep) !== -1 || s.submittedEmail;
+      var isMid = s.maxStep >= 8 && !isEmailStep;
+      var dotClass = s.submittedEmail ? 'dot-email' : (isMid ? 'dot-mid' : 'dot-early');
+
+      var branchBadge = s.branch
+        ? '<span class="badge badge-' + s.branch + '">' + (s.branch === 'women' ? '♀ Women' : '♂ Men') + '</span>'
+        : '<span class="badge badge-nodata">—</span>';
+      var emailBadge = s.submittedEmail
+        ? '<span class="badge badge-email">✓ Email</span>'
+        : '<span class="badge badge-noemail">✗</span>';
+
+      var ansChips = s.answers.length > 0
+        ? s.answers.map(function(a) { return '<span class="ans-chip"><strong>' + a.q + '</strong>' + a.a + '</span>'; }).join('')
+        : '<span style="font-size:0.72rem;color:rgba(255,255,255,0.2);">No answer data</span>';
+
+      var rowId = 'sess-' + i;
+      return '<tr class="sess-expand" onclick="toggleSessDetail(\'' + rowId + '\')">' +
+        '<td style="color:rgba(255,255,255,0.3);font-family:monospace;font-size:0.72rem;">' + shortId + '</td>' +
+        '<td>' + timeStr + '</td>' +
+        '<td>' + (s.country || '<span style="color:rgba(255,255,255,0.2)">—</span>') + '</td>' +
+        '<td>' + branchBadge + '</td>' +
+        '<td><span class="step-pill"><span class="step-dot ' + dotClass + '"></span>' + s.maxStep + ' — ' + stepLabel + '</span></td>' +
+        '<td>' + emailBadge + '</td>' +
+        '</tr>' +
+        '<tr class="sess-detail" id="' + rowId + '">' +
+        '<td colspan="6"><div class="sess-detail-inner">' + ansChips + '</div></td>' +
+        '</tr>';
+    }).join('');
+
+    document.getElementById('sessionsWrap').innerHTML =
+      '<table class="sess-table">' +
+      '<thead><tr>' +
+        '<th onclick="sessSortBy(\'sid\', this)">Session<span class="sort-arrow"> ↕</span></th>' +
+        '<th onclick="sessSortBy(\'time\', this)" class="sorted">Time<span class="sort-arrow"> ↓</span></th>' +
+        '<th onclick="sessSortBy(\'country\', this)">Country<span class="sort-arrow"> ↕</span></th>' +
+        '<th onclick="sessSortBy(\'branch\', this)">Branch<span class="sort-arrow"> ↕</span></th>' +
+        '<th onclick="sessSortBy(\'step\', this)">Last step<span class="sort-arrow"> ↕</span></th>' +
+        '<th onclick="sessSortBy(\'email\', this)">Email<span class="sort-arrow"> ↕</span></th>' +
+      '</tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+      '</table>';
+  }
+
+  function toggleSessDetail(rowId) {
+    var row = document.getElementById(rowId);
+    if (!row) return;
+    row.style.display = row.style.display === 'table-row' ? 'none' : 'table-row';
   }
 </script>
 </body>
