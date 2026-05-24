@@ -258,26 +258,37 @@
     });
 
     var stepLabels = {
-      0: 'Splash / Start',
-      1: 'Q1 — Age',
-      2: 'Q2 — Attraction',
-      3: 'Q3 — Mood',
-      4: 'Q4 — Voice',
-      5: 'Q5 — Character',
-      6: 'Q6 — Pulse',
-      7: 'Q7 — Setting',
-      8: 'Q8 — Dynamic',
-      9: 'Q9 — Touch',
-      10: 'Q10 — Fantasies',
-      11: 'Loading',
-      12: 'Email step'
+      0:  'Splash / Start',
+      1:  'Q1 — Age',
+      2:  'Q2 — Attraction (branch)',
+      3:  'Q3 — Mood',
+      4:  'Q4 — Voice',
+      5:  'Q5 — Character',
+      6:  'Q6 — Pulse quicken',
+      7:  'Q7 — Setting',
+      8:  'Q8 — Dynamic',
+      9:  'Q9 — Touch / multi',
+      10: 'Interstitial',
+      11: 'Q10 — Fantasies',
+      12: 'Q11 — Dirty talk',
+      13: 'Q12 — Heat level',
+      14: 'Loading',
+      15: 'Email step',
+      16: 'Q13 — Roughness',
+      17: 'Q14 — Fantasies / multi',
+      18: 'Interstitial 2',
+      19: 'Q15 — Feel / multi',
+      20: 'Q16 — Turn on / multi',
+      21: 'Q17 — Voice guidance',
+      22: 'Loading (men)',
+      23: 'Email step (men)'
     };
 
-    var maxStep = Math.max.apply(null, Object.keys(stepViews).map(Number).concat([0]));
+    var maxStep = Math.max.apply(null, Object.keys(stepViews).map(Number).concat([15]));
     var html = '';
     var firstCount = starts || 1;
 
-    for (var s = 0; s <= Math.max(maxStep, 5); s++) {
+    for (var s = 0; s <= maxStep; s++) {
       var count = stepViews[s] ? stepViews[s].size : 0;
       var pct = firstCount > 0 ? Math.round(count / firstCount * 100) : 0;
       var label = stepLabels[s] || 'Step ' + s;
