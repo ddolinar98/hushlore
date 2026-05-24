@@ -1199,6 +1199,25 @@ function submitEmail() {
     return;
   }
   if (typeof fbq !== 'undefined') fbq('track', 'Lead', { content_name: 'Hushlore Quiz2 Email', currency: 'USD', value: 32.99 });
+  // Calculate match based on key answers
+  function calcMatch() {
+    if (branch === 'men') {
+      var r = answers['q13'];
+      if (r === 3) return 'slow-devotion';
+      if (r === 2) return 'best-friends-untold';
+      if (r === 1 || r === 4) return 'commanding-embrace';
+      return 'midnight-surrender';
+    } else {
+      var d = answers['q8'];
+      if (d === 0) return 'commanding-embrace';
+      if (d === 1 || d === 3) return 'midnight-surrender';
+      if (d === 2 || d === 5) return 'forbidden-whispers';
+      if (d === 4) return 'slow-devotion';
+      return 'best-friends-untold';
+    }
+  }
+  var matchKey = calcMatch();
+
   try {
     localStorage.setItem('hl_quiz2_branch', branch || 'women');
     localStorage.setItem('hl_email', email);
@@ -1211,9 +1230,9 @@ function submitEmail() {
     },
     body: JSON.stringify({ email: email, groups: ['187738021652595766'], fields: { quiz_source: 'quiz2', branch: branch || 'women' } })
   }).then(function() {
-    window.location.href = 'result.html?match=your-match&src=quiz2';
+    window.location.href = 'result.html?match=' + matchKey + '&src=quiz2';
   }).catch(function() {
-    window.location.href = 'result.html?match=your-match&src=quiz2';
+    window.location.href = 'result.html?match=' + matchKey + '&src=quiz2';
   });
 }
 

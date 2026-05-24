@@ -1772,6 +1772,139 @@ p {
 }
 
 /* ====================================
+   Match reveal
+   ==================================== */
+
+.match-reveal {
+  text-align: center;
+  padding: 2rem 1.5rem 1.5rem;
+  max-width: 580px;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+.match-reveal-eyebrow {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+.match-reveal-title {
+  font-family: var(--serif);
+  font-size: clamp(1.8rem, 6vw, 2.5rem);
+  font-weight: 400;
+  color: #fff;
+  margin-bottom: 0.4rem;
+}
+.match-reveal-descriptor {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+.match-reveal-lead {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-style: italic;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.6;
+}
+
+/* ====================================
+   Social proof live counter
+   ==================================== */
+
+.social-proof-live {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 1.25rem;
+}
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4caf50;
+  box-shadow: 0 0 6px #4caf50;
+  animation: pulse-dot 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+/* ====================================
+   CTA testimonial
+   ==================================== */
+
+.cta-testimonial {
+  background: rgba(192, 51, 88, 0.07);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+.cta-testimonial-stars {
+  color: #f5c842;
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+}
+.cta-testimonial-text {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.55;
+  margin-bottom: 0.4rem;
+}
+.cta-testimonial-author {
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+/* ====================================
+   Guarantee badge
+   ==================================== */
+
+.guarantee-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 0.875rem 1.125rem;
+  margin-top: 1rem;
+  text-align: left;
+}
+.guarantee-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+.guarantee-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.guarantee-text strong {
+  font-size: 0.85rem;
+  color: #fff;
+}
+.guarantee-text span {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* ====================================
    Trust badges
    ==================================== */
 

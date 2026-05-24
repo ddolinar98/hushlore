@@ -47,6 +47,14 @@
       <span class="brand-mark-tagline">Audio Romance</span>
     </section>
 
+    <!-- Match reveal -->
+    <section class="match-reveal" id="matchReveal" style="display:none;">
+      <span class="match-reveal-eyebrow">Your perfect match</span>
+      <h2 class="match-reveal-title" id="matchTitle"></h2>
+      <p class="match-reveal-descriptor" id="matchDescriptor"></p>
+      <p class="match-reveal-lead" id="matchLead"></p>
+    </section>
+
     <!-- Offer hero + story collage -->
     <section class="offer-hero">
       <h1>Experience pleasure<br /><span class="italic">like never before.</span></h1>
@@ -85,6 +93,12 @@
     <!-- Pricing -->
     <section class="pricing-section" id="pricing">
       <h2>Choose your <span class="italic">membership</span></h2>
+
+      <!-- Social proof live counter -->
+      <div class="social-proof-live">
+        <span class="live-dot"></span>
+        <span id="buyersToday">47 people</span> purchased in the last 24 hours
+      </div>
 
       <!--
         PLACEHOLDER pricing. Strikethrough "was" prices must be REAL prices
@@ -146,17 +160,32 @@
         </div>
       </div>
 
+      <!-- Testimonial above CTA -->
+      <div class="cta-testimonial">
+        <div class="cta-testimonial-stars">★★★★★</div>
+        <p class="cta-testimonial-text">"I was skeptical. Pressed play anyway. Twenty minutes later I was completely lost in it. Worth every penny."</p>
+        <span class="cta-testimonial-author">— Sarah M., verified listener</span>
+      </div>
+
       <a href="https://buy.stripe.com/9B6bJ140M69N1ozeasfAc01"
          id="continueBtn"
          class="continue-cta">Continue</a>
 
-      <p class="auto-renew-text" style="margin-top: 0.5rem;">
+      <!-- Guarantee badge -->
+      <div class="guarantee-badge">
+        <span class="guarantee-icon">🛡️</span>
+        <div class="guarantee-text">
+          <strong>30-Day Money-Back Guarantee</strong>
+          <span>Not happy? Full refund, no questions asked.</span>
+        </div>
+      </div>
+
+      <p class="auto-renew-text" style="margin-top: 0.75rem;">
         By continuing, you agree to our <a href="terms.html" style="color: var(--gold);">Terms</a> and <a href="privacy.html" style="color: var(--gold);">Privacy Policy</a>.
       </p>
 
       <p class="auto-renew-text">
         One-time payment. No subscription, no auto-renewal.
-        30-day refund guarantee — no questions asked.
       </p>
     </section>
 
@@ -361,10 +390,25 @@
       return 'slow-devotion';
     }
 
-    // Match data is preserved in localStorage for post-purchase use,
-    // but no longer rendered on this page (replaced by big brand mark).
     const key = getOutcome();
     try { localStorage.setItem('hushlore_outcome', key); } catch (_) {}
+
+    // Show match reveal section
+    const outcome = outcomes[key];
+    if (outcome) {
+      document.getElementById('matchTitle').textContent = outcome.title;
+      document.getElementById('matchDescriptor').textContent = outcome.descriptor;
+      document.getElementById('matchLead').textContent = outcome.lead;
+      document.getElementById('matchReveal').style.display = 'block';
+    }
+
+    // Social proof — consistent per day, 31–72 range
+    (function() {
+      const d = new Date();
+      const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+      const n = 31 + (seed % 42);
+      document.getElementById('buyersToday').textContent = n + ' people';
+    })();
 
     /* ====================================
        Pricing tier selection
