@@ -854,11 +854,12 @@ var SESSION_ID = (function() {
 })();
 var USER_COUNTRY = null;
 
-// Detect country on load
+// Detect country on load — render after so quiz_start includes country
 fetch('https://ipapi.co/json/')
   .then(function(r) { return r.json(); })
   .then(function(d) { USER_COUNTRY = d.country_name || d.country || null; })
-  .catch(function() {});
+  .catch(function() {})
+  .then(function() { render(); track('quiz_start', { step: 0 }); });
 
 function track(event, extras) {
   var payload = Object.assign({ session_id: SESSION_ID, event: event, branch: branch || null, country: USER_COUNTRY }, extras || {});
@@ -1270,10 +1271,8 @@ function submitEmail() {
 }
 
 /* ════════════════════════════════════════
-   INIT
+   INIT — triggered after country fetch above
 ════════════════════════════════════════ */
-render();
-track('quiz_start', { step: 0 });
 </script>
 </body>
 </html>
