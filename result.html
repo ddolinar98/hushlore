@@ -150,10 +150,9 @@
          id="continueBtn"
          class="continue-cta">Continue</a>
 
-      <div class="tc-row">
-        <input type="checkbox" id="tcCheck" />
-        <label for="tcCheck">I agree to the <a href="terms.html" style="color: var(--gold);">T&amp;Cs</a> and <a href="privacy.html" style="color: var(--gold);">Privacy Policy</a></label>
-      </div>
+      <p class="auto-renew-text" style="margin-top: 0.5rem;">
+        By continuing, you agree to our <a href="terms.html" style="color: var(--gold);">Terms</a> and <a href="privacy.html" style="color: var(--gold);">Privacy Policy</a>.
+      </p>
 
       <p class="auto-renew-text">
         One-time payment. No subscription, no auto-renewal.
@@ -409,16 +408,7 @@
     /* ====================================
        Continue → checkout (gated by T&Cs checkbox)
        ==================================== */
-    document.getElementById('continueBtn').addEventListener('click', (e) => {
-      const tc = document.getElementById('tcCheck');
-      if (!tc.checked) {
-        e.preventDefault();
-        tc.focus();
-        tc.closest('.tc-row').style.color = '#ff8a7a';
-        return false;
-      }
-      // InitiateCheckout already fired on page load
-    });
+    // Terms accepted implicitly by clicking Continue (shown in text above button)
   </script>
 
 </body>
