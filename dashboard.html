@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — Dashboard</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #0e0e14; color: #e8e4f0; min-height: 100vh; }
+
+    /* LOGIN */
+    .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-box { background: #17121f; border: 1px solid rgba(192,51,88,0.25); border-radius: 12px; padding: 2.5rem; width: 100%; max-width: 340px; text-align: center; }
+    .login-logo { font-size: 1.5rem; font-weight: 700; color: #fff; margin-bottom: 0.25rem; }
+    .login-logo span { color: #c03358; }
+    .login-sub { font-size: 0.8rem; color: rgba(255,255,255,0.35); margin-bottom: 1.75rem; }
+    .login-inp { width: 100%; padding: 0.75rem 1rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #fff; font-size: 0.95rem; outline: none; margin-bottom: 0.75rem; }
+    .login-inp:focus { border-color: rgba(192,51,88,0.5); }
+    .login-btn { width: 100%; padding: 0.75rem; background: #c03358; border: none; border-radius: 8px; color: #fff; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+    .login-btn:hover { background: #e0456e; }
+    .login-err { font-size: 0.8rem; color: #ff6b8a; margin-top: 0.5rem; }
+
+    /* DASHBOARD */
+    .dash { display: none; }
+    .dash-header { background: #17121f; border-bottom: 1px solid rgba(255,255,255,0.07); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .dash-logo { font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .dash-logo span { color: #c03358; }
+    .dash-meta { font-size: 0.75rem; color: rgba(255,255,255,0.35); }
+    .dash-body { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
+
+    /* KPI row */
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.75rem; }
+    .kpi-card { background: #17121f; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 1.25rem 1rem; text-align: center; }
+    .kpi-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); margin-bottom: 0.4rem; }
+    .kpi-val { font-size: 2rem; font-weight: 700; color: #fff; }
+    .kpi-val.accent { color: #c03358; }
+    .kpi-sub { font-size: 0.7rem; color: rgba(255,255,255,0.3); margin-top: 0.2rem; }
+
+    /* Section */
+    .section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.35); margin-bottom: 0.875rem; }
+    .card { background: #17121f; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem; }
+    .card-title { font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.8); margin-bottom: 1rem; }
+
+    /* Funnel */
+    .funnel { display: flex; flex-direction: column; gap: 0.5rem; }
+    .funnel-row { display: flex; align-items: center; gap: 0.75rem; }
+    .funnel-label { font-size: 0.75rem; color: rgba(255,255,255,0.5); width: 160px; flex-shrink: 0; }
+    .funnel-bar-wrap { flex: 1; background: rgba(255,255,255,0.06); border-radius: 4px; height: 22px; position: relative; overflow: hidden; }
+    .funnel-bar { height: 100%; background: linear-gradient(90deg, #c03358, #e0456e); border-radius: 4px; transition: width 0.6s ease; }
+    .funnel-count { font-size: 0.75rem; color: rgba(255,255,255,0.6); width: 50px; text-align: right; flex-shrink: 0; }
+    .funnel-pct { font-size: 0.7rem; color: rgba(255,255,255,0.3); width: 40px; text-align: right; flex-shrink: 0; }
+
+    /* Branch split */
+    .split-row { display: flex; gap: 1rem; margin-bottom: 1.25rem; }
+    .split-card { flex: 1; background: #17121f; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 1.25rem; text-align: center; }
+    .split-emoji { font-size: 1.5rem; margin-bottom: 0.3rem; }
+    .split-label { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-bottom: 0.3rem; }
+    .split-val { font-size: 1.6rem; font-weight: 700; color: #fff; }
+
+    /* Answers table */
+    .ans-table { width: 100%; border-collapse: collapse; }
+    .ans-table th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.3); text-align: left; padding: 0 0 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .ans-table td { font-size: 0.82rem; color: rgba(255,255,255,0.75); padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    .ans-table td:first-child { color: rgba(255,255,255,0.35); font-size: 0.72rem; width: 80px; }
+    .ans-bar-wrap { background: rgba(255,255,255,0.05); border-radius: 3px; height: 6px; width: 120px; display: inline-block; vertical-align: middle; margin-left: 0.5rem; }
+    .ans-bar { height: 100%; background: #c03358; border-radius: 3px; }
+    .ans-count { font-size: 0.72rem; color: rgba(255,255,255,0.3); margin-left: 0.4rem; }
+
+    /* Q selector */
+    .q-tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+    .q-tab { padding: 0.3rem 0.75rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12); background: transparent; color: rgba(255,255,255,0.45); font-size: 0.75rem; cursor: pointer; }
+    .q-tab.active { background: rgba(192,51,88,0.2); border-color: rgba(192,51,88,0.5); color: #fff; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 3rem; color: rgba(255,255,255,0.3); font-size: 0.85rem; }
+    .refresh-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; color: rgba(255,255,255,0.5); font-size: 0.75rem; padding: 0.3rem 0.75rem; cursor: pointer; }
+    .refresh-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    @media (max-width: 600px) {
+      .kpi-val { font-size: 1.5rem; }
+      .split-row { flex-direction: column; }
+      .funnel-label { width: 100px; font-size: 0.68rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div class="login-logo">Hush<span>lore</span></div>
+    <div class="login-sub">Internal Analytics</div>
+    <input class="login-inp" type="password" id="pwdInp" placeholder="Password" />
+    <button class="login-btn" onclick="checkLogin()">Enter</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dash" id="dashWrap">
+
+  <div class="dash-header">
+    <div class="dash-logo">Hush<span>lore</span> <span style="font-weight:400;color:rgba(255,255,255,0.3);font-size:0.85rem;">/ Analytics</span></div>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <span class="dash-meta" id="lastUpdated"></span>
+      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div class="dash-body">
+
+    <!-- KPIs -->
+    <div class="kpi-row" id="kpiRow">
+      <div class="kpi-card"><div class="kpi-label">Quiz Starts</div><div class="kpi-val" id="kpiStarts">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Reached Email</div><div class="kpi-val" id="kpiEmails">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Email Rate</div><div class="kpi-val accent" id="kpiEmailRate">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Avg Drop Step</div><div class="kpi-val" id="kpiDropStep">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Women / Men</div><div class="kpi-val" id="kpiBranch">—</div></div>
+    </div>
+
+    <!-- Branch split -->
+    <div class="split-row">
+      <div class="split-card">
+        <div class="split-emoji">♀️</div>
+        <div class="split-label">Women path</div>
+        <div class="split-val" id="splitWomen">—</div>
+      </div>
+      <div class="split-card">
+        <div class="split-emoji">♂️</div>
+        <div class="split-label">Men path</div>
+        <div class="split-val" id="splitMen">—</div>
+      </div>
+      <div class="split-card">
+        <div class="split-emoji">📧</div>
+        <div class="split-label">Emails submitted</div>
+        <div class="split-val" id="splitEmails">—</div>
+      </div>
+    </div>
+
+    <!-- Funnel -->
+    <div class="card">
+      <div class="card-title">Drop-off funnel — steps</div>
+      <div class="funnel" id="funnelWrap"><div class="loading">Loading…</div></div>
+    </div>
+
+    <!-- Top answers per question -->
+    <div class="card">
+      <div class="card-title">Answers by question</div>
+      <div class="q-tabs" id="qTabs"></div>
+      <table class="ans-table" id="ansTable">
+        <thead><tr><th>Question</th><th>Answer</th><th>Picks</th></tr></thead>
+        <tbody id="ansTbody"><tr><td colspan="3" style="text-align:center;padding:1rem;color:rgba(255,255,255,0.2);">Select a question above</td></tr></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  var SB_URL = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
+  var SB_KEY = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
+  var DASH_PWD = 'hushlore2026';
+  var allData = [];
+
+  /* ─── LOGIN ─── */
+  document.getElementById('pwdInp').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') checkLogin();
+  });
+
+  function checkLogin() {
+    var v = document.getElementById('pwdInp').value;
+    if (v === DASH_PWD) {
+      document.getElementById('loginWrap').style.display = 'none';
+      document.getElementById('dashWrap').style.display = 'block';
+      loadData();
+    } else {
+      document.getElementById('loginErr').textContent = 'Wrong password.';
+    }
+  }
+
+  /* ─── FETCH DATA ─── */
+  function loadData() {
+    fetch(SB_URL + '?order=created_at.asc&limit=10000', {
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      allData = data;
+      document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+      renderDash(data);
+    })
+    .catch(function() {
+      document.getElementById('lastUpdated').textContent = 'Failed to load';
+    });
+  }
+
+  /* ─── RENDER ─── */
+  function renderDash(data) {
+    // Filter out test events
+    data = data.filter(function(e) { return e.session_id !== 'test'; });
+
+    // Unique sessions
+    var sessions = {};
+    data.forEach(function(e) { if (!sessions[e.session_id]) sessions[e.session_id] = []; sessions[e.session_id].push(e); });
+    var sessionIds = Object.keys(sessions);
+
+    // KPIs
+    var starts = data.filter(function(e) { return e.event === 'quiz_start'; }).length;
+    var emailSubmits = data.filter(function(e) { return e.event === 'email_submit'; }).length;
+    var emailRate = starts > 0 ? Math.round(emailSubmits / starts * 100) : 0;
+
+    // Branch counts (from answer events where branch is set)
+    var branchEvents = data.filter(function(e) { return e.branch !== null && e.event === 'answer'; });
+    var womenCount = branchEvents.filter(function(e) { return e.branch === 'women'; }).length;
+    var menCount   = branchEvents.filter(function(e) { return e.branch === 'men'; }).length;
+    var womenSess  = countUniqueSessions(data.filter(function(e) { return e.branch === 'women'; }));
+    var menSess    = countUniqueSessions(data.filter(function(e) { return e.branch === 'men'; }));
+
+    // Avg drop step
+    var maxStepPerSession = sessionIds.map(function(sid) {
+      var steps = sessions[sid].filter(function(e) { return e.step !== null; }).map(function(e) { return e.step; });
+      return steps.length > 0 ? Math.max.apply(null, steps) : 0;
+    });
+    var avgDrop = maxStepPerSession.length > 0 ? Math.round(maxStepPerSession.reduce(function(a,b){return a+b;},0) / maxStepPerSession.length) : 0;
+
+    document.getElementById('kpiStarts').textContent = starts;
+    document.getElementById('kpiEmails').textContent = emailSubmits;
+    document.getElementById('kpiEmailRate').textContent = emailRate + '%';
+    document.getElementById('kpiDropStep').textContent = 'Step ' + avgDrop;
+    document.getElementById('kpiBranch').textContent = womenSess + ' / ' + menSess;
+
+    document.getElementById('splitWomen').textContent = womenSess;
+    document.getElementById('splitMen').textContent = menSess;
+    document.getElementById('splitEmails').textContent = emailSubmits;
+
+    // Funnel
+    renderFunnel(data, starts);
+
+    // Answer tabs
+    renderAnswerTabs(data);
+  }
+
+  function countUniqueSessions(events) {
+    var s = {};
+    events.forEach(function(e) { s[e.session_id] = 1; });
+    return Object.keys(s).length;
+  }
+
+  function renderFunnel(data, starts) {
+    var stepViews = {};
+    data.filter(function(e) { return e.event === 'step_view' || e.event === 'quiz_start'; }).forEach(function(e) {
+      var s = e.step || 0;
+      if (!stepViews[s]) stepViews[s] = new Set();
+      stepViews[s].add(e.session_id);
+    });
+
+    var stepLabels = {
+      0: 'Splash / Start',
+      1: 'Q1 — Age',
+      2: 'Q2 — Attraction',
+      3: 'Q3 — Mood',
+      4: 'Q4 — Voice',
+      5: 'Q5 — Character',
+      6: 'Q6 — Pulse',
+      7: 'Q7 — Setting',
+      8: 'Q8 — Dynamic',
+      9: 'Q9 — Touch',
+      10: 'Q10 — Fantasies',
+      11: 'Loading',
+      12: 'Email step'
+    };
+
+    var maxStep = Math.max.apply(null, Object.keys(stepViews).map(Number).concat([0]));
+    var html = '';
+    var firstCount = starts || 1;
+
+    for (var s = 0; s <= Math.max(maxStep, 5); s++) {
+      var count = stepViews[s] ? stepViews[s].size : 0;
+      var pct = firstCount > 0 ? Math.round(count / firstCount * 100) : 0;
+      var label = stepLabels[s] || 'Step ' + s;
+      html += '<div class="funnel-row">' +
+        '<span class="funnel-label">' + label + '</span>' +
+        '<div class="funnel-bar-wrap"><div class="funnel-bar" style="width:' + pct + '%"></div></div>' +
+        '<span class="funnel-count">' + count + '</span>' +
+        '<span class="funnel-pct">' + pct + '%</span>' +
+        '</div>';
+    }
+    document.getElementById('funnelWrap').innerHTML = html || '<div class="loading">No data yet</div>';
+  }
+
+  function renderAnswerTabs(data) {
+    var answerEvents = data.filter(function(e) { return e.event === 'answer' && e.question_id; });
+    var questions = {};
+    answerEvents.forEach(function(e) {
+      if (!questions[e.question_id]) questions[e.question_id] = {};
+      var key = e.answer_text || 'unknown';
+      questions[e.question_id][key] = (questions[e.question_id][key] || 0) + 1;
+    });
+
+    var qIds = Object.keys(questions).sort();
+    var tabsHtml = qIds.map(function(qid, i) {
+      return '<button class="q-tab' + (i === 0 ? ' active' : '') + '" onclick="showQ(\'' + qid + '\', this)">' + qid + '</button>';
+    }).join('');
+    document.getElementById('qTabs').innerHTML = tabsHtml || '<span style="font-size:0.75rem;color:rgba(255,255,255,0.25)">No answers yet</span>';
+
+    window._questionData = questions;
+    if (qIds.length > 0) showQ(qIds[0], document.querySelector('.q-tab'));
+  }
+
+  function showQ(qid, btn) {
+    document.querySelectorAll('.q-tab').forEach(function(t) { t.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+
+    var answers = window._questionData[qid] || {};
+    var entries = Object.entries(answers).sort(function(a,b) { return b[1]-a[1]; });
+    var maxVal = entries.length > 0 ? entries[0][1] : 1;
+
+    var rows = entries.map(function(entry) {
+      var pct = Math.round(entry[1] / maxVal * 100);
+      return '<tr><td>' + qid + '</td><td>' + entry[0] + '<span class="ans-bar-wrap"><span class="ans-bar" style="width:' + pct + '%"></span></span></td><td><span class="ans-count">' + entry[1] + '</span></td></tr>';
+    }).join('');
+
+    document.getElementById('ansTbody').innerHTML = rows || '<tr><td colspan="3" style="text-align:center;padding:1rem;color:rgba(255,255,255,0.2);">No answers for this question</td></tr>';
+  }
+</script>
+</body>
+</html>

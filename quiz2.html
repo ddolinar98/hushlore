@@ -841,6 +841,28 @@ var TESTIMONIALS = [
 ];
 
 /* ════════════════════════════════════════
+   ANALYTICS — Supabase
+════════════════════════════════════════ */
+var SB_URL  = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
+var SB_KEY  = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
+var SESSION_ID = (function() {
+  try {
+    var s = sessionStorage.getItem('hl_sid');
+    if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hl_sid', s); }
+    return s;
+  } catch(e) { return Math.random().toString(36).slice(2); }
+})();
+
+function track(event, extras) {
+  var payload = Object.assign({ session_id: SESSION_ID, event: event, branch: branch || null }, extras || {});
+  fetch(SB_URL, {
+    method: 'POST',
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+    body: JSON.stringify(payload)
+  }).catch(function() {});
+}
+
+/* ════════════════════════════════════════
    STEP LOGIC
 ════════════════════════════════════════ */
 function branchArr() { return branch === 'men' ? MEN : WOMEN; }
@@ -859,7 +881,7 @@ function getStep(s) {
 }
 
 function goNext() {
-  if (step < emailStep()) { step++; render(); }
+  if (step < emailStep()) { step++; render(); track('step_view', { step: step }); }
 }
 
 function goBack() {
@@ -972,6 +994,7 @@ function pick(el, idx, multi) {
     if (data.branch) { branch = data.opts[idx].v; }
     document.querySelectorAll('.opt').forEach(function(o) { o.classList.remove('sel'); });
     el.classList.add('sel');
+    track('answer', { step: step, question_id: data.id, answer_text: data.opts[idx].t });
     setTimeout(goNext, 200);
   }
 }
@@ -1199,6 +1222,7 @@ function submitEmail() {
     return;
   }
   if (typeof fbq !== 'undefined') fbq('track', 'Lead', { content_name: 'Hushlore Quiz2 Email', currency: 'USD', value: 32.99 });
+  track('email_submit', { step: emailStep() });
   // Calculate match based on key answers
   function calcMatch() {
     if (branch === 'men') {
@@ -1240,6 +1264,7 @@ function submitEmail() {
    INIT
 ════════════════════════════════════════ */
 render();
+track('quiz_start', { step: 0 });
 </script>
 </body>
 </html>
