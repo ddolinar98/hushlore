@@ -146,6 +146,12 @@
       <div class="funnel" id="funnelWrap"><div class="loading">Loading…</div></div>
     </div>
 
+    <!-- Countries -->
+    <div class="card">
+      <div class="card-title">Starts by country</div>
+      <div id="countryWrap"><div class="loading">Loading…</div></div>
+    </div>
+
     <!-- Top answers per question -->
     <div class="card">
       <div class="card-title">Answers by question</div>
@@ -239,6 +245,9 @@
     // Funnel
     renderFunnel(data, starts);
 
+    // Countries
+    renderCountries(data);
+
     // Answer tabs
     renderAnswerTabs(data);
   }
@@ -300,6 +309,30 @@
         '</div>';
     }
     document.getElementById('funnelWrap').innerHTML = html || '<div class="loading">No data yet</div>';
+  }
+
+  function renderCountries(data) {
+    var starts = data.filter(function(e) { return e.event === 'quiz_start' && e.country; });
+    var counts = {};
+    starts.forEach(function(e) {
+      counts[e.country] = (counts[e.country] || 0) + 1;
+    });
+    var entries = Object.entries(counts).sort(function(a,b) { return b[1]-a[1]; });
+    if (entries.length === 0) {
+      document.getElementById('countryWrap').innerHTML = '<div style="font-size:0.8rem;color:rgba(255,255,255,0.25);padding:0.5rem 0;">No country data yet</div>';
+      return;
+    }
+    var maxVal = entries[0][1];
+    var html = '<div class="funnel">' + entries.map(function(e) {
+      var pct = Math.round(e[1] / maxVal * 100);
+      return '<div class="funnel-row">' +
+        '<span class="funnel-label">' + e[0] + '</span>' +
+        '<div class="funnel-bar-wrap"><div class="funnel-bar" style="width:' + pct + '%"></div></div>' +
+        '<span class="funnel-count">' + e[1] + '</span>' +
+        '<span class="funnel-pct">' + Math.round(e[1]/starts.length*100) + '%</span>' +
+        '</div>';
+    }).join('') + '</div>';
+    document.getElementById('countryWrap').innerHTML = html;
   }
 
   function renderAnswerTabs(data) {

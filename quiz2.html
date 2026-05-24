@@ -852,9 +852,16 @@ var SESSION_ID = (function() {
     return s;
   } catch(e) { return Math.random().toString(36).slice(2); }
 })();
+var USER_COUNTRY = null;
+
+// Detect country on load
+fetch('https://ipapi.co/json/')
+  .then(function(r) { return r.json(); })
+  .then(function(d) { USER_COUNTRY = d.country_name || d.country || null; })
+  .catch(function() {});
 
 function track(event, extras) {
-  var payload = Object.assign({ session_id: SESSION_ID, event: event, branch: branch || null }, extras || {});
+  var payload = Object.assign({ session_id: SESSION_ID, event: event, branch: branch || null, country: USER_COUNTRY }, extras || {});
   fetch(SB_URL, {
     method: 'POST',
     headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
