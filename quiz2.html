@@ -1002,6 +1002,8 @@ function pick(el, idx, multi) {
 function contMulti() {
   var data = getStep(step);
   if (!answers[data.id] || answers[data.id].length === 0) return;
+  var selectedTexts = answers[data.id].map(function(idx) { return data.opts[idx].t; }).join(', ');
+  track('answer', { step: step, question_id: data.id, answer_text: selectedTexts });
   goNext();
 }
 
