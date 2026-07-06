@@ -20,8 +20,11 @@
   document,'script','https://connect.facebook.net/en_US/fbevents.js');
   fbq('init', '1813144372979449');
   fbq('track', 'PageView');
-  fbq('track', 'Purchase', { value: 32.99, currency: 'USD' });
-  </script>
+  // Purchase value = the plan the buyer actually selected (stored by result/checkout)
+  var hlPrice = 32.99;
+  try { var _p = parseFloat(localStorage.getItem('hl_plan_price')); if (_p) hlPrice = _p; } catch (e) {}
+  fbq('track', 'Purchase', { value: hlPrice, currency: 'USD' });
+</script>
   <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1813144372979449&ev=PageView&noscript=1"/></noscript>
 </head>
 <body>
@@ -38,8 +41,11 @@
       <span class="eyebrow">Thank you</span>
       <h1>You're in. <span class="italic">Quiet, please.</span></h1>
       <p class="lead" style="margin: 1.5rem auto 0;">
-        Your audio pack is being prepared. Check your inbox within the next 10 minutes.
+        Your library is unlocked and ready right now. Find somewhere quiet, put your headphones in, and press play.
       </p>
+      <div style="margin: 2rem auto 0;">
+        <a href="library.html" id="libraryBtn" class="btn btn-lg">Open your library →</a>
+      </div>
     </section>
 
     <section class="container">
@@ -49,15 +55,15 @@
         <ul class="result-features" style="text-align: left;">
           <li>
             <span class="check">i.</span>
-            <span><strong>Confirmation email</strong> — arriving shortly. Check spam if you don't see it.</span>
+            <span><strong>Your full library is ready now</strong> — tap “Open your library” above. Bookmark that page so you can come back anytime.</span>
           </li>
           <li>
             <span class="check">ii.</span>
-            <span><strong>Your audio pack link</strong> follows within 10 minutes.</span>
+            <span><strong>Confirmation email</strong> — your receipt is arriving shortly. Check spam if you don't see it.</span>
           </li>
           <li>
             <span class="check">iii.</span>
-            <span><strong>Listen anytime</strong> — lifetime access, on any device.</span>
+            <span><strong>Listen anytime, on any device</strong> — and new stories are added every month, included with your membership.</span>
           </li>
         </ul>
 
@@ -88,6 +94,34 @@
       </div>
     </div>
   </footer>
+
+  <script>
+    /* Analytics — Supabase (same table as quiz2) */
+    const HL_SB_URL = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
+    const HL_SB_KEY = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
+    function hlSid() {
+      try {
+        let s = sessionStorage.getItem('hl_sid');
+        if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hl_sid', s); }
+        return s;
+      } catch (e) { return 'anon-' + Date.now().toString(36); }
+    }
+    (function () {
+      let branch = null, match = null;
+      try {
+        branch = localStorage.getItem('hl_quiz2_branch');
+        match = localStorage.getItem('hushlore_outcome');
+      } catch (e) {}
+      // Point the library button at the buyer's matched outcome
+      const libBtn = document.getElementById('libraryBtn');
+      if (libBtn && match) libBtn.href = 'library.html?match=' + encodeURIComponent(match);
+      fetch(HL_SB_URL, {
+        method: 'POST', keepalive: true,
+        headers: { 'apikey': HL_SB_KEY, 'Authorization': 'Bearer ' + HL_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ session_id: hlSid(), event: 'purchase_complete', branch: branch, answer_text: match })
+      }).catch(function(){});
+    })();
+  </script>
 
 </body>
 </html>

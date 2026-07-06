@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — Your Library</title>
+  <meta name="description" content="Your personalized Hushlore audio collection." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    .lib-wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 120px; }
+
+    .lib-topbar {
+      display: flex; align-items: center; justify-content: center;
+      padding: 34px 24px 10px; position: relative;
+    }
+    .lib-brand {
+      font-family: var(--serif); font-size: 30px; letter-spacing: 0.04em;
+      color: var(--cream); font-weight: 500;
+    }
+    .lib-brand span { color: var(--gold); }
+
+    /* Hero — your match */
+    .lib-hero { text-align: center; padding: 40px 0 8px; }
+    .lib-eyebrow {
+      font-family: var(--sans); font-size: 12px; letter-spacing: 0.32em;
+      text-transform: uppercase; color: var(--gold); font-weight: 600;
+    }
+    .lib-hero h1 {
+      font-family: var(--serif); font-weight: 500;
+      font-size: clamp(38px, 7vw, 64px); line-height: 1.05;
+      color: var(--cream); margin: 14px 0 8px;
+    }
+    .lib-descriptor {
+      font-family: var(--sans); font-size: 13px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .lib-lead {
+      font-family: var(--serif); font-style: italic;
+      font-size: clamp(18px, 3vw, 22px); color: #cbb3c2;
+      max-width: 620px; margin: 20px auto 0; line-height: 1.5;
+    }
+
+    .lib-section-head {
+      display: flex; align-items: baseline; gap: 14px;
+      margin: 72px 0 6px; padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .lib-section-head.sub { margin-top: 52px; border-bottom: none; padding-bottom: 4px; }
+    .lib-section-head h2 {
+      font-family: var(--serif); font-weight: 500;
+      font-size: clamp(26px, 4vw, 36px); color: var(--cream);
+    }
+    .lib-section-head h3 {
+      font-family: var(--serif); font-weight: 500;
+      font-size: clamp(22px, 3.4vw, 28px); color: var(--cream);
+    }
+    .lib-section-head .tag {
+      font-family: var(--sans); font-size: 11px; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--muted);
+    }
+
+    .story-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 18px; margin-top: 24px; align-items: start;
+    }
+    @media (max-width: 680px) { .story-grid { grid-template-columns: 1fr; } }
+
+    .story-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px 22px 18px;
+      display: flex; flex-direction: column; gap: 12px; overflow: visible;
+      width: 100%; min-width: 0; box-sizing: border-box;
+      transition: border-color 0.25s ease, transform 0.25s ease;
+    }
+    .story-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+
+    .story-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .voice-tag {
+      font-family: var(--sans); font-size: 10px; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--gold);
+      border: 1px solid var(--border-strong); border-radius: 40px;
+      padding: 4px 11px; white-space: nowrap;
+    }
+    .story-len { font-family: var(--sans); font-size: 11px; color: var(--muted); letter-spacing: 0.06em; }
+
+    .story-card h4 {
+      font-family: var(--serif); font-weight: 500;
+      font-size: 24px; line-height: 1.15; color: var(--cream); margin: 0;
+    }
+    .story-blurb {
+      font-family: var(--sans); font-size: 13.5px; line-height: 1.55;
+      color: #a98ea3; margin: 0;
+    }
+    .story-card audio {
+      width: 100%; margin-top: 8px; min-height: 40px;
+    }
+
+    .lib-hero-grid .story-card { background: var(--bg-elevated); border-color: var(--border-strong); }
+
+    .lib-note {
+      text-align: center; font-family: var(--sans); font-size: 13px;
+      color: var(--muted); margin-top: 90px; line-height: 1.7;
+    }
+    .lib-note a { color: var(--gold); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="lib-topbar">
+    <div class="lib-brand">Hush<span>lore</span></div>
+  </div>
+
+  <div class="lib-wrap">
+
+    <!-- YOUR MATCH -->
+    <section class="lib-hero">
+      <div class="lib-eyebrow">Your match</div>
+      <h1 id="matchTitle"></h1>
+      <div class="lib-descriptor" id="matchDescriptor"></div>
+      <p class="lib-lead" id="matchLead"></p>
+    </section>
+
+    <div class="lib-section-head sub">
+      <h3>Start here — made for you</h3>
+      <span class="tag">4 stories</span>
+    </div>
+    <div class="story-grid lib-hero-grid" id="matchGrid"></div>
+
+    <!-- FULL LIBRARY -->
+    <div class="lib-section-head">
+      <h2>The full Hushlore library</h2>
+      <span class="tag">everything, included</span>
+    </div>
+    <div id="fullLibrary"></div>
+
+    <p class="lib-note">
+      New stories are added every month — your membership always includes the latest.<br />
+      Questions about your membership? <a href="mailto:hello@hushlorewhisper.com">hello@hushlorewhisper.com</a>
+    </p>
+  </div>
+
+  <script>
+    /* ====================================
+       Config
+       ==================================== */
+    // Where the MP3s live (Cloudflare R2 custom domain). Change here if it ever moves.
+    const AUDIO_BASE = 'https://audio.hushlorewhisper.com';
+
+    /* ====================================
+       Outcomes (same keys/copy as result.html)
+       ==================================== */
+    const outcomes = {
+      'slow-devotion':       { title: 'Slow Devotion',       descriptor: 'Tender · Adoring · Held',      lead: 'You crave being cherished. Soft voices, long looks, the ache of being truly seen.' },
+      'forbidden-whispers':  { title: 'Forbidden Whispers',  descriptor: 'Secret · Charged · Inevitable', lead: "You're drawn to what shouldn't happen. Closed doors. Glances that linger one beat too long." },
+      'commanding-embrace':  { title: 'Commanding Embrace',  descriptor: 'Dominant · Possessive · Sure',  lead: 'You want a voice that doesn\'t ask twice. "Mine." The word lands and you feel it everywhere.' },
+      'best-friends-untold': { title: 'Best Friends Untold', descriptor: 'Tender · Playful · Inevitable',  lead: 'Years of restraint. One night that changes everything. Soft, playful — then breathtaking.' },
+      'enemys-confession':   { title: "Enemy's Confession",  descriptor: 'Charged · Tense · Honest',      lead: 'Every argument was a touch in disguise. The moment the mask drops, you stop breathing.' },
+      'midnight-surrender':  { title: 'Midnight Surrender',  descriptor: 'Pure · Indulgent · Yours',      lead: 'No story. Just sensation. A voice in the dark, attending to nothing but you.' }
+    };
+
+    const orderedKeys = ['slow-devotion','forbidden-whispers','commanding-embrace','best-friends-untold','enemys-confession','midnight-surrender'];
+
+    /* ====================================
+       Stories (24) — id maps to <id>.mp3 in R2
+       ==================================== */
+    const stories = {
+      'slow-devotion': [
+        { id: 'slow-devotion-01', voice: 'Brian', len: '12 min', title: 'The Way You Deserve',     blurb: 'In your own bed, unhurried — a voice that asks nothing but to cherish you.' },
+        { id: 'slow-devotion-02', voice: 'Brian', len: '10 min', title: 'Let Me Take Care of You',  blurb: 'A bath he ran for you. Candlelight, warm water, and hands that only give.' },
+        { id: 'slow-devotion-03', voice: 'Brian', len: '10 min', title: 'Rain and Nowhere to Be',   blurb: 'A slow rainy Sunday, tangled in the sheets, the whole day yours.' },
+        { id: 'slow-devotion-04', voice: 'Brian', len: '11 min', title: 'Warm Through the Storm',   blurb: 'Snow at the window, a fire, a blanket — and nowhere either of you has to be.' }
+      ],
+      'forbidden-whispers': [
+        { id: 'forbidden-whispers-01', voice: 'Brian', len: '10 min', title: 'The Door We Locked',        blurb: 'A borrowed room, stolen hours, and a lock that finally clicks.' },
+        { id: 'forbidden-whispers-02', voice: 'Brian', len: '10 min', title: 'Two Floors Up',             blurb: 'A dark study while the party carries on beneath you. Stay quiet.' },
+        { id: 'forbidden-whispers-03', voice: 'Brian', len: '10 min', title: 'The Room Next Door',        blurb: 'His hotel room on a work trip. The conference can wait until morning.' },
+        { id: 'forbidden-whispers-04', voice: 'Brian', len: '11 min', title: 'Before the Next Song Ends', blurb: 'The coat room at a wedding, the band still playing through the wall.' }
+      ],
+      'commanding-embrace': [
+        { id: 'commanding-embrace-01', voice: 'Adam', len: '10 min', title: "Say It's Mine",             blurb: 'Low light, and a voice that decides. One word, and you feel it everywhere.' },
+        { id: 'commanding-embrace-02', voice: 'Adam', len: '11 min', title: 'On My Time',                blurb: "He's been waiting behind the door. The second you walk in, you're his." },
+        { id: 'commanding-embrace-03', voice: 'Adam', len: '11 min', title: 'I Told You to Wait',        blurb: 'A dark bedroom, and the reward for doing exactly as you were told.' },
+        { id: 'commanding-embrace-04', voice: 'Adam', len: '12 min', title: "You've Been Waiting All Day", blurb: 'He teased you since noon. Now you\'re home, and he\'s in no hurry.' }
+      ],
+      'best-friends-untold': [
+        { id: 'best-friends-untold-01', voice: 'Brian', len: '11 min', title: 'After All This Time',   blurb: 'His couch, late, the movie long forgotten. The line finally crossed.' },
+        { id: 'best-friends-untold-02', voice: 'Brian', len: '10 min', title: 'Only One Bed',          blurb: 'A cabin, a trip, one bed — and two people done pretending to sleep.' },
+        { id: 'best-friends-untold-03', voice: 'Brian', len: '10 min', title: "Don't Make Me Go",       blurb: 'Her doorway after a night out. Neither of you says goodnight.' },
+        { id: 'best-friends-untold-04', voice: 'Brian', len: '11 min', title: 'The Last Ones Awake',    blurb: 'His kitchen at 2am, everyone gone home, the tension finally snapping.' }
+      ],
+      'enemys-confession': [
+        { id: 'enemys-confession-01', voice: 'Adam', len: '12 min', title: 'Every Argument Was This', blurb: 'An empty office after hours, and one last fight that turns to something else.' },
+        { id: 'enemys-confession-02', voice: 'Adam', len: '10 min', title: 'Snowed In With You',      blurb: 'Stranded by a storm. One cabin, one fire, and all night to stop pretending.' },
+        { id: 'enemys-confession-03', voice: 'Adam', len: '10 min', title: 'You Came All This Way',   blurb: 'Midnight at his door, where you showed up to finish the argument.' },
+        { id: 'enemys-confession-04', voice: 'Adam', len: '11 min', title: 'Say You Hate Me Again',   blurb: 'A rooftop after the launch party, where you sparred all night.' }
+      ],
+      'midnight-surrender': [
+        { id: 'midnight-surrender-f-01', voice: 'Lily',  len: '11 min', title: 'Who Runs the Night',   blurb: 'Lights off. Her voice, and a night that belongs to no one but you.' },
+        { id: 'midnight-surrender-02',   voice: 'Brian', len: '10 min', title: 'Nothing But This',     blurb: 'No story. No scene. Just sensation, and a voice attending to you.' },
+        { id: 'midnight-surrender-03',   voice: 'Adam',  len: '10 min', title: 'Just Do As I Say',     blurb: 'Lights off, and a voice that gives the orders. You only have to obey.' },
+        { id: 'midnight-surrender-f-02', voice: 'Lily',  len: '13 min', title: 'Let Me Lead Tonight',  blurb: 'Her voice in the dark, and nothing to do but let her lead you all the way.' }
+      ]
+    };
+
+    /* ====================================
+       Which outcome is this listener?
+       ==================================== */
+    function getOutcome() {
+      const p = new URLSearchParams(window.location.search);
+      const m = p.get('match');
+      if (m && outcomes[m]) return m;
+      try { const s = localStorage.getItem('hushlore_outcome'); if (s && outcomes[s]) return s; } catch (_) {}
+      return 'slow-devotion';
+    }
+    const key = getOutcome();
+    try { localStorage.setItem('hushlore_outcome', key); } catch (_) {}
+
+    /* ====================================
+       Analytics — same Supabase table as quiz2/result
+       ==================================== */
+    const HL_SB_URL = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
+    const HL_SB_KEY = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
+    function hlSid() {
+      try {
+        let s = sessionStorage.getItem('hl_sid');
+        if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hl_sid', s); }
+        return s;
+      } catch (e) { return 'anon-' + Date.now().toString(36); }
+    }
+    function hlTrack(event, extras) {
+      let branch = null;
+      try { branch = localStorage.getItem('hl_quiz2_branch'); } catch (e) {}
+      const payload = Object.assign({ session_id: hlSid(), event: event, branch: branch }, extras || {});
+      fetch(HL_SB_URL, {
+        method: 'POST', keepalive: true,
+        headers: { 'apikey': HL_SB_KEY, 'Authorization': 'Bearer ' + HL_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(payload)
+      }).catch(function(){});
+    }
+    hlTrack('library_view', { answer_text: key });
+
+    /* ====================================
+       Render
+       ==================================== */
+    function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+    function cardHTML(s) {
+      return '' +
+        '<article class="story-card">' +
+          '<div class="story-top">' +
+            '<span class="voice-tag">' + esc(s.voice) + '</span>' +
+            '<span class="story-len">' + esc(s.len) + '</span>' +
+          '</div>' +
+          '<h4>' + esc(s.title) + '</h4>' +
+          '<p class="story-blurb">' + esc(s.blurb) + '</p>' +
+          '<audio controls preload="none" data-id="' + esc(s.id) + '" src="' + AUDIO_BASE + '/' + esc(s.id) + '.mp3"></audio>' +
+        '</article>';
+    }
+
+    // Hero — matched outcome
+    const oc = outcomes[key];
+    document.getElementById('matchTitle').textContent = oc.title;
+    document.getElementById('matchDescriptor').textContent = oc.descriptor;
+    document.getElementById('matchLead').textContent = oc.lead;
+    document.getElementById('matchGrid').innerHTML = stories[key].map(cardHTML).join('');
+
+    // Full library — every outcome except the matched one (already featured above)
+    const full = document.getElementById('fullLibrary');
+    orderedKeys.filter(k => k !== key).forEach(k => {
+      const o = outcomes[k];
+      const head = '' +
+        '<div class="lib-section-head sub">' +
+          '<h3>' + esc(o.title) + '</h3>' +
+          '<span class="tag">' + esc(o.descriptor) + '</span>' +
+        '</div>';
+      const grid = '<div class="story-grid">' + stories[k].map(cardHTML).join('') + '</div>';
+      full.insertAdjacentHTML('beforeend', head + grid);
+    });
+
+    // Track first play per story
+    const played = {};
+    document.addEventListener('play', function (e) {
+      const el = e.target;
+      if (el && el.tagName === 'AUDIO' && el.dataset.id && !played[el.dataset.id]) {
+        played[el.dataset.id] = true;
+        hlTrack('story_play', { answer_text: el.dataset.id });
+      }
+    }, true);
+  </script>
+</body>
+</html>
