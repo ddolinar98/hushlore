@@ -9,289 +9,356 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 
   <style>
-    .lib-wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 120px; }
+    body { background: var(--bg); }
+    .lib-page { max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 100px; }
 
-    .lib-topbar {
-      display: flex; align-items: center; justify-content: center;
-      padding: 34px 24px 10px; position: relative;
-    }
-    .lib-brand {
-      font-family: var(--serif); font-size: 30px; letter-spacing: 0.04em;
-      color: var(--cream); font-weight: 500;
-    }
-    .lib-brand span { color: var(--gold); }
+    /* top nav */
+    .lib-nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0 10px; }
+    .lib-logo { font-family: var(--serif); font-size: 26px; letter-spacing: 0.04em; color: var(--cream); font-weight: 500; }
+    .lib-logo span { color: var(--gold); }
+    .lib-navlinks { display: flex; align-items: center; gap: 26px; }
+    .lib-navlinks a { font-family: var(--sans); font-size: 15px; color: #c1a7b8; text-decoration: none; font-weight: 500; }
+    .lib-navlinks a.active { color: var(--cream); border-bottom: 2px solid var(--gold); padding-bottom: 3px; }
+    .lib-navlinks a:hover { color: var(--cream); }
 
-    /* Hero — your match */
-    .lib-hero { text-align: center; padding: 40px 0 8px; }
-    .lib-eyebrow {
-      font-family: var(--sans); font-size: 12px; letter-spacing: 0.32em;
-      text-transform: uppercase; color: var(--gold); font-weight: 600;
-    }
-    .lib-hero h1 {
-      font-family: var(--serif); font-weight: 500;
-      font-size: clamp(38px, 7vw, 64px); line-height: 1.05;
-      color: var(--cream); margin: 14px 0 8px;
-    }
-    .lib-descriptor {
-      font-family: var(--sans); font-size: 13px; letter-spacing: 0.14em;
-      text-transform: uppercase; color: var(--muted);
-    }
-    .lib-lead {
-      font-family: var(--serif); font-style: italic;
-      font-size: clamp(18px, 3vw, 22px); color: #cbb3c2;
-      max-width: 620px; margin: 20px auto 0; line-height: 1.5;
-    }
+    /* welcome strip */
+    .lib-welcome { margin: 18px 0 6px; }
+    .lib-welcome .eyebrow { font-family: var(--sans); font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+    .lib-welcome h1 { font-family: var(--serif); font-weight: 500; font-size: clamp(30px, 5vw, 48px); color: var(--cream); margin-top: 6px; line-height: 1.05; }
+    .lib-welcome p { font-family: var(--sans); font-size: 15px; color: #a98ea3; margin-top: 8px; max-width: 560px; }
 
-    .lib-section-head {
-      display: flex; align-items: baseline; gap: 14px;
-      margin: 72px 0 6px; padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .lib-section-head.sub { margin-top: 52px; border-bottom: none; padding-bottom: 4px; }
-    .lib-section-head h2 {
-      font-family: var(--serif); font-weight: 500;
-      font-size: clamp(26px, 4vw, 36px); color: var(--cream);
-    }
-    .lib-section-head h3 {
-      font-family: var(--serif); font-weight: 500;
-      font-size: clamp(22px, 3.4vw, 28px); color: var(--cream);
-    }
-    .lib-section-head .tag {
-      font-family: var(--sans); font-size: 11px; letter-spacing: 0.18em;
-      text-transform: uppercase; color: var(--muted);
-    }
+    /* search + filters */
+    .lib-search { margin: 26px 0 6px; display: grid; gap: 14px; }
+    .lib-search-row { display: flex; gap: 12px; }
+    .lib-search-input { flex: 1 1 auto; position: relative; }
+    .lib-search-input input { width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 15px 16px 15px 44px; color: var(--cream); font-family: var(--sans); font-size: 15px; }
+    .lib-search-input input::placeholder { color: #7a6075; }
+    .lib-search-input::before { content: '🔍'; position: absolute; left: 15px; top: 50%; transform: translateY(-50%); opacity: .6; font-size: 14px; }
+    .lib-search-btn { background: #d21f3c; color: #fff; border: none; border-radius: 8px; padding: 0 26px; font-family: var(--sans); font-weight: 700; font-size: 15px; cursor: pointer; }
+    .lib-search-btn:hover { background: #e83350; }
+    .lib-filters { display: flex; gap: 12px; flex-wrap: wrap; }
+    .lib-filter { flex: 1 1 200px; }
+    .lib-filter label { display: block; font-family: var(--sans); font-size: 12px; color: #a98ea3; margin-bottom: 6px; }
+    .lib-filter select { width: 100%; box-sizing: border-box; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 13px 14px; color: var(--cream); font-family: var(--sans); font-size: 15px; appearance: none; cursor: pointer; }
 
-    .story-grid {
-      display: grid; grid-template-columns: repeat(2, 1fr);
-      gap: 18px; margin-top: 24px; align-items: start;
-    }
-    @media (max-width: 680px) { .story-grid { grid-template-columns: 1fr; } }
+    /* rows */
+    .lib-row { margin-top: 40px; }
+    .lib-row-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .lib-row-head h2 { font-family: var(--serif); font-weight: 500; font-size: clamp(20px, 3vw, 27px); color: var(--cream); }
+    .lib-row-head .heart { color: var(--gold); font-size: 18px; }
+    .lib-row-head .sub { font-family: var(--sans); font-size: 12px; color: var(--muted); letter-spacing: .04em; margin-left: 4px; }
+    .lib-track { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+    .lib-track::-webkit-scrollbar { height: 8px; }
+    .lib-track::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
 
-    .story-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 22px 22px 18px;
-      display: flex; flex-direction: column; gap: 12px; overflow: visible;
-      width: 100%; min-width: 0; box-sizing: border-box;
-      transition: border-color 0.25s ease, transform 0.25s ease;
-    }
-    .story-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+    /* card */
+    .card { flex: 0 0 auto; width: 260px; scroll-snap-align: start; cursor: pointer; }
+    @media (max-width: 560px) { .card { width: 220px; } }
+    .card-thumb { position: relative; width: 100%; aspect-ratio: 4/5; border-radius: 10px; overflow: hidden;
+      background-size: cover; background-position: center; background-color: var(--bg-elevated); }
+    .card-thumb::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,6,8,0) 40%, rgba(8,6,8,0.9) 100%); }
+    .card:hover .card-thumb { outline: 2px solid var(--border-strong); }
+    .card-heat { position: absolute; top: 10px; right: 10px; z-index: 2; background: rgba(8,6,8,0.7); border-radius: 20px; padding: 4px 9px; font-size: 12px; letter-spacing: 1px; }
+    .card-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 2;
+      width: 54px; height: 54px; border-radius: 50%; background: rgba(210,31,60,0.92); display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4); transition: transform .15s ease; }
+    .card:hover .card-play { transform: translate(-50%,-50%) scale(1.08); }
+    .card-play svg { width: 22px; height: 22px; margin-left: 3px; fill: #fff; }
+    .card-meta { position: absolute; left: 12px; right: 12px; bottom: 10px; z-index: 2; }
+    .card-title { font-family: var(--serif); font-weight: 600; font-size: 19px; color: #fff; line-height: 1.12;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-sub { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+    .card-dur { font-family: var(--sans); font-size: 12px; color: #e7d4e0; }
+    .card-views { font-family: var(--sans); font-size: 12px; color: #c1a7b8; }
+    .card-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .card-tag { font-family: var(--sans); font-size: 10.5px; letter-spacing: .04em; color: #d8c2cf;
+      background: rgba(107,16,48,0.35); border: 1px solid var(--border); border-radius: 20px; padding: 3px 9px; white-space: nowrap; }
+    .card-heart { position: absolute; bottom: 12px; right: 12px; z-index: 3; color: #e7d4e0; font-size: 18px; cursor: pointer; opacity: .85; }
+    .card-heart.on { color: var(--gold-bright); }
 
-    .story-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .voice-tag {
-      font-family: var(--sans); font-size: 10px; letter-spacing: 0.16em;
-      text-transform: uppercase; color: var(--gold);
-      border: 1px solid var(--border-strong); border-radius: 40px;
-      padding: 4px 11px; white-space: nowrap;
-    }
-    .story-len { font-family: var(--sans); font-size: 11px; color: var(--muted); letter-spacing: 0.06em; }
+    /* results (search) */
+    #resultsSection { margin-top: 32px; }
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; margin-top: 16px; }
+    .results-grid .card { width: 100%; }
+    .lib-empty { font-family: var(--sans); color: var(--muted); text-align: center; padding: 40px 0; }
+    .hidden { display: none !important; }
 
-    .story-card h4 {
-      font-family: var(--serif); font-weight: 500;
-      font-size: 24px; line-height: 1.15; color: var(--cream); margin: 0;
-    }
-    .story-blurb {
-      font-family: var(--sans); font-size: 13.5px; line-height: 1.55;
-      color: #a98ea3; margin: 0;
-    }
-    .story-card audio {
-      width: 100%; margin-top: 8px; min-height: 40px;
-    }
-
-    .lib-hero-grid .story-card { background: var(--bg-elevated); border-color: var(--border-strong); }
-
-    .lib-note {
-      text-align: center; font-family: var(--sans); font-size: 13px;
-      color: var(--muted); margin-top: 90px; line-height: 1.7;
-    }
-    .lib-note a { color: var(--gold); text-decoration: none; }
+    /* player modal */
+    .player-overlay { position: fixed; inset: 0; z-index: 50; background: rgba(4,3,5,0.82); backdrop-filter: blur(6px);
+      display: none; align-items: center; justify-content: center; padding: 20px; }
+    .player-overlay.open { display: flex; }
+    .player { background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: 16px; width: 100%; max-width: 460px; overflow: hidden; }
+    .player-img { width: 100%; aspect-ratio: 16/10; background-size: cover; background-position: center; position: relative; }
+    .player-img::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,6,8,0) 40%, rgba(23,11,21,0.95) 100%); }
+    .player-body { padding: 20px 24px 26px; }
+    .player-eyebrow { font-family: var(--sans); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); }
+    .player h3 { font-family: var(--serif); font-weight: 600; font-size: 26px; color: var(--cream); margin-top: 4px; line-height: 1.1; }
+    .player-tags { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    .player audio { width: 100%; margin-top: 18px; }
+    .player-close { position: absolute; top: 12px; right: 12px; z-index: 3; width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(8,6,8,0.6); border: none; color: #fff; font-size: 18px; cursor: pointer; }
   </style>
 </head>
 <body>
-  <div class="lib-topbar">
-    <div class="lib-brand">Hush<span>lore</span></div>
+  <div class="lib-page">
+
+    <nav class="lib-nav">
+      <div class="lib-logo">Hush<span>lore</span></div>
+      <div class="lib-navlinks">
+        <a href="library.html" class="active">Stories</a>
+        <a href="account.html" id="accountLink">Account</a>
+      </div>
+    </nav>
+
+    <div class="lib-welcome">
+      <div class="eyebrow">Your library</div>
+      <h1 id="welcomeTitle">Welcome back</h1>
+      <p id="welcomeSub"></p>
+    </div>
+
+    <!-- search + filters -->
+    <div class="lib-search">
+      <div class="lib-search-row">
+        <div class="lib-search-input"><input id="searchInput" type="text" placeholder="Search by title, mood or tag…" /></div>
+        <button class="lib-search-btn" id="searchBtn">Search</button>
+      </div>
+      <div class="lib-filters">
+        <div class="lib-filter"><label>Category</label><select id="filterCategory"></select></div>
+        <div class="lib-filter"><label>Voice</label><select id="filterVoice"></select></div>
+      </div>
+    </div>
+
+    <!-- search results (hidden until searching) -->
+    <div id="resultsSection" class="hidden">
+      <div class="lib-row-head"><h2 id="resultsTitle">Results</h2><a href="#" id="clearSearch" class="sub" style="color:var(--gold);text-decoration:none;margin-left:auto;">clear ✕</a></div>
+      <div class="results-grid" id="resultsGrid"></div>
+      <div class="lib-empty hidden" id="resultsEmpty">No stories match that. Try another word or clear the search.</div>
+    </div>
+
+    <!-- browse rows -->
+    <div id="rows"></div>
   </div>
 
-  <div class="lib-wrap">
-
-    <!-- YOUR MATCH -->
-    <section class="lib-hero">
-      <div class="lib-eyebrow">Your match</div>
-      <h1 id="matchTitle"></h1>
-      <div class="lib-descriptor" id="matchDescriptor"></div>
-      <p class="lib-lead" id="matchLead"></p>
-    </section>
-
-    <div class="lib-section-head sub">
-      <h3>Start here — made for you</h3>
-      <span class="tag">4 stories</span>
+  <!-- player modal -->
+  <div class="player-overlay" id="playerOverlay">
+    <div class="player">
+      <div class="player-img" id="playerImg"><button class="player-close" id="playerClose">✕</button></div>
+      <div class="player-body">
+        <div class="player-eyebrow" id="playerVoice"></div>
+        <h3 id="playerTitle"></h3>
+        <div class="player-tags" id="playerTags"></div>
+        <audio id="playerAudio" controls preload="none"></audio>
+      </div>
     </div>
-    <div class="story-grid lib-hero-grid" id="matchGrid"></div>
-
-    <!-- FULL LIBRARY -->
-    <div class="lib-section-head">
-      <h2>The full Hushlore library</h2>
-      <span class="tag">everything, included</span>
-    </div>
-    <div id="fullLibrary"></div>
-
-    <p class="lib-note">
-      New stories are added every month — your membership always includes the latest.<br />
-      Questions about your membership? <a href="mailto:hello@hushlorewhisper.com">hello@hushlorewhisper.com</a>
-    </p>
   </div>
 
   <script>
-    /* ====================================
-       Config
-       ==================================== */
-    // Where the MP3s live (Cloudflare R2 custom domain). Change here if it ever moves.
     const AUDIO_BASE = 'https://audio.hushlorewhisper.com';
+    // Temporary thumbnails (brand photos) — swap to per-story AI images later.
+    const IMGS = ['images/webpagephoto1.jpg','images/webpagephoto2.jpg','images/webpagephoto3.jpg','images/webpagephoto4.jpg','images/webpagephoto5.jpg','images/webpagephoto6.jpg','images/webpagephoto8.jpg'];
 
-    /* ====================================
-       Outcomes (same keys/copy as result.html)
-       ==================================== */
     const outcomes = {
-      'slow-devotion':       { title: 'Slow Devotion',       descriptor: 'Tender · Adoring · Held',      lead: 'You crave being cherished. Soft voices, long looks, the ache of being truly seen.' },
-      'forbidden-whispers':  { title: 'Forbidden Whispers',  descriptor: 'Secret · Charged · Inevitable', lead: "You're drawn to what shouldn't happen. Closed doors. Glances that linger one beat too long." },
-      'commanding-embrace':  { title: 'Commanding Embrace',  descriptor: 'Dominant · Possessive · Sure',  lead: 'You want a voice that doesn\'t ask twice. "Mine." The word lands and you feel it everywhere.' },
-      'best-friends-untold': { title: 'Best Friends Untold', descriptor: 'Tender · Playful · Inevitable',  lead: 'Years of restraint. One night that changes everything. Soft, playful — then breathtaking.' },
-      'enemys-confession':   { title: "Enemy's Confession",  descriptor: 'Charged · Tense · Honest',      lead: 'Every argument was a touch in disguise. The moment the mask drops, you stop breathing.' },
-      'midnight-surrender':  { title: 'Midnight Surrender',  descriptor: 'Pure · Indulgent · Yours',      lead: 'No story. Just sensation. A voice in the dark, attending to nothing but you.' }
+      'slow-devotion':       { title: 'Slow Devotion',       lead: 'Tender, adoring, held.' },
+      'forbidden-whispers':  { title: 'Forbidden Whispers',  lead: 'Secret, charged, inevitable.' },
+      'commanding-embrace':  { title: 'Commanding Embrace',  lead: 'Dominant, possessive, sure.' },
+      'best-friends-untold': { title: 'Best Friends Untold', lead: 'Years of restraint, one night.' },
+      'enemys-confession':   { title: "Enemy's Confession",  lead: 'Every argument was this.' },
+      'midnight-surrender':  { title: 'Midnight Surrender',  lead: 'No story. Just sensation.' }
     };
-
     const orderedKeys = ['slow-devotion','forbidden-whispers','commanding-embrace','best-friends-untold','enemys-confession','midnight-surrender'];
 
-    /* ====================================
-       Stories (24) — id maps to <id>.mp3 in R2
-       ==================================== */
-    const stories = {
-      'slow-devotion': [
-        { id: 'slow-devotion-01', voice: 'Brian', len: '12 min', title: 'The Way You Deserve',     blurb: 'In your own bed, unhurried — a voice that asks nothing but to cherish you.' },
-        { id: 'slow-devotion-02', voice: 'Brian', len: '10 min', title: 'Let Me Take Care of You',  blurb: 'A bath he ran for you. Candlelight, warm water, and hands that only give.' },
-        { id: 'slow-devotion-03', voice: 'Brian', len: '10 min', title: 'Rain and Nowhere to Be',   blurb: 'A slow rainy Sunday, tangled in the sheets, the whole day yours.' },
-        { id: 'slow-devotion-04', voice: 'Brian', len: '11 min', title: 'Warm Through the Storm',   blurb: 'Snow at the window, a fire, a blanket — and nowhere either of you has to be.' }
-      ],
-      'forbidden-whispers': [
-        { id: 'forbidden-whispers-01', voice: 'Brian', len: '10 min', title: 'The Door We Locked',        blurb: 'A borrowed room, stolen hours, and a lock that finally clicks.' },
-        { id: 'forbidden-whispers-02', voice: 'Brian', len: '10 min', title: 'Two Floors Up',             blurb: 'A dark study while the party carries on beneath you. Stay quiet.' },
-        { id: 'forbidden-whispers-03', voice: 'Brian', len: '10 min', title: 'The Room Next Door',        blurb: 'His hotel room on a work trip. The conference can wait until morning.' },
-        { id: 'forbidden-whispers-04', voice: 'Brian', len: '11 min', title: 'Before the Next Song Ends', blurb: 'The coat room at a wedding, the band still playing through the wall.' }
-      ],
-      'commanding-embrace': [
-        { id: 'commanding-embrace-01', voice: 'Adam', len: '10 min', title: "Say It's Mine",             blurb: 'Low light, and a voice that decides. One word, and you feel it everywhere.' },
-        { id: 'commanding-embrace-02', voice: 'Adam', len: '11 min', title: 'On My Time',                blurb: "He's been waiting behind the door. The second you walk in, you're his." },
-        { id: 'commanding-embrace-03', voice: 'Adam', len: '11 min', title: 'I Told You to Wait',        blurb: 'A dark bedroom, and the reward for doing exactly as you were told.' },
-        { id: 'commanding-embrace-04', voice: 'Adam', len: '12 min', title: "You've Been Waiting All Day", blurb: 'He teased you since noon. Now you\'re home, and he\'s in no hurry.' }
-      ],
-      'best-friends-untold': [
-        { id: 'best-friends-untold-01', voice: 'Brian', len: '11 min', title: 'After All This Time',   blurb: 'His couch, late, the movie long forgotten. The line finally crossed.' },
-        { id: 'best-friends-untold-02', voice: 'Brian', len: '10 min', title: 'Only One Bed',          blurb: 'A cabin, a trip, one bed — and two people done pretending to sleep.' },
-        { id: 'best-friends-untold-03', voice: 'Brian', len: '10 min', title: "Don't Make Me Go",       blurb: 'Her doorway after a night out. Neither of you says goodnight.' },
-        { id: 'best-friends-untold-04', voice: 'Brian', len: '11 min', title: 'The Last Ones Awake',    blurb: 'His kitchen at 2am, everyone gone home, the tension finally snapping.' }
-      ],
-      'enemys-confession': [
-        { id: 'enemys-confession-01', voice: 'Adam', len: '12 min', title: 'Every Argument Was This', blurb: 'An empty office after hours, and one last fight that turns to something else.' },
-        { id: 'enemys-confession-02', voice: 'Adam', len: '10 min', title: 'Snowed In With You',      blurb: 'Stranded by a storm. One cabin, one fire, and all night to stop pretending.' },
-        { id: 'enemys-confession-03', voice: 'Adam', len: '10 min', title: 'You Came All This Way',   blurb: 'Midnight at his door, where you showed up to finish the argument.' },
-        { id: 'enemys-confession-04', voice: 'Adam', len: '11 min', title: 'Say You Hate Me Again',   blurb: 'A rooftop after the launch party, where you sparred all night.' }
-      ],
-      'midnight-surrender': [
-        { id: 'midnight-surrender-f-01', voice: 'Lily',  len: '11 min', title: 'Who Runs the Night',   blurb: 'Lights off. Her voice, and a night that belongs to no one but you.' },
-        { id: 'midnight-surrender-02',   voice: 'Brian', len: '10 min', title: 'Nothing But This',     blurb: 'No story. No scene. Just sensation, and a voice attending to you.' },
-        { id: 'midnight-surrender-03',   voice: 'Adam',  len: '10 min', title: 'Just Do As I Say',     blurb: 'Lights off, and a voice that gives the orders. You only have to obey.' },
-        { id: 'midnight-surrender-f-02', voice: 'Lily',  len: '13 min', title: 'Let Me Lead Tonight',  blurb: 'Her voice in the dark, and nothing to do but let her lead you all the way.' }
-      ]
-    };
+    // flat story list
+    const S = [
+      ['slow-devotion','slow-devotion-01','The Way You Deserve','Brian','12 min',2,['tender','worship'],'1.2M'],
+      ['slow-devotion','slow-devotion-02','Let Me Take Care of You','Brian','10 min',2,['tender','slow burn'],'980K'],
+      ['slow-devotion','slow-devotion-03','Rain and Nowhere to Be','Brian','10 min',2,['tender','lazy morning'],'1.1M'],
+      ['slow-devotion','slow-devotion-04','Warm Through the Storm','Brian','11 min',2,['tender','cozy'],'640K'],
+      ['forbidden-whispers','forbidden-whispers-01','The Door We Locked','Brian','10 min',3,['forbidden','secret'],'1.4M'],
+      ['forbidden-whispers','forbidden-whispers-02','Two Floors Up','Brian','10 min',3,['forbidden','risky'],'1.0M'],
+      ['forbidden-whispers','forbidden-whispers-03','The Room Next Door','Brian','10 min',3,['forbidden','slow burn'],'890K'],
+      ['forbidden-whispers','forbidden-whispers-04','Before the Next Song Ends','Brian','11 min',3,['forbidden','urgent'],'720K'],
+      ['commanding-embrace','commanding-embrace-01',"Say It's Mine",'Adam','10 min',3,['dominant','possessive'],'2.1M'],
+      ['commanding-embrace','commanding-embrace-02','On My Terms','Adam','11 min',3,['dominant','rough'],'1.7M'],
+      ['commanding-embrace','commanding-embrace-03','I Told You to Wait','Adam','11 min',3,['dominant','control'],'1.5M'],
+      ['commanding-embrace','commanding-embrace-04',"You've Been Waiting All Day",'Adam','12 min',3,['dominant','teasing'],'820K'],
+      ['best-friends-untold','best-friends-untold-01','After All This Time','Brian','11 min',2,['friends to lovers','tender'],'1.9M'],
+      ['best-friends-untold','best-friends-untold-02','Only One Bed','Brian','10 min',3,['friends to lovers','one bed'],'1.6M'],
+      ['best-friends-untold','best-friends-untold-03',"Don't Make Me Go",'Brian','10 min',2,['friends to lovers','longing'],'1.1M'],
+      ['best-friends-untold','best-friends-untold-04','The Last Ones Awake','Brian','11 min',3,['friends to lovers','late night'],'700K'],
+      ['enemys-confession','enemys-confession-01','Every Argument Was This','Adam','12 min',3,['enemies to lovers','charged'],'2.3M'],
+      ['enemys-confession','enemys-confession-02','Snowed In With You','Adam','10 min',3,['enemies to lovers','forced proximity'],'1.4M'],
+      ['enemys-confession','enemys-confession-03','You Came All This Way','Adam','10 min',3,['enemies to lovers','tension'],'1.2M'],
+      ['enemys-confession','enemys-confession-04','Say You Hate Me Again','Adam','11 min',3,['enemies to lovers','rooftop'],'760K'],
+      ['midnight-surrender','midnight-surrender-f-01','Who Runs the Night','Lily','11 min',3,['female voice','she leads'],'1.1M'],
+      ['midnight-surrender','midnight-surrender-02','Nothing But This','Brian','10 min',3,['pure sensation','intimate'],'1.3M'],
+      ['midnight-surrender','midnight-surrender-03','Just Do As I Say','Adam','10 min',3,['dominant','pure sensation'],'1.5M'],
+      ['midnight-surrender','midnight-surrender-f-02','Let Me Lead Tonight','Lily','13 min',3,['female voice','she leads'],'680K'],
+      // — real voice-actor recordings (men-facing = female voice). br:'m'. Placeholder display names (creator credit TBD). —
+      ['commanding-embrace','commanding-embrace-straight-m-01','Look at Me','Scarlett','13 min',3,['femdom','pure heat'],'2.4K','m'],
+      ['slow-devotion','slow-devotion-straight-m-01','Come Home to Me','Grace','15 min',2,['girlfriend','tender'],'1.9K','m'],
+      // — real voice-actor recordings (women-facing = male voice). br:'w'. —
+      ['commanding-embrace','commanding-embrace-straight-w-01','On My Time','Julian','13 min',3,['dominant','pure heat'],'1.1K','w'],
+      ['midnight-surrender','midnight-surrender-straight-m-01','Every Inch','Vivienne','14 min',3,['pure heat','she leads'],'1.3K','m']
+    ].map(function (r, i) {
+      return { cat: r[0], id: r[1], title: r[2], voice: r[3], len: r[4], heat: r[5], tags: r[6], views: r[7], br: r[8] || (r[3] === 'Lily' ? 'm' : 'w'), img: IMGS[i % IMGS.length] };
+    });
+    const byId = {}; S.forEach(function (s) { byId[s.id] = s; });
+    // listener branch: 'm' (men → female-voice stories) / 'w' (women → male-voice stories)
+    function getBranch() { try { const b = localStorage.getItem('hl_quiz2_branch'); if (b === 'men') return 'm'; if (b === 'women') return 'w'; } catch (_) {} return null; }
+    const listenerBr = getBranch();
+    const realRecordings = ['commanding-embrace-straight-w-01','midnight-surrender-straight-m-01','commanding-embrace-straight-m-01','slow-devotion-straight-m-01'];
 
-    /* ====================================
-       Which outcome is this listener?
-       ==================================== */
+    // which outcome is this listener?
     function getOutcome() {
-      const p = new URLSearchParams(window.location.search);
-      const m = p.get('match');
-      if (m && outcomes[m]) return m;
+      const p = new URLSearchParams(location.search).get('match');
+      if (p && outcomes[p]) return p;
       try { const s = localStorage.getItem('hushlore_outcome'); if (s && outcomes[s]) return s; } catch (_) {}
       return 'slow-devotion';
     }
     const key = getOutcome();
     try { localStorage.setItem('hushlore_outcome', key); } catch (_) {}
 
-    /* ====================================
-       Analytics — same Supabase table as quiz2/result
-       ==================================== */
-    const HL_SB_URL = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
-    const HL_SB_KEY = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
-    function hlSid() {
-      try {
-        let s = sessionStorage.getItem('hl_sid');
-        if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hl_sid', s); }
-        return s;
-      } catch (e) { return 'anon-' + Date.now().toString(36); }
-    }
-    function hlTrack(event, extras) {
-      let branch = null;
-      try { branch = localStorage.getItem('hl_quiz2_branch'); } catch (e) {}
-      const payload = Object.assign({ session_id: hlSid(), event: event, branch: branch }, extras || {});
-      fetch(HL_SB_URL, {
-        method: 'POST', keepalive: true,
-        headers: { 'apikey': HL_SB_KEY, 'Authorization': 'Bearer ' + HL_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify(payload)
-      }).catch(function(){});
-    }
-    hlTrack('library_view', { answer_text: key });
+    document.getElementById('welcomeTitle').textContent = 'Welcome back';
+    document.getElementById('welcomeSub').textContent = 'Your match is ' + outcomes[key].title + '. Press play on anything — headphones on, lights low.';
 
-    /* ====================================
-       Render
-       ==================================== */
-    function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+    function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+    function chili(n) { return '🌶️'.repeat(n); }
+
+    /* saved (hearts) */
+    function getSaved() { try { return JSON.parse(localStorage.getItem('hl_saved') || '{}'); } catch (_) { return {}; } }
+    function toggleSaved(id) { const s = getSaved(); if (s[id]) delete s[id]; else s[id] = 1; try { localStorage.setItem('hl_saved', JSON.stringify(s)); } catch (_) {} return !!s[id]; }
 
     function cardHTML(s) {
+      const saved = getSaved();
       return '' +
-        '<article class="story-card">' +
-          '<div class="story-top">' +
-            '<span class="voice-tag">' + esc(s.voice) + '</span>' +
-            '<span class="story-len">' + esc(s.len) + '</span>' +
+        '<div class="card" data-id="' + s.id + '">' +
+          '<div class="card-thumb" style="background-image:url(' + s.img + ')">' +
+            '<div class="card-heat">' + chili(s.heat) + '</div>' +
+            '<div class="card-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>' +
+            '<span class="card-heart' + (saved[s.id] ? ' on' : '') + '" data-heart="' + s.id + '">' + (saved[s.id] ? '♥' : '♡') + '</span>' +
+            '<div class="card-meta">' +
+              '<div class="card-title">' + esc(s.title) + '</div>' +
+              '<div class="card-sub"><span class="card-dur">⏳ ' + esc(s.len) + '</span><span class="card-views">▷ ' + esc(s.views) + '</span></div>' +
+              '<div class="card-tags">' + s.tags.map(function (t) { return '<span class="card-tag">' + esc(t) + '</span>'; }).join('') + '</div>' +
+            '</div>' +
           '</div>' +
-          '<h4>' + esc(s.title) + '</h4>' +
-          '<p class="story-blurb">' + esc(s.blurb) + '</p>' +
-          '<audio controls preload="none" data-id="' + esc(s.id) + '" src="' + AUDIO_BASE + '/' + esc(s.id) + '.mp3"></audio>' +
-        '</article>';
+        '</div>';
     }
 
-    // Hero — matched outcome
-    const oc = outcomes[key];
-    document.getElementById('matchTitle').textContent = oc.title;
-    document.getElementById('matchDescriptor').textContent = oc.descriptor;
-    document.getElementById('matchLead').textContent = oc.lead;
-    document.getElementById('matchGrid').innerHTML = stories[key].map(cardHTML).join('');
+    function rowHTML(title, heart, sub, list) {
+      return '' +
+        '<section class="lib-row">' +
+          '<div class="lib-row-head">' + (heart ? '<span class="heart">♥</span>' : '') + '<h2>' + esc(title) + '</h2>' + (sub ? '<span class="sub">' + esc(sub) + '</span>' : '') + '</div>' +
+          '<div class="lib-track">' + list.map(cardHTML).join('') + '</div>' +
+        '</section>';
+    }
 
-    // Full library — every outcome except the matched one (already featured above)
-    const full = document.getElementById('fullLibrary');
-    orderedKeys.filter(k => k !== key).forEach(k => {
-      const o = outcomes[k];
-      const head = '' +
-        '<div class="lib-section-head sub">' +
-          '<h3>' + esc(o.title) + '</h3>' +
-          '<span class="tag">' + esc(o.descriptor) + '</span>' +
-        '</div>';
-      const grid = '<div class="story-grid">' + stories[k].map(cardHTML).join('') + '</div>';
-      full.insertAdjacentHTML('beforeend', head + grid);
+    // rows — Whisper-style: History · POV · Trending · Popular This Week
+    function parseViews(v) { const n = parseFloat(v) || 0; return v.indexOf('M') > -1 ? n * 1e6 : (v.indexOf('K') > -1 ? n * 1e3 : n); }
+    let matchList = S.filter(function (s) { return s.cat === key && (!listenerBr || s.br === listenerBr); });
+    if (!matchList.length) matchList = S.filter(function (s) { return s.cat === key; });
+    const pov = ['midnight-surrender-f-01','midnight-surrender-02','midnight-surrender-03','midnight-surrender-f-02','commanding-embrace-02','enemys-confession-01','forbidden-whispers-02','best-friends-untold-02'].map(function (id) { return byId[id]; });
+    const trending = S.slice().sort(function (a, b) { return parseViews(b.views) - parseViews(a.views); }).slice(0, 8);
+    const popular = ['slow-devotion-01','forbidden-whispers-01','best-friends-untold-01','midnight-surrender-f-01','enemys-confession-03','commanding-embrace-03','slow-devotion-02','forbidden-whispers-03'].map(function (id) { return byId[id]; });
+
+    function getHistory() { try { return JSON.parse(localStorage.getItem('hl_history') || '[]'); } catch (_) { return []; } }
+    function pushHistory(id) { try { let h = getHistory().filter(function (x) { return x !== id; }); h.unshift(id); h = h.slice(0, 12); localStorage.setItem('hl_history', JSON.stringify(h)); } catch (_) {} }
+
+    function renderRows() {
+      const hist = getHistory().map(function (id) { return byId[id]; }).filter(Boolean);
+      const newReal = realRecordings.map(function (id) { return byId[id]; }).filter(Boolean).filter(function (s) { return !listenerBr || s.br === listenerBr; });
+      let html = '';
+      if (newReal.length) html += rowHTML('New — Fresh Recordings', true, 'real voices, just delivered', newReal);
+      if (hist.length) html += rowHTML('History', true, 'recently played', hist);
+      else html += rowHTML('Start Here — ' + outcomes[key].title, true, 'your match', matchList);
+      html += rowHTML('POV Experiences', true, 'immersive', pov);
+      html += rowHTML('Trending', true, 'most played', trending);
+      html += rowHTML('Popular This Week', true, 'loved right now', popular);
+      document.getElementById('rows').innerHTML = html;
+    }
+    renderRows();
+
+    /* filters */
+    const catSel = document.getElementById('filterCategory');
+    catSel.innerHTML = '<option value="">Any</option>' + orderedKeys.map(function (k) { return '<option value="' + k + '">' + esc(outcomes[k].title) + '</option>'; }).join('');
+    const voiceSel = document.getElementById('filterVoice');
+    voiceSel.innerHTML = '<option value="">All</option>' + ['Brian','Adam','Lily'].map(function (v) { return '<option value="' + v + '">' + v + '</option>'; }).join('');
+
+    /* search / filter */
+    const resultsSection = document.getElementById('resultsSection');
+    const resultsGrid = document.getElementById('resultsGrid');
+    const resultsEmpty = document.getElementById('resultsEmpty');
+    const rowsEl = document.getElementById('rows');
+
+    function runSearch() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const cat = catSel.value, voice = voiceSel.value;
+      if (!q && !cat && !voice) { clearSearch(); return; }
+      const res = S.filter(function (s) {
+        const hay = (s.title + ' ' + s.tags.join(' ') + ' ' + outcomes[s.cat].title + ' ' + s.voice).toLowerCase();
+        return (!q || hay.indexOf(q) > -1) && (!cat || s.cat === cat) && (!voice || s.voice === voice);
+      });
+      document.getElementById('resultsTitle').textContent = res.length + ' ' + (res.length === 1 ? 'story' : 'stories');
+      resultsGrid.innerHTML = res.map(cardHTML).join('');
+      resultsEmpty.classList.toggle('hidden', res.length !== 0);
+      resultsSection.classList.remove('hidden');
+      rowsEl.classList.add('hidden');
+      hlTrack('library_search', { answer_text: q || (cat + '/' + voice) });
+    }
+    function clearSearch() {
+      document.getElementById('searchInput').value = ''; catSel.value = ''; voiceSel.value = '';
+      resultsSection.classList.add('hidden'); rowsEl.classList.remove('hidden');
+    }
+    document.getElementById('searchBtn').addEventListener('click', runSearch);
+    document.getElementById('searchInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') runSearch(); });
+    catSel.addEventListener('change', runSearch);
+    voiceSel.addEventListener('change', runSearch);
+    document.getElementById('clearSearch').addEventListener('click', function (e) { e.preventDefault(); clearSearch(); });
+
+    /* card interactions (delegated) */
+    document.body.addEventListener('click', function (e) {
+      const heart = e.target.closest('[data-heart]');
+      if (heart) { const on = toggleSaved(heart.getAttribute('data-heart')); heart.classList.toggle('on', on); heart.textContent = on ? '♥' : '♡'; return; }
+      const card = e.target.closest('.card');
+      if (card) openPlayer(byId[card.getAttribute('data-id')]);
     });
 
-    // Track first play per story
-    const played = {};
-    document.addEventListener('play', function (e) {
-      const el = e.target;
-      if (el && el.tagName === 'AUDIO' && el.dataset.id && !played[el.dataset.id]) {
-        played[el.dataset.id] = true;
-        hlTrack('story_play', { answer_text: el.dataset.id });
-      }
-    }, true);
+    /* player modal */
+    const overlay = document.getElementById('playerOverlay');
+    const audioEl = document.getElementById('playerAudio');
+    function openPlayer(s) {
+      document.getElementById('playerImg').style.backgroundImage = 'url(' + s.img + ')';
+      document.getElementById('playerVoice').textContent = s.voice + '  ·  ' + s.len + '  ·  ' + chili(s.heat);
+      document.getElementById('playerTitle').textContent = s.title;
+      document.getElementById('playerTags').innerHTML = s.tags.map(function (t) { return '<span class="card-tag">' + esc(t) + '</span>'; }).join('');
+      audioEl.src = AUDIO_BASE + '/' + s.id + '.mp3';
+      overlay.classList.add('open');
+      audioEl.play().catch(function () {});
+      pushHistory(s.id); renderRows();
+      hlTrack('story_play', { answer_text: s.id });
+    }
+    function closePlayer() { overlay.classList.remove('open'); audioEl.pause(); }
+    document.getElementById('playerClose').addEventListener('click', closePlayer);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) closePlayer(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePlayer(); });
+
+    /* analytics */
+    const HL_SB_URL = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
+    const HL_SB_KEY = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
+    function hlSid() { try { let s = sessionStorage.getItem('hl_sid'); if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hl_sid', s); } return s; } catch (e) { return 'anon-' + Date.now().toString(36); } }
+    function hlTrack(event, extras) {
+      let branch = null; try { branch = localStorage.getItem('hl_quiz2_branch'); } catch (e) {}
+      fetch(HL_SB_URL, { method: 'POST', keepalive: true,
+        headers: { 'apikey': HL_SB_KEY, 'Authorization': 'Bearer ' + HL_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(Object.assign({ session_id: hlSid(), event: event, branch: branch }, extras || {})) }).catch(function () {});
+    }
+    hlTrack('library_view', { answer_text: key });
   </script>
 </body>
 </html>

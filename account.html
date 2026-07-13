@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — Account</title>
+  <meta name="description" content="Your Hushlore account." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    body { background: var(--bg); }
+    .ac-page { max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 80px; }
+
+    .ac-nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0 10px; }
+    .ac-logo { font-family: var(--serif); font-size: 26px; letter-spacing: 0.04em; color: var(--cream); font-weight: 500; }
+    .ac-logo span { color: var(--gold); }
+    .ac-navlinks { display: flex; align-items: center; gap: 26px; }
+    .ac-navlinks a { font-family: var(--sans); font-size: 15px; color: #c1a7b8; text-decoration: none; font-weight: 500; }
+    .ac-navlinks a.active { color: var(--cream); border-bottom: 2px solid var(--gold); padding-bottom: 3px; }
+
+    .ac-card { max-width: 760px; margin: 48px auto 0; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 34px clamp(20px, 4vw, 40px) 30px; }
+
+    .ac-tabs { display: flex; gap: 28px; margin-bottom: 30px; }
+    .ac-tab { font-family: var(--sans); font-size: 18px; font-weight: 600; color: var(--muted); background: none; border: none; cursor: pointer; padding: 0 0 6px; }
+    .ac-tab.active { color: var(--cream); border-bottom: 2px solid var(--gold); }
+
+    .ac-pane { display: none; }
+    .ac-pane.active { display: block; }
+
+    .ac-field { margin-bottom: 22px; }
+    .ac-field > label { display: block; font-family: var(--sans); font-size: 14px; color: #a98ea3; margin-bottom: 9px; }
+    .ac-select { position: relative; }
+    .ac-select select { width: 100%; box-sizing: border-box; background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 44px 16px 16px; color: var(--cream); font-family: var(--sans); font-size: 16px; appearance: none; cursor: pointer; }
+    .ac-select::after { content: '⌄'; position: absolute; right: 18px; top: 44%; transform: translateY(-50%); color: #a98ea3; font-size: 18px; pointer-events: none; }
+
+    .ac-toggle { display: flex; align-items: center; justify-content: space-between; background: var(--bg-elevated);
+      border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .ac-toggle span { font-family: var(--sans); font-size: 16px; color: var(--cream); }
+    .ac-switch { width: 50px; height: 28px; border-radius: 20px; background: #3a2530; position: relative; cursor: pointer; transition: background .2s ease; flex: 0 0 auto; }
+    .ac-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: left .2s ease; }
+    .ac-switch.on { background: var(--gold); }
+    .ac-switch.on::after { left: 25px; }
+
+    .ac-saved { font-family: var(--sans); font-size: 13px; color: #35d07f; opacity: 0; transition: opacity .3s ease; margin-top: 4px; height: 16px; }
+    .ac-saved.show { opacity: 1; }
+
+    .ac-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--bg-elevated);
+      border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 12px; }
+    .ac-row .k { font-family: var(--sans); font-size: 16px; color: #c1a7b8; }
+    .ac-row .v { font-family: var(--sans); font-size: 16px; color: var(--cream); font-weight: 600; text-align: right; }
+    .ac-row .v.badge { color: #35d07f; }
+
+    .ac-foot { border-top: 1px solid var(--border); margin-top: 28px; padding-top: 22px; text-align: center; }
+    .ac-foot a { font-family: var(--sans); font-size: 14px; color: #a98ea3; text-decoration: none; margin: 0 10px; }
+    .ac-foot a:hover { color: var(--cream); }
+    .ac-foot .sep { color: #3a2530; }
+    .ac-contact { text-align: center; font-family: var(--sans); font-size: 13px; color: var(--muted); margin-top: 22px; }
+    .ac-contact a { color: var(--gold); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="ac-page">
+    <nav class="ac-nav">
+      <div class="ac-logo">Hush<span>lore</span></div>
+      <div class="ac-navlinks">
+        <a href="library.html">Stories</a>
+        <a href="account.html" class="active">Account</a>
+      </div>
+    </nav>
+
+    <div class="ac-card">
+      <div class="ac-tabs">
+        <button class="ac-tab active" data-tab="prefs">Preferences</button>
+        <button class="ac-tab" data-tab="info">Information</button>
+      </div>
+
+      <!-- PREFERENCES -->
+      <div class="ac-pane active" id="pane-prefs">
+        <div class="ac-field">
+          <label>Gender</label>
+          <div class="ac-select"><select id="selGender">
+            <option value="women">👩 Woman</option>
+            <option value="men">👨 Man</option>
+          </select></div>
+        </div>
+        <div class="ac-field">
+          <label>Interested In</label>
+          <div class="ac-select"><select id="selInterest">
+            <option value="men">👨 Men</option>
+            <option value="women">👩 Women</option>
+          </select></div>
+        </div>
+        <div class="ac-field">
+          <label>Experience Type</label>
+          <div class="ac-select"><select id="selExperience"></select></div>
+        </div>
+        <div class="ac-field">
+          <label>Preferred Heat</label>
+          <div class="ac-select"><select id="selHeat">
+            <option value="gentle">🕯️ Gentle &amp; tender</option>
+            <option value="steamy">🔥 Steamy</option>
+            <option value="hottest">🔥🔥 Hottest — pure heat</option>
+          </select></div>
+        </div>
+        <div class="ac-saved" id="savedMsg">Saved ✓ — your library is updated</div>
+      </div>
+
+      <!-- INFORMATION -->
+      <div class="ac-pane" id="pane-info">
+        <div class="ac-row"><span class="k">Email</span><span class="v" id="infEmail">—</span></div>
+        <div class="ac-row"><span class="k">Registration Date</span><span class="v" id="infReg">—</span></div>
+        <div class="ac-row"><span class="k">Audios Listened</span><span class="v" id="infListened">0</span></div>
+        <div class="ac-row"><span class="k">Total Listening Duration</span><span class="v" id="infDuration">00h 00min</span></div>
+        <div class="ac-row"><span class="k">Membership Type</span><span class="v" id="infPlan">1-Month membership</span></div>
+        <div class="ac-row"><span class="k">Membership Status</span><span class="v badge">Active</span></div>
+      </div>
+
+      <div class="ac-foot">
+        <a href="terms.html">Terms &amp; Conditions</a><span class="sep">|</span>
+        <a href="privacy.html">Privacy Policy</a><span class="sep">|</span>
+        <a href="#" id="manageLink">Manage</a><span class="sep">|</span>
+        <a href="#" id="logoutLink">Logout</a>
+      </div>
+    </div>
+
+    <p class="ac-contact">Contact us at <a href="mailto:hello@hushlorewhisper.com">hello@hushlorewhisper.com</a></p>
+  </div>
+
+  <script>
+    const outcomes = {
+      'slow-devotion':'Slow Devotion','forbidden-whispers':'Forbidden Whispers','commanding-embrace':'Commanding Embrace',
+      'best-friends-untold':'Best Friends Untold','enemys-confession':"Enemy's Confession",'midnight-surrender':'Midnight Surrender'
+    };
+    const orderedKeys = ['slow-devotion','forbidden-whispers','commanding-embrace','best-friends-untold','enemys-confession','midnight-surrender'];
+    function ls(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (_) { return d; } }
+    function set(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
+
+    /* tabs */
+    document.querySelectorAll('.ac-tab').forEach(function (t) {
+      t.addEventListener('click', function () {
+        document.querySelectorAll('.ac-tab').forEach(function (x) { x.classList.remove('active'); });
+        document.querySelectorAll('.ac-pane').forEach(function (x) { x.classList.remove('active'); });
+        t.classList.add('active');
+        document.getElementById('pane-' + t.dataset.tab).classList.add('active');
+      });
+    });
+
+    /* ---- Preferences (functional — write to the same keys the funnel uses) ---- */
+    const selGender = document.getElementById('selGender');
+    const selInterest = document.getElementById('selInterest');
+    const selExperience = document.getElementById('selExperience');
+    const selHeat = document.getElementById('selHeat');
+    // Experience-type options (mirrors Whisper); each maps to one of our 6 outcomes so the library re-personalizes.
+    const EXPERIENCES = [
+      ['heat',     '🔥 Fast and intense, focused on pure heat',              'commanding-embrace'],
+      ['limits',   '💗 Bold and daring — dirty talk that pushes the limits', 'enemys-confession'],
+      ['roleplay', '🛏️ Immersive roleplay with rich sound and presence',     'forbidden-whispers'],
+      ['pov',      "💬 A voice speaking directly to me, like I'm in the moment", 'midnight-surrender'],
+      ['audiobook','📖 Story-driven, spicy audio you can get lost in',       'best-friends-untold'],
+      ['romance',  '❤️ Emotional tension, connection and slow-burn romance',  'slow-devotion'],
+      ['solo',     '🧘‍♀️ Guided pleasure or mindful solo exploration',  'midnight-surrender'],
+      ['unsure',   "🤷‍♀️ I'm exploring, not sure yet",                  '']
+    ];
+    const EXP_TO_OUTCOME = {}; EXPERIENCES.forEach(function (e) { EXP_TO_OUTCOME[e[0]] = e[2]; });
+    selExperience.innerHTML = EXPERIENCES.map(function (e) { return '<option value="' + e[0] + '">' + e[1] + '</option>'; }).join('');
+
+    const branch = ls('hl_quiz2_branch', 'women');
+    selGender.value = branch;
+    selInterest.value = branch === 'men' ? 'women' : 'men';
+    selExperience.value = (function () {
+      const stored = ls('hl_experience', '');
+      if (stored && EXP_TO_OUTCOME.hasOwnProperty(stored)) return stored;
+      const o = ls('hushlore_outcome', '');
+      const found = EXPERIENCES.filter(function (e) { return e[2] === o; })[0];
+      return found ? found[0] : 'romance';
+    })();
+    selHeat.value = ls('hl_heat', 'steamy');
+
+    let savedTimer;
+    function flashSaved() {
+      const m = document.getElementById('savedMsg'); m.classList.add('show');
+      clearTimeout(savedTimer); savedTimer = setTimeout(function () { m.classList.remove('show'); }, 1800);
+    }
+    selGender.addEventListener('change', function () {
+      set('hl_quiz2_branch', selGender.value);
+      selInterest.value = selGender.value === 'men' ? 'women' : 'men';
+      flashSaved();
+    });
+    selInterest.addEventListener('change', flashSaved);
+    selExperience.addEventListener('change', function () {
+      set('hl_experience', selExperience.value);
+      const mapped = EXP_TO_OUTCOME[selExperience.value];
+      if (mapped) set('hushlore_outcome', mapped);
+      flashSaved();
+    });
+    selHeat.addEventListener('change', function () { set('hl_heat', selHeat.value); flashSaved(); });
+
+    /* ---- Information (real-ish data) ---- */
+    // email — captured at quiz email step if present
+    const email = ls('hl_email', '') || ls('hushlore_email', '');
+    document.getElementById('infEmail').textContent = email || '—';
+
+    // registration date — first time we ever see this browser
+    let reg = ls('hl_registered', '');
+    if (!reg) { reg = new Date().toISOString(); set('hl_registered', reg); }
+    document.getElementById('infReg').textContent = new Date(reg).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+
+    // audios listened — distinct stories played (from library history)
+    let history = []; try { history = JSON.parse(ls('hl_history', '[]')); } catch (_) {}
+    const listened = Math.max(history.length, parseInt(ls('hl_play_count', '0'), 10) || 0);
+    document.getElementById('infListened').textContent = listened;
+
+    // total listening duration — tracked seconds if available, else estimate ~10.5 min/story
+    let secs = parseInt(ls('hl_listen_secs', '0'), 10) || 0;
+    if (!secs) secs = Math.round(listened * 10.5 * 60);
+    const h = Math.floor(secs / 3600), m2 = Math.floor((secs % 3600) / 60), s2 = secs % 60;
+    document.getElementById('infDuration').textContent =
+      String(h).padStart(2, '0') + 'h ' + String(m2).padStart(2, '0') + 'min' + (h === 0 ? ' ' + String(s2).padStart(2, '0') + 's' : '');
+
+    // membership type — from the plan price stored at checkout
+    const price = parseFloat(ls('hl_plan_price', '')) || 0;
+    const plan = price >= 49 ? '6-Month membership' : price >= 32 ? '3-Month membership' : '1-Month membership';
+    document.getElementById('infPlan').textContent = plan;
+
+    /* footer actions */
+    document.getElementById('logoutLink').addEventListener('click', function (e) {
+      e.preventDefault();
+      try { ['hushlore_outcome','hl_quiz2_branch','hl_history','hl_saved','hl_onboarded','hl_bought_any','hl_plan_price'].forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {}
+      window.location.href = 'index.html';
+    });
+    // Manage = Stripe customer portal (add link when the new Stripe account is set up)
+    document.getElementById('manageLink').addEventListener('click', function (e) { e.preventDefault(); alert('Manage your membership — coming soon. For anything urgent, email hello@hushlorewhisper.com'); });
+
+    /* analytics */
+    const HL_SB_URL = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
+    const HL_SB_KEY = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
+    function hlSid() { try { let s = sessionStorage.getItem('hl_sid'); if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hl_sid', s); } return s; } catch (e) { return 'anon-' + Date.now().toString(36); } }
+    fetch(HL_SB_URL, { method: 'POST', keepalive: true,
+      headers: { 'apikey': HL_SB_KEY, 'Authorization': 'Bearer ' + HL_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ session_id: hlSid(), event: 'account_view', branch: branch }) }).catch(function () {});
+  </script>
+</body>
+</html>
