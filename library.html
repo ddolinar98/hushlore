@@ -207,7 +207,8 @@
       ['commanding-embrace','commanding-embrace-straight-w-01','On My Time','Julian','13 min',3,['dominant','pure heat'],'1.1K','w'],
       ['midnight-surrender','midnight-surrender-straight-m-01','Every Inch','Vivienne','14 min',3,['pure heat','she leads'],'1.3K','m'],
       ['midnight-surrender','midnight-surrender-straight-m-02','Lock the Door','Scarlett','22 min',3,['pure heat','intense'],'1.0K','m'],
-      ['slow-devotion','slow-devotion-straight-m-03','Wake Up','Vivienne','16 min',2,['tender','lazy morning'],'1.0K','m']
+      ['slow-devotion','slow-devotion-straight-m-03','Wake Up','Vivienne','16 min',2,['tender','lazy morning'],'1.0K','m'],
+      ['commanding-embrace','commanding-embrace-straight-m-02','Look at You','Scarlett','15 min',3,['femdom','pure heat'],'1.0K','m']
     ].map(function (r, i) {
       return { cat: r[0], id: r[1], title: r[2], voice: r[3], len: r[4], heat: r[5], tags: r[6], views: r[7], br: r[8] || (r[3] === 'Lily' ? 'm' : 'w'), img: IMGS[i % IMGS.length] };
     });
@@ -215,7 +216,7 @@
     // listener branch: 'm' (men → female-voice stories) / 'w' (women → male-voice stories)
     function getBranch() { try { const b = localStorage.getItem('hl_quiz2_branch'); if (b === 'men') return 'm'; if (b === 'women') return 'w'; } catch (_) {} return null; }
     const listenerBr = getBranch();
-    const realRecordings = ['slow-devotion-straight-m-03','midnight-surrender-straight-m-02','forbidden-whispers-straight-m-01','commanding-embrace-straight-w-01','midnight-surrender-straight-m-01','commanding-embrace-straight-m-01','slow-devotion-straight-m-01'];
+    const realRecordings = ['commanding-embrace-straight-m-02','slow-devotion-straight-m-03','midnight-surrender-straight-m-02','forbidden-whispers-straight-m-01','commanding-embrace-straight-w-01','midnight-surrender-straight-m-01','commanding-embrace-straight-m-01','slow-devotion-straight-m-01'];
 
     // which outcome is this listener?
     function getOutcome() {
