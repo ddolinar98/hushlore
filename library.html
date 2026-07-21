@@ -210,7 +210,9 @@
       ['slow-devotion','slow-devotion-straight-m-03','Wake Up','Vivienne','16 min',2,['tender','lazy morning'],'1.0K','m'],
       ['commanding-embrace','commanding-embrace-straight-m-02','Look at You','Scarlett','15 min',3,['femdom','pure heat'],'1.0K','m'],
       // threesome: not one of the 6 quiz outcomes — filed under midnight-surrender (pure heat) for discoverability; move to a dedicated section when built
-      ['midnight-surrender','threesome-mff-m-01','My Friend and I','Vivienne','20 min',3,['threesome','two women'],'1.0K','m']
+      ['midnight-surrender','threesome-mff-m-01','My Friend and I','Vivienne','20 min',3,['threesome','two women'],'1.0K','m'],
+      ['enemys-confession','enemys-confession-straight-w-02','Admit It','Julian','19 min',3,['enemies to lovers','charged'],'1.0K','w'],
+      ['midnight-surrender','midnight-surrender-straight-w-01','Give In','Julian','19 min',3,['surrender','he leads'],'1.0K','w']
     ].map(function (r, i) {
       return { cat: r[0], id: r[1], title: r[2], voice: r[3], len: r[4], heat: r[5], tags: r[6], views: r[7], br: r[8] || (r[3] === 'Lily' ? 'm' : 'w'), img: IMGS[i % IMGS.length] };
     });
@@ -218,7 +220,7 @@
     // listener branch: 'm' (men → female-voice stories) / 'w' (women → male-voice stories)
     function getBranch() { try { const b = localStorage.getItem('hl_quiz2_branch'); if (b === 'men') return 'm'; if (b === 'women') return 'w'; } catch (_) {} return null; }
     const listenerBr = getBranch();
-    const realRecordings = ['threesome-mff-m-01','commanding-embrace-straight-m-02','slow-devotion-straight-m-03','midnight-surrender-straight-m-02','forbidden-whispers-straight-m-01','commanding-embrace-straight-w-01','midnight-surrender-straight-m-01','commanding-embrace-straight-m-01','slow-devotion-straight-m-01'];
+    const realRecordings = ['enemys-confession-straight-w-02','midnight-surrender-straight-w-01','threesome-mff-m-01','commanding-embrace-straight-m-02','slow-devotion-straight-m-03','midnight-surrender-straight-m-02','forbidden-whispers-straight-m-01','commanding-embrace-straight-w-01','midnight-surrender-straight-m-01','commanding-embrace-straight-m-01','slow-devotion-straight-m-01'];
 
     // which outcome is this listener?
     function getOutcome() {
