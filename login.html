@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — Sign In</title>
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    body { background: var(--bg); }
+    .lg-page { max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 80px; }
+    .lg-nav { display: flex; align-items: center; justify-content: center; padding: 22px 0 10px; }
+    .lg-logo { font-family: var(--serif); font-size: 26px; letter-spacing: 0.04em; color: var(--cream); font-weight: 500; text-decoration: none; }
+    .lg-logo span { color: var(--gold); }
+
+    .lg-card { max-width: 440px; margin: 56px auto 0; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 34px clamp(20px, 5vw, 36px) 30px; }
+
+    .lg-title { font-family: var(--serif); font-size: 30px; color: var(--cream); text-align: center; margin: 0 0 6px; font-weight: 500; }
+    .lg-sub { font-family: var(--sans); font-size: 14px; color: #a98ea3; text-align: center; margin: 0 0 26px; line-height: 1.5; }
+
+    .lg-tabs { display: flex; gap: 26px; justify-content: center; margin-bottom: 26px; }
+    .lg-tab { font-family: var(--sans); font-size: 16px; font-weight: 600; color: var(--muted); background: none; border: none; cursor: pointer; padding: 0 0 6px; }
+    .lg-tab.active { color: var(--cream); border-bottom: 2px solid var(--gold); }
+
+    .lg-field { margin-bottom: 16px; }
+    .lg-field label { display: block; font-family: var(--sans); font-size: 14px; color: #a98ea3; margin-bottom: 8px; }
+    .lg-field input { width: 100%; box-sizing: border-box; background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: 10px; padding: 15px 16px; color: var(--cream); font-family: var(--sans); font-size: 16px; }
+    .lg-field input:focus { outline: none; border-color: var(--gold); }
+    .lg-hint { font-family: var(--sans); font-size: 12px; color: #8d7684; margin-top: 6px; }
+
+    .lg-btn { width: 100%; background: var(--gold); color: #1a0d14; border: none; border-radius: 10px;
+      padding: 16px; font-family: var(--sans); font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 6px; }
+    .lg-btn:disabled { opacity: .6; cursor: default; }
+
+    .lg-msg { font-family: var(--sans); font-size: 14px; text-align: center; margin-top: 16px; line-height: 1.5; min-height: 20px; }
+    .lg-msg.err { color: #ff7a8a; }
+    .lg-msg.ok { color: #35d07f; }
+
+    .lg-foot { text-align: center; margin-top: 22px; border-top: 1px solid var(--border); padding-top: 20px; }
+    .lg-foot a { font-family: var(--sans); font-size: 14px; color: #c1a7b8; text-decoration: none; }
+    .lg-foot a:hover { color: var(--cream); }
+  </style>
+</head>
+<body>
+  <div class="lg-page">
+    <div class="lg-nav"><a class="lg-logo" href="index.html">Hush<span>lore</span></a></div>
+
+    <div class="lg-card">
+      <h1 class="lg-title" id="ttl">Welcome back</h1>
+      <p class="lg-sub" id="sub">Sign in to open your library.</p>
+
+      <div class="lg-tabs">
+        <button class="lg-tab active" id="tabIn" type="button">Sign in</button>
+        <button class="lg-tab" id="tabUp" type="button">Create account</button>
+      </div>
+
+      <form id="frm" autocomplete="on">
+        <div class="lg-field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com" />
+        </div>
+        <div class="lg-field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required placeholder="••••••••" />
+          <div class="lg-hint" id="pwHint" style="display:none">At least 8 characters.</div>
+        </div>
+        <button class="lg-btn" id="btn" type="submit">Sign in</button>
+      </form>
+
+      <div class="lg-msg" id="msg"></div>
+
+      <div class="lg-foot">
+        <a href="index.html">← Back to Hushlore</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var mode = 'login';
+    var tabIn = document.getElementById('tabIn'), tabUp = document.getElementById('tabUp');
+    var btn = document.getElementById('btn'), msg = document.getElementById('msg');
+    var ttl = document.getElementById('ttl'), sub = document.getElementById('sub'), pwHint = document.getElementById('pwHint');
+    var pw = document.getElementById('password');
+
+    function next() {
+      var n = new URLSearchParams(location.search).get('next') || 'library.html';
+      return /^[a-z0-9_-]+\.html(\?.*)?$/i.test(n) ? n : 'library.html';   // same-site only
+    }
+
+    function setMode(m) {
+      mode = m;
+      var up = m === 'register';
+      tabIn.classList.toggle('active', !up); tabUp.classList.toggle('active', up);
+      ttl.textContent = up ? 'Create your account' : 'Welcome back';
+      sub.textContent = up ? 'Use the email you purchased with — your access is linked to it.' : 'Sign in to open your library.';
+      btn.textContent = up ? 'Create account' : 'Sign in';
+      pwHint.style.display = up ? 'block' : 'none';
+      pw.setAttribute('autocomplete', up ? 'new-password' : 'current-password');
+      msg.textContent = ''; msg.className = 'lg-msg';
+    }
+    tabIn.onclick = function () { setMode('login'); };
+    tabUp.onclick = function () { setMode('register'); };
+    if (new URLSearchParams(location.search).get('new') === '1') setMode('register');
+
+    var ERRORS = {
+      invalid_email: 'That email address does not look right.',
+      weak_password: 'Password must be at least 8 characters.',
+      email_taken: 'An account with this email already exists — try signing in.',
+      bad_credentials: 'Wrong email or password.'
+    };
+
+    document.getElementById('frm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = document.getElementById('email').value.trim();
+      var password = pw.value;
+      btn.disabled = true; msg.className = 'lg-msg'; msg.textContent = 'One moment…';
+
+      fetch('/api/auth/' + (mode === 'register' ? 'register' : 'login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ email: email, password: password })
+      }).then(function (r) {
+        return r.json().then(function (d) { return { ok: r.ok, d: d }; });
+      }).then(function (res) {
+        if (!res.ok) {
+          btn.disabled = false;
+          msg.className = 'lg-msg err';
+          msg.textContent = ERRORS[res.d.error] || 'Something went wrong. Please try again.';
+          return;
+        }
+        msg.className = 'lg-msg ok';
+        if (res.d.sub && res.d.sub.active) {
+          msg.textContent = 'Signed in — opening your library…';
+          location.href = next();
+        } else {
+          msg.textContent = "You're signed in, but there's no active subscription on this email yet.";
+          setTimeout(function () { location.href = 'result.html'; }, 2200);
+        }
+      }).catch(function () {
+        btn.disabled = false;
+        msg.className = 'lg-msg err';
+        msg.textContent = 'Network problem. Please try again.';
+      });
+    });
+
+    // already signed in with access? skip straight through
+    fetch('/api/auth/me', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d.authenticated && d.sub && d.sub.active) location.href = next(); })
+      .catch(function () {});
+  </script>
+</body>
+</html>

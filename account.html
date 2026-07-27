@@ -234,16 +234,44 @@
     document.getElementById('infDuration').textContent =
       String(h).padStart(2, '0') + 'h ' + String(m2).padStart(2, '0') + 'min' + (h === 0 ? ' ' + String(s2).padStart(2, '0') + 's' : '');
 
-    // membership type — from the plan price stored at checkout
+    // membership type — real subscription from the account (falls back to the checkout price)
     const price = parseFloat(ls('hl_plan_price', '')) || 0;
-    const plan = price >= 49 ? '6-Month membership' : price >= 32 ? '3-Month membership' : '1-Month membership';
-    document.getElementById('infPlan').textContent = plan;
+    const planEl = document.getElementById('infPlan');
+    const statusEl = document.querySelector('.ac-row .v.badge');
+    planEl.textContent = price >= 49 ? '6-Month membership' : price >= 32 ? '3-Month membership' : '1-Month membership';
+
+    const PLAN_LABEL = { '1m': '1-Month membership', '3m': '3-Month membership', '6m': '6-Month membership' };
+    fetch('/api/auth/me', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.authenticated) {
+          if (statusEl) { statusEl.textContent = 'Not signed in'; statusEl.classList.remove('badge'); }
+          return;
+        }
+        document.getElementById('infEmail').textContent = d.email;
+        if (d.created_at) {
+          document.getElementById('infReg').textContent =
+            new Date(d.created_at).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+        }
+        if (d.sub && d.sub.active) {
+          planEl.textContent = PLAN_LABEL[d.sub.plan] || planEl.textContent;
+          if (statusEl) statusEl.textContent = 'Active — renews ' + String(d.sub.expires_at).slice(0, 10);
+        } else if (statusEl) {
+          statusEl.textContent = 'No active membership';
+          statusEl.classList.remove('badge');
+        }
+      })
+      .catch(function () {});
 
     /* footer actions */
     document.getElementById('logoutLink').addEventListener('click', function (e) {
       e.preventDefault();
-      try { ['hushlore_outcome','hl_quiz2_branch','hl_history','hl_saved','hl_onboarded','hl_bought_any','hl_plan_price'].forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {}
-      window.location.href = 'index.html';
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })
+        .catch(function () {})
+        .then(function () {
+          try { ['hushlore_outcome','hl_quiz2_branch','hl_gender','hl_aud','hl_history','hl_saved','hl_onboarded','hl_bought_any','hl_plan_price'].forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {}
+          window.location.href = 'index.html';
+        });
     });
     // Manage = Stripe customer portal (add link when the new Stripe account is set up)
     document.getElementById('manageLink').addEventListener('click', function (e) { e.preventDefault(); alert('Manage your membership — coming soon. For anything urgent, email hello@hushlorewhisper.com'); });

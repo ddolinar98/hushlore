@@ -159,7 +159,25 @@
   </div>
 
   <script>
-    const AUDIO_BASE = 'https://audio.hushlorewhisper.com';
+    // Audio is served by the Worker at /audio/<id>.mp3 — it checks the session + active
+    // subscription before streaming from R2. The bucket itself is private.
+    const AUDIO_BASE = '/audio';
+
+    /* ── gate: require an account with an active subscription ───────────────── */
+    (function gate() {
+      var el = document.documentElement;
+      el.style.visibility = 'hidden';                       // avoid flashing the library
+      function leave(to) { location.replace(to); }
+      fetch('/api/auth/me', { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.authenticated) return leave('login.html?next=library.html');
+          if (!d.sub || !d.sub.active) return leave('result.html?expired=1');
+          window.HL_USER = d;
+          el.style.visibility = '';
+        })
+        .catch(function () { el.style.visibility = ''; });   // network hiccup: don't lock a paying user out
+    })();
     // Temporary thumbnails (brand photos) — swap to per-story AI images later.
     const IMGS = ['images/webpagephoto1.jpg','images/webpagephoto2.jpg','images/webpagephoto3.jpg','images/webpagephoto4.jpg','images/webpagephoto5.jpg','images/webpagephoto6.jpg','images/webpagephoto8.jpg'];
 

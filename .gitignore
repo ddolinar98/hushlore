@@ -1,0 +1,18 @@
+.env
+audio-tests/
+.wrangler/
+.DS_Store
+
+# Creator material — briefs, recordings, roadmap. Never publish: contains real
+# creator names and the story scripts. Everything here stays local.
+Creators/
+_build-scripts/
+production/
+deploy/
+Creator roadmap.xlsx
+*.xlsx
+*.docx
+*.pages
+*.pdf
+*.mp3
+*.wav

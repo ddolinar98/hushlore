@@ -1,0 +1,19 @@
+name = "hushlorenew"
+compatibility_date = "2026-05-01"
+pages_build_output_dir = "."
+
+# Accounts + subscriptions
+[[d1_databases]]
+binding = "DB"
+database_name = "hushlore-db"
+database_id = "aaa47523-6b92-495f-a89a-4a9f398b714a"
+
+# Story audio — served only through /audio/* after an auth + subscription check
+[[r2_buckets]]
+binding = "AUDIO"
+bucket_name = "hushlore-audio"
+
+# Secrets (set in Cloudflare dashboard, never here):
+#   SESSION_SECRET    — random string, signs session cookies
+#   ADMIN_KEY         — protects /api/admin/grant
+#   MAILERLITE_TOKEN  — optional, marketing list
