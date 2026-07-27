@@ -218,7 +218,12 @@
       ['commanding-embrace','commanding-embrace-straight-w-02','All Day','Andrew Ladd','22 min',3,['dominant','wanted all day'],'1.0K','w'],
       ['midnight-surrender','midnight-surrender-straight-w-02','Right Now','Andrew Ladd','24 min',3,['urgent','raw heat'],'1.0K','w'],
       // guided-solo: not one of the 6 quiz outcomes — filed under midnight-surrender for discoverability; move to a dedicated section when built
-      ['midnight-surrender','guided-solo-straight-w-01','Follow My Voice','Andrew Ladd','23 min',3,['guided','solo'],'1.0K','w']
+      ['midnight-surrender','guided-solo-straight-w-01','Follow My Voice','Andrew Ladd','23 min',3,['guided','solo'],'1.0K','w'],
+      ['slow-devotion','slow-devotion-straight-m-02','Finally','Grace','16 min',2,['long distance','reunion'],'1.0K','m'],
+      ['forbidden-whispers','forbidden-whispers-straight-m-02','The Balcony','Grace','16 min',3,['forbidden','the neighbor'],'1.0K','m'],
+      ['best-friends-untold','best-friends-untold-straight-m-02','One More Night','Grace','20 min',2,['friends to lovers','bittersweet'],'1.0K','m'],
+      ['commanding-embrace','commanding-embrace-straight-m-03','You Don\'t Decide Tonight','Grace','24 min',3,['femdom','loving'],'1.0K','m'],
+      ['midnight-surrender','midnight-surrender-straight-m-03','Every Part of You','Grace','25 min',3,['worship','pure sensation'],'1.0K','m']
     ].map(function (r, i) {
       return { cat: r[0], id: r[1], title: r[2], voice: r[3], len: r[4], heat: r[5], tags: r[6], views: r[7], br: r[8] || (r[3] === 'Lily' ? 'm' : 'w'), img: IMGS[i % IMGS.length] };
     });
@@ -226,7 +231,7 @@
     // listener branch: 'm' (men → female-voice stories) / 'w' (women → male-voice stories)
     function getBranch() { try { const b = localStorage.getItem('hl_quiz2_branch'); if (b === 'men') return 'm'; if (b === 'women') return 'w'; } catch (_) {} return null; }
     const listenerBr = getBranch();
-    const realRecordings = ['commanding-embrace-straight-w-02','midnight-surrender-straight-w-02','guided-solo-straight-w-01','enemys-confession-straight-m-01','best-friends-untold-straight-m-01','enemys-confession-straight-w-02','midnight-surrender-straight-w-01','threesome-mff-m-01','commanding-embrace-straight-m-02','slow-devotion-straight-m-03','midnight-surrender-straight-m-02','forbidden-whispers-straight-m-01','commanding-embrace-straight-w-01','midnight-surrender-straight-m-01','commanding-embrace-straight-m-01','slow-devotion-straight-m-01'];
+    const realRecordings = ['slow-devotion-straight-m-02','forbidden-whispers-straight-m-02','best-friends-untold-straight-m-02','commanding-embrace-straight-m-03','midnight-surrender-straight-m-03','commanding-embrace-straight-w-02','midnight-surrender-straight-w-02','guided-solo-straight-w-01','enemys-confession-straight-m-01','best-friends-untold-straight-m-01','enemys-confession-straight-w-02','midnight-surrender-straight-w-01','threesome-mff-m-01','commanding-embrace-straight-m-02','slow-devotion-straight-m-03','midnight-surrender-straight-m-02','forbidden-whispers-straight-m-01','commanding-embrace-straight-w-01','midnight-surrender-straight-m-01','commanding-embrace-straight-m-01','slow-devotion-straight-m-01'];
 
     // which outcome is this listener?
     function getOutcome() {
