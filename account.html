@@ -171,9 +171,23 @@
     const EXP_TO_OUTCOME = {}; EXPERIENCES.forEach(function (e) { EXP_TO_OUTCOME[e[0]] = e[2]; });
     selExperience.innerHTML = EXPERIENCES.map(function (e) { return '<option value="' + e[0] + '">' + e[1] + '</option>'; }).join('');
 
-    const branch = ls('hl_quiz2_branch', 'women');
-    selGender.value = branch;
-    selInterest.value = branch === 'men' ? 'women' : 'men';
+    // Gender select value: 'women'=Woman, 'men'=Man. Interest select value: attracted-to ('men'/'women').
+    const gStored = ls('hl_gender', '');            // woman | man | nb
+    const bStored = ls('hl_quiz2_branch', 'women'); // attracted-to
+    selGender.value = gStored === 'man' ? 'men' : 'women';
+    selInterest.value = bStored === 'men' ? 'men' : 'women';
+    function genderFromSel() { return selGender.value === 'men' ? 'man' : 'woman'; }
+    function computeAudAcc(gender, interest) {
+      if (gender === 'woman' && interest === 'men') return 'W';
+      if (gender === 'man' && interest === 'women') return 'M';
+      if (gender === 'woman' && interest === 'women') return 'L';
+      if (gender === 'man' && interest === 'men') return 'G';
+      return interest === 'men' ? 'W' : 'M';
+    }
+    function saveOrientation() {
+      var gender = genderFromSel(), interest = selInterest.value;
+      set('hl_gender', gender); set('hl_quiz2_branch', interest); set('hl_aud', computeAudAcc(gender, interest));
+    }
     selExperience.value = (function () {
       const stored = ls('hl_experience', '');
       if (stored && EXP_TO_OUTCOME.hasOwnProperty(stored)) return stored;
@@ -188,12 +202,8 @@
       const m = document.getElementById('savedMsg'); m.classList.add('show');
       clearTimeout(savedTimer); savedTimer = setTimeout(function () { m.classList.remove('show'); }, 1800);
     }
-    selGender.addEventListener('change', function () {
-      set('hl_quiz2_branch', selGender.value);
-      selInterest.value = selGender.value === 'men' ? 'women' : 'men';
-      flashSaved();
-    });
-    selInterest.addEventListener('change', flashSaved);
+    selGender.addEventListener('change', function () { saveOrientation(); flashSaved(); });
+    selInterest.addEventListener('change', function () { saveOrientation(); flashSaved(); });
     selExperience.addEventListener('change', function () {
       set('hl_experience', selExperience.value);
       const mapped = EXP_TO_OUTCOME[selExperience.value];

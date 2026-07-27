@@ -223,15 +223,34 @@
       ['forbidden-whispers','forbidden-whispers-straight-m-02','The Balcony','Grace','16 min',3,['forbidden','the neighbor'],'1.0K','m'],
       ['best-friends-untold','best-friends-untold-straight-m-02','One More Night','Grace','20 min',2,['friends to lovers','bittersweet'],'1.0K','m'],
       ['commanding-embrace','commanding-embrace-straight-m-03','You Don\'t Decide Tonight','Grace','24 min',3,['femdom','loving'],'1.0K','m'],
-      ['midnight-surrender','midnight-surrender-straight-m-03','Every Part of You','Grace','25 min',3,['worship','pure sensation'],'1.0K','m']
+      ['midnight-surrender','midnight-surrender-straight-m-03','Every Part of You','Grace','25 min',3,['worship','pure sensation'],'1.0K','m'],
+      // lesbian (female voice → woman into women). aud='L' auto-derived from 'lesbian' in id.
+      ['slow-devotion','slow-devotion-lesbian-01','First Time','Vivienne','20 min',2,['lesbian','first time'],'1.0K','m']
     ].map(function (r, i) {
-      return { cat: r[0], id: r[1], title: r[2], voice: r[3], len: r[4], heat: r[5], tags: r[6], views: r[7], br: r[8] || (r[3] === 'Lily' ? 'm' : 'w'), img: IMGS[i % IMGS.length] };
+      var brr = r[8] || (r[3] === 'Lily' ? 'm' : 'w');
+      var aud = /lesbian/.test(r[1]) ? 'L' : (/(^|[-_])gay([-_]|$)/.test(r[1]) ? 'G' : (brr === 'm' ? 'M' : 'W'));
+      return { cat: r[0], id: r[1], title: r[2], voice: r[3], len: r[4], heat: r[5], tags: r[6], views: r[7], br: brr, aud: aud, img: IMGS[i % IMGS.length] };
     });
     const byId = {}; S.forEach(function (s) { byId[s.id] = s; });
-    // listener branch: 'm' (men → female-voice stories) / 'w' (women → male-voice stories)
-    function getBranch() { try { const b = localStorage.getItem('hl_quiz2_branch'); if (b === 'men') return 'm'; if (b === 'women') return 'w'; } catch (_) {} return null; }
-    const listenerBr = getBranch();
-    const realRecordings = ['slow-devotion-straight-m-02','forbidden-whispers-straight-m-02','best-friends-untold-straight-m-02','commanding-embrace-straight-m-03','midnight-surrender-straight-m-03','commanding-embrace-straight-w-02','midnight-surrender-straight-w-02','guided-solo-straight-w-01','enemys-confession-straight-m-01','best-friends-untold-straight-m-01','enemys-confession-straight-w-02','midnight-surrender-straight-w-01','threesome-mff-m-01','commanding-embrace-straight-m-02','slow-devotion-straight-m-03','midnight-surrender-straight-m-02','forbidden-whispers-straight-m-01','commanding-embrace-straight-w-01','midnight-surrender-straight-m-01','commanding-embrace-straight-m-01','slow-devotion-straight-m-01'];
+    // listener AUDIENCE: 'M' straight men (female voice) · 'W' straight women (male voice) · 'L' women into women (lesbian) · 'G' men into men (gay)
+    // voice gender of an audience: M,L = female voice · W,G = male voice
+    function voiceOf(a) { return (a === 'W' || a === 'G') ? 'm' : 'f'; }
+    function computeAud() {
+      try {
+        var a = localStorage.getItem('hl_aud'); if (a === 'M' || a === 'W' || a === 'L' || a === 'G') return a;
+        var g = localStorage.getItem('hl_gender'), b = localStorage.getItem('hl_quiz2_branch'); // g: woman|man|nb ; b (attracted-to): men|women
+        if (g && b) {
+          if (g === 'woman' && b === 'men') return 'W';
+          if (g === 'man' && b === 'women') return 'M';
+          if (g === 'woman' && b === 'women') return 'L';
+          if (g === 'man' && b === 'men') return 'G';
+        }
+        if (b === 'men') return 'W'; if (b === 'women') return 'M'; // legacy (pre-orientation): straight by attraction
+      } catch (_) {}
+      return null;
+    }
+    const listenerAud = computeAud();
+    const realRecordings = ['slow-devotion-lesbian-01','slow-devotion-straight-m-02','forbidden-whispers-straight-m-02','best-friends-untold-straight-m-02','commanding-embrace-straight-m-03','midnight-surrender-straight-m-03','commanding-embrace-straight-w-02','midnight-surrender-straight-w-02','guided-solo-straight-w-01','enemys-confession-straight-m-01','best-friends-untold-straight-m-01','enemys-confession-straight-w-02','midnight-surrender-straight-w-01','threesome-mff-m-01','commanding-embrace-straight-m-02','slow-devotion-straight-m-03','midnight-surrender-straight-m-02','forbidden-whispers-straight-m-01','commanding-embrace-straight-w-01','midnight-surrender-straight-m-01','commanding-embrace-straight-m-01','slow-devotion-straight-m-01'];
 
     // which outcome is this listener?
     function getOutcome() {
@@ -280,7 +299,9 @@
 
     // rows — Whisper-style: History · POV · Trending · Popular This Week
     function parseViews(v) { const n = parseFloat(v) || 0; return v.indexOf('M') > -1 ? n * 1e6 : (v.indexOf('K') > -1 ? n * 1e3 : n); }
-    let matchList = S.filter(function (s) { return s.cat === key && (!listenerBr || s.br === listenerBr); });
+    // match: exact audience → same voice-gender → any (never empty)
+    let matchList = S.filter(function (s) { return s.cat === key && listenerAud && s.aud === listenerAud; });
+    if (!matchList.length && listenerAud) matchList = S.filter(function (s) { return s.cat === key && voiceOf(s.aud) === voiceOf(listenerAud); });
     if (!matchList.length) matchList = S.filter(function (s) { return s.cat === key; });
     const pov = ['midnight-surrender-f-01','midnight-surrender-02','midnight-surrender-03','midnight-surrender-f-02','commanding-embrace-02','enemys-confession-01','forbidden-whispers-02','best-friends-untold-02'].map(function (id) { return byId[id]; });
     const trending = S.slice().sort(function (a, b) { return parseViews(b.views) - parseViews(a.views); }).slice(0, 8);
@@ -291,7 +312,7 @@
 
     function renderRows() {
       const hist = getHistory().map(function (id) { return byId[id]; }).filter(Boolean);
-      const newReal = realRecordings.map(function (id) { return byId[id]; }).filter(Boolean).filter(function (s) { return !listenerBr || s.br === listenerBr; });
+      const newReal = realRecordings.map(function (id) { return byId[id]; }).filter(Boolean).filter(function (s) { return !listenerAud || s.aud === listenerAud; });
       let html = '';
       if (newReal.length) html += rowHTML('New — Fresh Recordings', true, 'real voices, just delivered', newReal);
       if (hist.length) html += rowHTML('History', true, 'recently played', hist);

@@ -1252,8 +1252,25 @@ function submitEmail() {
   }
   var matchKey = calcMatch();
 
+  // orientation: combine q1 (own gender) + branch (attracted-to) into an audience key
+  // M straight men (female voice) · W straight women (male voice) · L women→women (lesbian) · G men→men (gay)
+  function calcAud() {
+    var g = answers['q1']; // 0 Woman · 1 Man · 2 Non-binary
+    var gender = g === 0 ? 'woman' : (g === 1 ? 'man' : 'nb');
+    var b = branch || 'women';
+    var aud;
+    if (gender === 'woman' && b === 'men') aud = 'W';
+    else if (gender === 'man' && b === 'women') aud = 'M';
+    else if (gender === 'woman' && b === 'women') aud = 'L';
+    else if (gender === 'man' && b === 'men') aud = 'G';
+    else aud = (b === 'men' ? 'W' : 'M'); // non-binary / fallback → straight by attraction
+    return { gender: gender, aud: aud };
+  }
+  var _o = calcAud();
   try {
     localStorage.setItem('hl_quiz2_branch', branch || 'women');
+    localStorage.setItem('hl_gender', _o.gender);
+    localStorage.setItem('hl_aud', _o.aud);
     localStorage.setItem('hl_email', email);
   } catch(e) {}
   fetch('https://connect.mailerlite.com/api/subscribers', {
