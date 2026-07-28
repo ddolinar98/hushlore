@@ -245,7 +245,8 @@
       // lesbian (female voice → woman into women). aud='L' auto-derived from 'lesbian' in id.
       ['slow-devotion','slow-devotion-lesbian-01','First Time','Vivienne','20 min',2,['lesbian','first time'],'1.0K','m'],
       ['slow-devotion','slow-devotion-straight-w-02','Stay','Julian','20 min',2,['devoted','homecoming'],'1.0K','w'],
-      ['best-friends-untold','best-friends-untold-straight-w-01','All This Time','Julian','18 min',2,['friends to lovers','confession'],'1.0K','w']
+      ['best-friends-untold','best-friends-untold-straight-w-01','All This Time','Julian','18 min',2,['friends to lovers','confession'],'1.0K','w'],
+      ['forbidden-whispers','forbidden-whispers-straight-w-01',"Don't Make a Sound",'Julian','17 min',3,['forbidden','risky'],'1.0K','w']
     ].map(function (r, i) {
       var brr = r[8] || (r[3] === 'Lily' ? 'm' : 'w');
       var aud = /lesbian/.test(r[1]) ? 'L' : (/(^|[-_])gay([-_]|$)/.test(r[1]) ? 'G' : (brr === 'm' ? 'M' : 'W'));
@@ -270,7 +271,7 @@
       return null;
     }
     const listenerAud = computeAud();
-    const realRecordings = ['slow-devotion-straight-w-02','best-friends-untold-straight-w-01','slow-devotion-lesbian-01','slow-devotion-straight-m-02','forbidden-whispers-straight-m-02','best-friends-untold-straight-m-02','commanding-embrace-straight-m-03','midnight-surrender-straight-m-03','commanding-embrace-straight-w-02','midnight-surrender-straight-w-02','guided-solo-straight-w-01','enemys-confession-straight-m-01','best-friends-untold-straight-m-01','enemys-confession-straight-w-02','midnight-surrender-straight-w-01','threesome-mff-m-01','commanding-embrace-straight-m-02','slow-devotion-straight-m-03','midnight-surrender-straight-m-02','forbidden-whispers-straight-m-01','commanding-embrace-straight-w-01','midnight-surrender-straight-m-01','commanding-embrace-straight-m-01','slow-devotion-straight-m-01'];
+    const realRecordings = ['forbidden-whispers-straight-w-01','slow-devotion-straight-w-02','best-friends-untold-straight-w-01','slow-devotion-lesbian-01','slow-devotion-straight-m-02','forbidden-whispers-straight-m-02','best-friends-untold-straight-m-02','commanding-embrace-straight-m-03','midnight-surrender-straight-m-03','commanding-embrace-straight-w-02','midnight-surrender-straight-w-02','guided-solo-straight-w-01','enemys-confession-straight-m-01','best-friends-untold-straight-m-01','enemys-confession-straight-w-02','midnight-surrender-straight-w-01','threesome-mff-m-01','commanding-embrace-straight-m-02','slow-devotion-straight-m-03','midnight-surrender-straight-m-02','forbidden-whispers-straight-m-01','commanding-embrace-straight-w-01','midnight-surrender-straight-m-01','commanding-embrace-straight-m-01','slow-devotion-straight-m-01'];
 
     // which outcome is this listener?
     function getOutcome() {
