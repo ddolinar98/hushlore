@@ -193,30 +193,6 @@
 
     // flat story list
     const S = [
-      ['slow-devotion','slow-devotion-01','The Way You Deserve','Brian','12 min',2,['tender','worship'],'1.2M'],
-      ['slow-devotion','slow-devotion-02','Let Me Take Care of You','Brian','10 min',2,['tender','slow burn'],'980K'],
-      ['slow-devotion','slow-devotion-03','Rain and Nowhere to Be','Brian','10 min',2,['tender','lazy morning'],'1.1M'],
-      ['slow-devotion','slow-devotion-04','Warm Through the Storm','Brian','11 min',2,['tender','cozy'],'640K'],
-      ['forbidden-whispers','forbidden-whispers-01','The Door We Locked','Brian','10 min',3,['forbidden','secret'],'1.4M'],
-      ['forbidden-whispers','forbidden-whispers-02','Two Floors Up','Brian','10 min',3,['forbidden','risky'],'1.0M'],
-      ['forbidden-whispers','forbidden-whispers-03','The Room Next Door','Brian','10 min',3,['forbidden','slow burn'],'890K'],
-      ['forbidden-whispers','forbidden-whispers-04','Before the Next Song Ends','Brian','11 min',3,['forbidden','urgent'],'720K'],
-      ['commanding-embrace','commanding-embrace-01',"Say It's Mine",'Adam','10 min',3,['dominant','possessive'],'2.1M'],
-      ['commanding-embrace','commanding-embrace-02','On My Terms','Adam','11 min',3,['dominant','rough'],'1.7M'],
-      ['commanding-embrace','commanding-embrace-03','I Told You to Wait','Adam','11 min',3,['dominant','control'],'1.5M'],
-      ['commanding-embrace','commanding-embrace-04',"You've Been Waiting All Day",'Adam','12 min',3,['dominant','teasing'],'820K'],
-      ['best-friends-untold','best-friends-untold-01','After All This Time','Brian','11 min',2,['friends to lovers','tender'],'1.9M'],
-      ['best-friends-untold','best-friends-untold-02','Only One Bed','Brian','10 min',3,['friends to lovers','one bed'],'1.6M'],
-      ['best-friends-untold','best-friends-untold-03',"Don't Make Me Go",'Brian','10 min',2,['friends to lovers','longing'],'1.1M'],
-      ['best-friends-untold','best-friends-untold-04','The Last Ones Awake','Brian','11 min',3,['friends to lovers','late night'],'700K'],
-      ['enemys-confession','enemys-confession-01','Every Argument Was This','Adam','12 min',3,['enemies to lovers','charged'],'2.3M'],
-      ['enemys-confession','enemys-confession-02','Snowed In With You','Adam','10 min',3,['enemies to lovers','forced proximity'],'1.4M'],
-      ['enemys-confession','enemys-confession-03','You Came All This Way','Adam','10 min',3,['enemies to lovers','tension'],'1.2M'],
-      ['enemys-confession','enemys-confession-04','Say You Hate Me Again','Adam','11 min',3,['enemies to lovers','rooftop'],'760K'],
-      ['midnight-surrender','midnight-surrender-f-01','Who Runs the Night','Lily','11 min',3,['female voice','she leads'],'1.1M'],
-      ['midnight-surrender','midnight-surrender-02','Nothing But This','Brian','10 min',3,['pure sensation','intimate'],'1.3M'],
-      ['midnight-surrender','midnight-surrender-03','Just Do As I Say','Adam','10 min',3,['dominant','pure sensation'],'1.5M'],
-      ['midnight-surrender','midnight-surrender-f-02','Let Me Lead Tonight','Lily','13 min',3,['female voice','she leads'],'680K'],
       // — real voice-actor recordings (men-facing = female voice). br:'m'. Placeholder display names (creator credit TBD). —
       ['commanding-embrace','commanding-embrace-straight-m-01','Look at Me','Scarlett','13 min',3,['femdom','pure heat'],'2.4K','m'],
       ['slow-devotion','slow-devotion-straight-m-01','Come Home to Me','Grace','15 min',2,['girlfriend','tender'],'1.9K','m'],
@@ -320,13 +296,17 @@
 
     // rows — Whisper-style: History · POV · Trending · Popular This Week
     function parseViews(v) { const n = parseFloat(v) || 0; return v.indexOf('M') > -1 ? n * 1e6 : (v.indexOf('K') > -1 ? n * 1e3 : n); }
-    // match: exact audience → same voice-gender → any (never empty)
-    let matchList = S.filter(function (s) { return s.cat === key && listenerAud && s.aud === listenerAud; });
-    if (!matchList.length && listenerAud) matchList = S.filter(function (s) { return s.cat === key && voiceOf(s.aud) === voiceOf(listenerAud); });
-    if (!matchList.length) matchList = S.filter(function (s) { return s.cat === key; });
-    const pov = ['midnight-surrender-f-01','midnight-surrender-02','midnight-surrender-03','midnight-surrender-f-02','commanding-embrace-02','enemys-confession-01','forbidden-whispers-02','best-friends-untold-02'].map(function (id) { return byId[id]; });
-    const trending = S.slice().sort(function (a, b) { return parseViews(b.views) - parseViews(a.views); }).slice(0, 8);
-    const popular = ['slow-devotion-01','forbidden-whispers-01','best-friends-untold-01','midnight-surrender-f-01','enemys-confession-03','commanding-embrace-03','slow-devotion-02','forbidden-whispers-03'].map(function (id) { return byId[id]; });
+    // Only ever show stories written for THIS listener. We deliberately do NOT pad a thin
+    // audience (lesbian/gay) with same-voice stories, because those address a different
+    // listener — better a short shelf than a story that calls you the wrong thing.
+    const P = listenerAud ? S.filter(function (s) { return s.aud === listenerAud; }) : S.slice();
+
+    let matchList = P.filter(function (s) { return s.cat === key; });
+    if (!matchList.length) matchList = P.slice(0, 8);   // nothing in this outcome yet — show what we do have
+    // Browse rows are built from the catalogue itself, no hardcoded ids.
+    const pov = P.filter(function (s) { return s.heat === 3; }).slice(0, 8);
+    const trending = P.slice().sort(function (a, b) { return parseViews(b.views) - parseViews(a.views); }).slice(0, 8);
+    const popular = P.slice().sort(function (a, b) { return (b.heat - a.heat) || (parseViews(b.views) - parseViews(a.views)); }).slice(2, 10);
 
     function getHistory() { try { return JSON.parse(localStorage.getItem('hl_history') || '[]'); } catch (_) { return []; } }
     function pushHistory(id) { try { let h = getHistory().filter(function (x) { return x !== id; }); h.unshift(id); h = h.slice(0, 12); localStorage.setItem('hl_history', JSON.stringify(h)); } catch (_) {} }
@@ -335,12 +315,22 @@
       const hist = getHistory().map(function (id) { return byId[id]; }).filter(Boolean);
       const newReal = realRecordings.map(function (id) { return byId[id]; }).filter(Boolean).filter(function (s) { return !listenerAud || s.aud === listenerAud; });
       let html = '';
+      // Be honest when this listener's shelf is still small rather than padding it out.
+      if (P.length < 4) {
+        html += '<section class="lib-row"><div class="lib-row-head"><h2>' +
+          (P.length ? 'Your collection is just getting started' : 'Nothing here for you yet') +
+          '</h2></div><p style="font-family:var(--sans);color:#a98ea3;max-width:620px;line-height:1.6">' +
+          (P.length
+            ? 'These are the stories recorded for you so far. We only show you audio actually written for you — never someone else’s. New recordings are added every week.'
+            : 'We’re still recording for you. Everything in Hushlore is written for a specific listener, and we won’t show you stories meant for someone else. Your first recordings are on the way — email hello@hushlorewhisper.com and we’ll let you know the moment they land.') +
+          '</p></section>';
+      }
       if (newReal.length) html += rowHTML('New — Fresh Recordings', true, 'real voices, just delivered', newReal);
       if (hist.length) html += rowHTML('History', true, 'recently played', hist);
       else html += rowHTML('Start Here — ' + outcomes[key].title, true, 'your match', matchList);
-      html += rowHTML('POV Experiences', true, 'immersive', pov);
-      html += rowHTML('Trending', true, 'most played', trending);
-      html += rowHTML('Popular This Week', true, 'loved right now', popular);
+      if (pov.length)      html += rowHTML('POV Experiences', true, 'immersive', pov);
+      if (trending.length) html += rowHTML('Trending', true, 'most played', trending);
+      if (popular.length)  html += rowHTML('Popular This Week', true, 'loved right now', popular);
       document.getElementById('rows').innerHTML = html;
     }
     renderRows();
@@ -349,7 +339,8 @@
     const catSel = document.getElementById('filterCategory');
     catSel.innerHTML = '<option value="">Any</option>' + orderedKeys.map(function (k) { return '<option value="' + k + '">' + esc(outcomes[k].title) + '</option>'; }).join('');
     const voiceSel = document.getElementById('filterVoice');
-    voiceSel.innerHTML = '<option value="">All</option>' + ['Brian','Adam','Lily'].map(function (v) { return '<option value="' + v + '">' + v + '</option>'; }).join('');
+    const voiceNames = S.map(function (s) { return s.voice; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).sort();
+    voiceSel.innerHTML = '<option value="">All</option>' + voiceNames.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join('');
 
     /* search / filter */
     const resultsSection = document.getElementById('resultsSection');
