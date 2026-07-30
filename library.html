@@ -327,7 +327,7 @@
       }
       if (newReal.length) html += rowHTML('New — Fresh Recordings', true, 'real voices, just delivered', newReal);
       if (hist.length) html += rowHTML('History', true, 'recently played', hist);
-      else html += rowHTML('Start Here — ' + outcomes[key].title, true, 'your match', matchList);
+      else if (matchList.length) html += rowHTML('Start Here — ' + outcomes[key].title, true, 'your match', matchList);
       if (pov.length)      html += rowHTML('POV Experiences', true, 'immersive', pov);
       if (trending.length) html += rowHTML('Trending', true, 'most played', trending);
       if (popular.length)  html += rowHTML('Popular This Week', true, 'loved right now', popular);
