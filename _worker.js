@@ -463,7 +463,8 @@ async function chatMessages(request, env) {
 
   const since = url.searchParams.get('since') || '1970-01-01T00:00:00.000Z';
   const { results } = await env.DB.prepare(
-    'SELECT id, sender, body, created_at FROM chat_messages WHERE thread_id = ?1 AND created_at > ?2 ORDER BY created_at LIMIT 200'
+    `SELECT id, sender, body, created_at, ${found.role === 'creator' ? 'sent_by' : 'NULL AS sent_by'}
+       FROM chat_messages WHERE thread_id = ?1 AND created_at > ?2 ORDER BY created_at LIMIT 200`
   ).bind(found.t.id, since).all();
 
   // mark this side as read
@@ -703,7 +704,7 @@ async function adminThread(request, env) {
   if (!t) return json({ error: 'not_found' }, 404);
 
   const { results: messages } = await env.DB.prepare(
-    'SELECT id, sender, body, created_at FROM chat_messages WHERE thread_id = ?1 ORDER BY created_at'
+    'SELECT id, sender, body, created_at, sent_by FROM chat_messages WHERE thread_id = ?1 ORDER BY created_at'
   ).bind(id).all();
   const bal = await env.DB.prepare('SELECT credits FROM chat_balances WHERE user_id = ?1').bind(t.user_id).first();
   const sub = await activeSub(env, t.user_id);
@@ -719,22 +720,37 @@ async function adminThread(request, env) {
 }
 
 async function adminReply(request, env) {
-  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const who = await requireAdmin(request, env);
+  if (!who) return json({ error: 'unauthorized' }, 401);
   const b = await request.json().catch(() => ({}));
   const text = String(b.body || '').trim();
   if (!text) return json({ error: 'empty_message' }, 400);
   if (text.length > MAX_MESSAGE_CHARS) return json({ error: 'message_too_long' }, 400);
-  const t = await env.DB.prepare('SELECT id FROM chat_threads WHERE id = ?1').bind(String(b.thread || '')).first();
+  const t = await env.DB.prepare(
+    'SELECT id, creator_id FROM chat_threads WHERE id = ?1').bind(String(b.thread || '')).first();
   if (!t) return json({ error: 'not_found' }, 404);
 
+  // 'creator' sends it under her name; anything else is plainly the Hushlore team.
+  // Either way sent_by records who actually typed it, so the creator and we can always tell.
+  const asCreator = b.as === 'creator';
+  const sender = asCreator ? 'creator' : 'admin';
   const id = crypto.randomUUID(), at = nowISO();
+
   await env.DB.prepare(
-    "INSERT INTO chat_messages (id, thread_id, sender, body, created_at) VALUES (?1,?2,'admin',?3,?4)"
-  ).bind(id, t.id, text, at).run();
+    'INSERT INTO chat_messages (id, thread_id, sender, body, created_at, sent_by) VALUES (?1,?2,?3,?4,?5,?6)'
+  ).bind(id, t.id, sender, text, at, who.uid || 'admin').run();
   await env.DB.prepare(
     'UPDATE chat_threads SET last_msg_at = ?1, last_msg_from = ?2, user_unread = user_unread + 1 WHERE id = ?3'
-  ).bind(at, 'admin', t.id).run();
-  return json({ ok: true, id, created_at: at });
+  ).bind(at, sender, t.id).run();
+
+  // a reply under her name still earns her the payout
+  if (asCreator) {
+    const c = await env.DB.prepare('SELECT payout_cents FROM creators WHERE id = ?1').bind(t.creator_id).first();
+    await env.DB.prepare(
+      'INSERT INTO creator_earnings (id, creator_id, message_id, cents, created_at) VALUES (?1,?2,?3,?4,?5)'
+    ).bind(crypto.randomUUID(), t.creator_id, id, (c && c.payout_cents) || 12, at).run();
+  }
+  return json({ ok: true, id, created_at: at, sender });
 }
 
 async function adminBlock(request, env) {

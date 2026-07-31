@@ -172,7 +172,7 @@
           <span class="player-dm-av" id="playerDmAv"></span>
           <span class="player-dm-txt">
             <b id="playerDmName"></b>
-            <em id="playerDmSub">reads and replies herself</em>
+            <em id="playerDmSub"></em>
           </span>
           <span class="player-dm-go">Message →</span>
         </a>
@@ -350,7 +350,7 @@
               'Message ' + esc(who) + ' directly' +
             '</div>' +
             '<div style="font-family:var(--sans);font-size:14.5px;color:#c1a7b8;margin-top:6px;line-height:1.5">' +
-              'Tell her what you want to hear next — she reads and replies herself. Your first 3 messages are free.' +
+              'Tell her what you want to hear next. Your first 3 messages are free.' +
             '</div>' +
           '</div>' +
           '<div style="font-family:var(--sans);font-weight:700;font-size:15px;background:var(--gold);color:#1a0d14;' +
@@ -453,7 +453,7 @@
       document.getElementById('playerDmAv').textContent = (s.voice || '?').charAt(0);
       document.getElementById('playerDmName').textContent = 'Message ' + s.voice;
       document.getElementById('playerDmSub').textContent =
-        'She recorded this. Tell her what you thought — she replies herself.';
+        'She recorded this. Tell her what you thought.';
       el.href = 'chat.html?creator=' + encodeURIComponent(slug);
       el.style.display = 'flex';
     }

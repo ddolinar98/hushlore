@@ -75,6 +75,8 @@
     .ad-actions { display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap; }
     .btn-send { background:var(--gold); color:#1a0d14; border:none; border-radius:9px; padding:11px 18px;
       font-family:var(--sans); font-weight:700; font-size:14px; cursor:pointer; }
+    .btn-staff { background:none; border:1px solid var(--border-strong); color:#c1a7b8; border-radius:9px;
+      padding:11px 16px; font-family:var(--sans); font-size:13.5px; cursor:pointer; }
     .btn-block { background:none; border:1px solid #7a2233; color:#ff9aab; border-radius:9px; padding:11px 16px;
       font-family:var(--sans); font-size:13.5px; cursor:pointer; }
     .ad-warn { font-family:var(--sans); font-size:11.5px; color:#8d7684; margin-top:8px; line-height:1.5; }
@@ -206,29 +208,39 @@
         '<div class="ad-foot">' +
           '<textarea id="reply" placeholder="Write to this customer as the Hushlore team…"></textarea>' +
           '<div class="ad-actions">' +
-            '<button class="btn-send" id="send">Send as Hushlore</button>' +
+            '<button class="btn-send" id="sendAs">Reply as ' + esc(t.creator_name) + '</button>' +
+            '<button class="btn-staff" id="send">Send as Hushlore</button>' +
             '<button class="btn-block" id="block">' + (t.blocked ? 'Unblock this customer' : 'Block this customer') + '</button>' +
           '</div>' +
-          '<div class="ad-warn">Your reply is shown to the customer as <b>Hushlore Team</b>, not as ' +
-            esc(t.creator_name) + '. Blocking stops them writing in this conversation.</div>' +
+          '<div class="ad-warn" id="sendWarn"></div>' +
         '</div>';
 
       var box = $('msgs');
       r.d.messages.forEach(function (m) { box.appendChild(bubble(m, t.creator_name)); });
       box.scrollTop = box.scrollHeight;
 
-      $('send').onclick = function () {
+      function post(as) {
         var txt = $('reply').value.trim(); if (!txt) return;
-        $('send').disabled = true;
+        $('send').disabled = $('sendAs').disabled = true;
         api('/api/admin/reply', { method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ thread: id, body: txt }) }).then(function (res) {
-            $('send').disabled = false;
+          body: JSON.stringify({ thread: id, body: txt, as: as }) }).then(function (res) {
+            $('send').disabled = $('sendAs').disabled = false;
             if (!res.ok) { alert('Could not send.'); return; }
             $('reply').value = '';
-            box.appendChild(bubble({ sender:'admin', body:txt, created_at:res.d.created_at }, t.creator_name));
+            box.appendChild(bubble({ sender: res.d.sender, body: txt, created_at: res.d.created_at, sent_by: 'you' }, t.creator_name));
             box.scrollTop = box.scrollHeight;
           });
-      };
+      }
+      $('send').onclick   = function () { post('admin'); };
+      $('sendAs').onclick = function () { post('creator'); };
+
+      function paintWarn() {
+        $('sendWarn').innerHTML =
+          '<b>Reply as ' + esc(t.creator_name) + '</b> reaches the customer under her name, and she is paid for it. ' +
+          'She can see in her own inbox that it came from you, and every message records who actually sent it. &nbsp;·&nbsp; ' +
+          '<b>Send as Hushlore</b> is clearly from the team — use it for warnings and disputes.';
+      }
+      paintWarn();
       $('block').onclick = function () {
         api('/api/admin/block', { method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ thread: id, blocked: !t.blocked }) }).then(function () { openThread(id); loadThreads(); });
@@ -240,6 +252,7 @@
     var d = document.createElement('div');
     d.className = 'm ' + m.sender;
     var who = m.sender === 'user' ? 'Customer' : (m.sender === 'creator' ? creatorName : 'Hushlore Team');
+    if (m.sender === 'creator' && m.sent_by) who += ' · sent by you';
     d.innerHTML = '<div class="who">' + esc(who) + '</div>' + esc(m.body) + '<div class="t">' + when(m.created_at) + '</div>';
     return d;
   }
