@@ -41,11 +41,29 @@
       <span class="eyebrow">Thank you</span>
       <h1>You're in. <span class="italic">Quiet, please.</span></h1>
       <p class="lead" style="margin: 1.5rem auto 0;">
-        Your library is unlocked and ready right now. Find somewhere quiet, put your headphones in, and press play.
+        One quick step and your library is open: create your account so we know it's you.
       </p>
-      <div style="margin: 2rem auto 0;">
-        <a href="library.html" id="libraryBtn" class="btn btn-lg">Open your library →</a>
+
+      <div id="setupBox" style="max-width:520px;margin:1.75rem auto 0;padding:20px 22px;border:1px solid rgba(192,51,88,.35);
+           border-radius:14px;background:rgba(192,51,88,.07);text-align:left;">
+        <div style="font-family:var(--sans);font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:600;">
+          Step 1 of 1
+        </div>
+        <p style="font-family:var(--sans);font-size:16px;line-height:1.6;color:var(--cream);margin:8px 0 4px;">
+          Use <strong>the same email address you just paid with</strong> — that's what your membership is attached to.
+          Pick any password you like.
+        </p>
+        <p style="font-family:var(--sans);font-size:13.5px;color:#a98ea3;margin:0;">
+          It takes about ten seconds, and it means you can come back on any device.
+        </p>
       </div>
+
+      <div style="margin: 1.5rem auto 0;">
+        <a href="login.html?new=1&amp;next=library.html" id="libraryBtn" class="btn btn-lg">Create your account →</a>
+      </div>
+      <p style="font-family:var(--sans);font-size:13.5px;color:#a98ea3;margin:.9rem auto 0;">
+        Already made one? <a href="login.html?next=library.html" style="color:#c1a7b8;">Sign in instead</a>.
+      </p>
     </section>
 
     <section class="container">
@@ -55,7 +73,7 @@
         <ul class="result-features" style="text-align: left;">
           <li>
             <span class="check">i.</span>
-            <span><strong>Your full library is ready now</strong> — tap “Open your library” above. Bookmark that page so you can come back anytime.</span>
+            <span><strong>Create your account with the email you paid with</strong> — your membership is already waiting on that address and unlocks the moment you sign up.</span>
           </li>
           <li>
             <span class="check">ii.</span>
@@ -112,9 +130,36 @@
         branch = localStorage.getItem('hl_quiz2_branch');
         match = localStorage.getItem('hushlore_outcome');
       } catch (e) {}
-      // Point the library button at the buyer's matched outcome
+      // Where the button goes depends on how far along they are:
+      //   no account yet   → sign up (their membership is waiting on their email)
+      //   signed in, new   → welcome onboarding
+      //   signed in, back  → straight into the library
       const libBtn = document.getElementById('libraryBtn');
-      if (libBtn && match) libBtn.href = 'library.html?match=' + encodeURIComponent(match);
+      const setupBox = document.getElementById('setupBox');
+      if (libBtn) {
+        let onboarded = false;
+        try { onboarded = localStorage.getItem('hl_onboarded') === '1'; } catch (_) {}
+        const afterAuth = onboarded
+          ? (match ? 'library.html?match=' + encodeURIComponent(match) : 'library.html')
+          : 'onboarding.html';
+
+        fetch('/api/auth/me', { credentials: 'same-origin' })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (d && d.authenticated) {                 // already has an account — skip the setup step
+              libBtn.textContent = 'Open your library →';
+              libBtn.href = afterAuth;
+              if (setupBox) setupBox.style.display = 'none';
+              const alt = document.querySelector('a[href^="login.html?next"]');
+              if (alt && alt.parentElement) alt.parentElement.style.display = 'none';
+            } else {
+              libBtn.href = 'login.html?new=1&next=' + encodeURIComponent(afterAuth);
+            }
+          })
+          .catch(function () {
+            libBtn.href = 'login.html?new=1&next=' + encodeURIComponent(afterAuth);
+          });
+      }
       fetch(HL_SB_URL, {
         method: 'POST', keepalive: true,
         headers: { 'apikey': HL_SB_KEY, 'Authorization': 'Bearer ' + HL_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },

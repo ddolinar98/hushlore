@@ -121,6 +121,7 @@
         <div class="ac-row"><span class="k">Total Listening Duration</span><span class="v" id="infDuration">00h 00min</span></div>
         <div class="ac-row"><span class="k">Membership Type</span><span class="v" id="infPlan">1-Month membership</span></div>
         <div class="ac-row"><span class="k">Membership Status</span><span class="v badge">Active</span></div>
+        <div class="ac-row"><span class="k">Messages left</span><span class="v" id="infCredits">—</span></div>
       </div>
 
       <div class="ac-foot">
@@ -261,6 +262,18 @@
           statusEl.textContent = 'No active membership';
           statusEl.classList.remove('badge');
         }
+      })
+      .catch(function () {});
+
+    // message credits (creator chat)
+    fetch('/api/chat/me', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var el = document.getElementById('infCredits');
+        if (!el || !d.authenticated) return;
+        if (d.credits > 0) el.textContent = d.credits;
+        else if (d.free_left > 0) el.textContent = d.free_left + ' free';
+        else el.innerHTML = '0 — <a href="chat.html" style="color:#c1a7b8">get more</a>';
       })
       .catch(function () {});
 

@@ -312,6 +312,31 @@
     function getHistory() { try { return JSON.parse(localStorage.getItem('hl_history') || '[]'); } catch (_) { return []; } }
     function pushHistory(id) { try { let h = getHistory().filter(function (x) { return x !== id; }); h.unshift(id); h = h.slice(0, 12); localStorage.setItem('hl_history', JSON.stringify(h)); } catch (_) {} }
 
+    /* Message-a-creator promo. Names a voice the listener actually has here, so it
+       reads as "talk to her" rather than a generic banner. Hidden if nobody is set up. */
+    function chatPromoHTML() {
+      const names = P.map(function (s) { return s.voice; })
+        .filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+      if (!names.length) return '';
+      const who = names[Math.floor(Math.random() * names.length)];
+      return '' +
+        '<section class="lib-row"><a href="chat.html" style="text-decoration:none;display:block">' +
+        '<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:linear-gradient(135deg,rgba(192,51,88,.16),rgba(107,16,48,.10));' +
+        'border:1px solid var(--border-strong);border-radius:14px;padding:20px 24px;">' +
+          '<div style="flex:1 1 320px;min-width:0">' +
+            '<div style="font-family:var(--sans);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600">New</div>' +
+            '<div style="font-family:var(--serif);font-size:clamp(20px,3vw,26px);color:var(--cream);margin-top:4px;line-height:1.2">' +
+              'Message ' + esc(who) + ' directly' +
+            '</div>' +
+            '<div style="font-family:var(--sans);font-size:14.5px;color:#c1a7b8;margin-top:6px;line-height:1.5">' +
+              'Tell her what you want to hear next — she reads and replies herself. Your first 3 messages are free.' +
+            '</div>' +
+          '</div>' +
+          '<div style="font-family:var(--sans);font-weight:700;font-size:15px;background:var(--gold);color:#1a0d14;' +
+            'border-radius:10px;padding:13px 22px;white-space:nowrap">Start a conversation →</div>' +
+        '</div></a></section>';
+    }
+
     function renderRows() {
       const hist = getHistory().map(function (id) { return byId[id]; }).filter(Boolean);
       const newReal = realRecordings.map(function (id) { return byId[id]; }).filter(Boolean).filter(function (s) { return !listenerAud || s.aud === listenerAud; });
@@ -327,6 +352,7 @@
           '</p></section>';
       }
       if (newReal.length) html += rowHTML('New — Fresh Recordings', true, 'real voices, just delivered', newReal);
+      html += chatPromoHTML();
       if (hist.length) html += rowHTML('History', true, 'recently played', hist);
       else if (matchList.length) html += rowHTML('Start Here — ' + outcomes[key].title, true, 'your match', matchList);
       if (pov.length)      html += rowHTML('POV Experiences', true, 'immersive', pov);

@@ -47,6 +47,28 @@
       <span class="brand-mark-tagline">Audio Romance</span>
     </section>
 
+    <!-- Shown when the library sent someone here because their membership lapsed -->
+    <section id="lapsedNote" style="display:none;max-width:620px;margin:0 auto 8px;padding:18px 22px;
+             border:1px solid rgba(192,51,88,.35);border-radius:14px;background:rgba(192,51,88,.07);text-align:center;">
+      <p style="font-family:var(--sans);font-size:16px;line-height:1.6;color:var(--cream);margin:0 0 4px;">
+        <strong>Your membership has ended.</strong>
+      </p>
+      <p style="font-family:var(--sans);font-size:14px;line-height:1.6;color:#a98ea3;margin:0;">
+        Everything you've listened to is still saved — pick a plan below and your library opens straight back up.
+        Already renewed? <a href="login.html?next=library.html" style="color:#c1a7b8;">Sign in</a>.
+      </p>
+    </section>
+    <script>
+      (function () {
+        try {
+          if (new URLSearchParams(location.search).get('expired') === '1') {
+            var n = document.getElementById('lapsedNote');
+            if (n) n.style.display = 'block';
+          }
+        } catch (_) {}
+      })();
+    </script>
+
     <!-- Match reveal -->
     <section class="match-reveal" id="matchReveal" style="display:none;">
       <span class="match-reveal-eyebrow">Your perfect match</span>
