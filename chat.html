@@ -130,10 +130,12 @@
 
 <script>
   /* Bundles — prices live here; wire each to the payment processor when it's set up. */
+  /* Ids match the server's BUNDLES in _worker.js — the price charged is always the
+     server's, never whatever the page happens to say. */
   var BUNDLES = [
-    { credits: 25,  price: '€9.99',  each: '€0.40 each', link: '' },
-    { credits: 60,  price: '€19.99', each: '€0.33 each', link: '', best: true },
-    { credits: 150, price: '€39.99', each: '€0.27 each', link: '' }
+    { id:'b25',  credits: 25,  price: '€9.99',  each: '€0.40 each' },
+    { id:'b60',  credits: 60,  price: '€19.99', each: '€0.33 each', best: true },
+    { id:'b150', credits: 150, price: '€39.99', each: '€0.27 each' }
   ];
 
   var state = { creators: [], threads: [], active: null, poll: null, lastAt: null, credits: 0, freeLeft: 0 };
@@ -314,8 +316,14 @@
     [].forEach.call($('bundles').querySelectorAll('.bundle'), function (el) {
       el.onclick = function () {
         var b = BUNDLES[+el.getAttribute('data-i')];
-        if (b.link) location.href = b.link;
-        else alert('Checkout is not connected yet — this is where the payment page will open.');
+        el.style.opacity = '.6';
+        api('/api/chat/order', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ bundle: b.id }) }).then(function (r) {
+            el.style.opacity = '';
+            if (!r.ok) { alert('Could not start that order. Please try again.'); return; }
+            // payment processor configured → straight to it; otherwise show the pending order
+            location.href = r.d.checkout_url || ('credits.html?order=' + encodeURIComponent(r.d.order_id));
+          });
       };
     });
     $('ov').classList.add('open');

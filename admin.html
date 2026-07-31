@@ -83,6 +83,15 @@
     .ad-empty { flex:1; display:flex; align-items:center; justify-content:center; text-align:center; padding:40px;
       font-family:var(--sans); color:#8d7684; font-size:15px; line-height:1.6; }
 
+    .ord { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; margin-top:16px; overflow:hidden; }
+    .ord-h { font-family:var(--sans); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#a98ea3; padding:14px 16px 8px; }
+    .ord-r { display:flex; align-items:center; gap:12px; padding:12px 16px; border-top:1px solid var(--border); flex-wrap:wrap; }
+    .ord-r .em { font-family:var(--sans); font-size:14px; color:var(--cream); flex:1 1 200px; min-width:0; }
+    .ord-r .amt { font-family:var(--sans); font-size:14px; color:var(--gold); font-weight:700;
+      font-variant-numeric:lining-nums tabular-nums; }
+    .ord-r .dt { font-family:var(--sans); font-size:12px; color:#8d7684; }
+    .btn-paid { background:var(--gold); color:#1a0d14; border:none; border-radius:8px; padding:8px 14px;
+      font-family:var(--sans); font-weight:700; font-size:13px; cursor:pointer; }
     .gate { max-width:420px; margin:80px auto; background:var(--bg-card); border:1px solid var(--border);
       border-radius:16px; padding:28px; text-align:center; }
     .gate h1 { font-family:var(--serif); font-size:26px; color:var(--cream); margin-bottom:8px; }
@@ -105,6 +114,8 @@
     <input id="search" placeholder="Filter by customer email…" style="flex:1 1 220px" />
     <button class="ad-out" id="refresh" style="color:#c1a7b8">Refresh</button>
   </div>
+
+  <div id="orders"></div>
 
   <div class="ad-wrap">
     <div class="ad-list" id="list"></div>
@@ -137,7 +148,33 @@
     paintStats(r.d);
     api('/api/auth/me').then(function (m) { if (m.d.email) $('whoAmI').textContent = m.d.email; });
     loadThreads();
+    loadOrders();
   });
+
+  function loadOrders() {
+    api('/api/admin/orders').then(function (r) {
+      if (!r.ok) return;
+      var os = (r.d.orders || []).filter(function (o) { return o.status === 'pending'; });
+      if (!os.length) { $('orders').innerHTML = ''; return; }
+      $('orders').innerHTML = '<div class="ord"><div class="ord-h">Orders waiting for payment</div>' +
+        os.map(function (o) {
+          return '<div class="ord-r"><span class="em">' + esc(o.email) + '</span>' +
+            '<span class="amt">' + o.credits + ' msgs · €' + (o.price_cents/100).toFixed(2) + '</span>' +
+            '<span class="dt">' + when(o.created_at) + '</span>' +
+            '<button class="btn-paid" data-order="' + esc(o.id) + '">Mark paid</button></div>';
+        }).join('') + '</div>';
+      [].forEach.call($('orders').querySelectorAll('.btn-paid'), function (b) {
+        b.onclick = function () {
+          b.disabled = true;
+          api('/api/admin/order-paid', { method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ order: b.getAttribute('data-order') }) }).then(function () {
+              loadOrders(); loadThreads();
+              api('/api/admin/overview').then(function (x) { if (x.ok) paintStats(x.d); });
+            });
+        };
+      });
+    });
+  }
 
   function paintStats(s) {
     var cards = [
@@ -259,7 +296,7 @@
 
   $('filterCreator').onchange = loadThreads;
   $('search').oninput = renderList;
-  $('refresh').onclick = function () { loadThreads(); api('/api/admin/overview').then(function (r) { if (r.ok) paintStats(r.d); }); };
+  $('refresh').onclick = function () { loadOrders(); loadThreads(); api('/api/admin/overview').then(function (r) { if (r.ok) paintStats(r.d); }); };
   $('out').onclick = function () {
     fetch('/api/auth/logout', { method:'POST', credentials:'same-origin' })
       .catch(function(){}).then(function(){ location.href = 'login.html'; });

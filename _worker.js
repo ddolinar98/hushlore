@@ -40,6 +40,10 @@ export default {
       if (p === '/api/chat/open')          return requirePost(request, () => chatOpen(request, env));
       if (p === '/api/chat/messages')      return chatMessages(request, env);
       if (p === '/api/chat/send')          return requirePost(request, () => chatSend(request, env));
+      if (p === '/api/chat/order')         return requirePost(request, () => chatCreateOrder(request, env));
+      if (p === '/api/chat/order-status')  return chatOrderStatus(request, env);
+      if (p === '/api/admin/orders')       return adminOrders(request, env);
+      if (p === '/api/admin/order-paid')   return requirePost(request, () => adminOrderPaid(request, env));
       if (p === '/api/admin/grant-credits')return requirePost(request, () => adminGrantCredits(request, env));
       if (p === '/api/admin/creator')      return requirePost(request, () => adminUpsertCreator(request, env));
       if (p === '/api/admin/promote')      return requirePost(request, () => adminPromote(request, env));
@@ -536,6 +540,82 @@ async function chatSend(request, env) {
     ok: true, id: msgId, created_at: at, charged: spent,
     credits: found.role === 'user' ? await creditBalance(env, who.uid) : null
   });
+}
+
+/* ───────────────────────── credit orders ─────────────────────────
+   The bundles a listener can buy. Prices live here so the page and the
+   server can never disagree about what an order is worth. When a payment
+   processor is set up, put its payment-page URL in `link` and the buyer
+   goes straight there; the processor then calls /api/admin/order-paid.
+──────────────────────────────────────────────────────────────────── */
+const BUNDLES = {
+  b25:  { credits: 25,  price_cents:  999, link: '' },
+  b60:  { credits: 60,  price_cents: 1999, link: '' },
+  b150: { credits: 150, price_cents: 3999, link: '' }
+};
+
+async function chatCreateOrder(request, env) {
+  const uid = await readSession(env, request);
+  if (!uid) return json({ error: 'auth_required' }, 401);
+  if (!await activeSub(env, uid)) return json({ error: 'subscription_required' }, 402);
+
+  const b = await request.json().catch(() => ({}));
+  const bundle = BUNDLES[String(b.bundle || '')];
+  if (!bundle) return json({ error: 'unknown_bundle' }, 400);
+
+  const id = crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT INTO chat_orders (id, user_id, credits, price_cents, status, created_at)
+     VALUES (?1, ?2, ?3, ?4, 'pending', ?5)`
+  ).bind(id, uid, bundle.credits, bundle.price_cents, nowISO()).run();
+
+  // once a processor is configured, send them straight to it with the order attached
+  const checkout = bundle.link
+    ? bundle.link + (bundle.link.indexOf('?') > -1 ? '&' : '?') + 'order=' + encodeURIComponent(id)
+    : null;
+  return json({
+    ok: true, order_id: id, credits: bundle.credits,
+    price_cents: bundle.price_cents, checkout_url: checkout
+  });
+}
+
+/** The buyer's page polls this after returning from checkout. */
+async function chatOrderStatus(request, env) {
+  const uid = await readSession(env, request);
+  if (!uid) return json({ error: 'auth_required' }, 401);
+  const id = new URL(request.url).searchParams.get('id') || '';
+  const o = await env.DB.prepare(
+    'SELECT id, credits, price_cents, status, created_at, paid_at FROM chat_orders WHERE id = ?1 AND user_id = ?2'
+  ).bind(id, uid).first();
+  if (!o) return json({ error: 'not_found' }, 404);
+  return json({ order: o, credits: await creditBalance(env, uid) });
+}
+
+async function adminOrders(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const { results } = await env.DB.prepare(
+    `SELECT o.*, u.email FROM chat_orders o JOIN users u ON u.id = o.user_id
+      ORDER BY o.created_at DESC LIMIT 100`
+  ).all();
+  return json({ orders: results || [] });
+}
+
+/** Mark an order paid → credits land and the house rules are posted.
+    This is the single call a payment processor's webhook needs to make. */
+async function adminOrderPaid(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const b = await request.json().catch(() => ({}));
+  const o = await env.DB.prepare('SELECT * FROM chat_orders WHERE id = ?1').bind(String(b.order || '')).first();
+  if (!o) return json({ error: 'not_found' }, 404);
+  if (o.status === 'paid') return json({ ok: true, already: true, credits: await creditBalance(env, o.user_id) });
+
+  await env.DB.prepare(
+    "UPDATE chat_orders SET status='paid', paid_at=?1, processor=?2, processor_ref=?3 WHERE id=?4"
+  ).bind(nowISO(), b.processor || 'manual', b.ref || null, o.id).run();
+
+  await addCredits(env, o.user_id, o.credits, 'purchase', o.id);
+  const notified = await postPurchaseNotice(env, o.user_id);
+  return json({ ok: true, credits: await creditBalance(env, o.user_id), notice_posted: notified });
 }
 
 /** Payment hook — call this from the processor's webhook (or by hand) after a bundle is bought. */
