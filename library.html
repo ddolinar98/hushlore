@@ -100,6 +100,19 @@
     .player-eyebrow { font-family: var(--sans); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); }
     .player h3 { font-family: var(--serif); font-weight: 600; font-size: 26px; color: var(--cream); margin-top: 4px; line-height: 1.1; }
     .player-tags { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+
+    /* offer to message the voice you're listening to — sits under the player controls */
+    .player-dm { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 12px 14px;
+      border: 1px solid var(--border-strong); border-radius: 12px; text-decoration: none;
+      background: linear-gradient(135deg, rgba(192,51,88,.16), rgba(107,16,48,.10)); transition: border-color .15s ease; }
+    .player-dm:hover { border-color: var(--gold); }
+    .player-dm-av { width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center;
+      justify-content: center; background: var(--bg-elevated); font-family: var(--serif); font-size: 17px; color: var(--gold); }
+    .player-dm-txt { flex: 1; min-width: 0; line-height: 1.35; }
+    .player-dm-txt b { display: block; font-family: var(--sans); font-size: 14.5px; color: var(--cream); font-weight: 600; }
+    .player-dm-txt em { font-family: var(--sans); font-size: 12.5px; color: #a98ea3; font-style: normal; }
+    .player-dm-go { font-family: var(--sans); font-size: 13px; font-weight: 700; color: #1a0d14;
+      background: var(--gold); border-radius: 8px; padding: 9px 14px; white-space: nowrap; flex: 0 0 auto; }
     .player audio { width: 100%; margin-top: 18px; }
     .player-close { position: absolute; top: 12px; right: 12px; z-index: 3; width: 34px; height: 34px; border-radius: 50%;
       background: rgba(8,6,8,0.6); border: none; color: #fff; font-size: 18px; cursor: pointer; }
@@ -155,6 +168,14 @@
         <h3 id="playerTitle"></h3>
         <div class="player-tags" id="playerTags"></div>
         <audio id="playerAudio" controls preload="none"></audio>
+        <a class="player-dm" id="playerDm" href="#" style="display:none">
+          <span class="player-dm-av" id="playerDmAv"></span>
+          <span class="player-dm-txt">
+            <b id="playerDmName"></b>
+            <em id="playerDmSub">reads and replies herself</em>
+          </span>
+          <span class="player-dm-go">Message →</span>
+        </a>
       </div>
     </div>
   </div>
@@ -411,12 +432,38 @@
     /* player modal */
     const overlay = document.getElementById('playerOverlay');
     const audioEl = document.getElementById('playerAudio');
+
+    /* Which voices can actually be messaged. Loaded once; the offer only appears
+       for a voice that has a chat profile, so it can never point at nobody. */
+    const dmBySlugName = {};
+    (function loadChatCreators() {
+      const q = listenerAud ? '?aud=' + listenerAud : '';
+      fetch('/api/chat/creators' + q, { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          (d.creators || []).forEach(function (c) { dmBySlugName[c.display_name] = c.slug; });
+        })
+        .catch(function () {});
+    })();
+
+    function showDmOffer(s) {
+      const el = document.getElementById('playerDm');
+      const slug = dmBySlugName[s.voice];
+      if (!slug) { el.style.display = 'none'; return; }
+      document.getElementById('playerDmAv').textContent = (s.voice || '?').charAt(0);
+      document.getElementById('playerDmName').textContent = 'Message ' + s.voice;
+      document.getElementById('playerDmSub').textContent =
+        'She recorded this. Tell her what you thought — she replies herself.';
+      el.href = 'chat.html?creator=' + encodeURIComponent(slug);
+      el.style.display = 'flex';
+    }
     function openPlayer(s) {
       document.getElementById('playerImg').style.backgroundImage = 'url(' + s.img + ')';
       document.getElementById('playerVoice').textContent = s.voice + '  ·  ' + s.len + '  ·  ' + chili(s.heat);
       document.getElementById('playerTitle').textContent = s.title;
       document.getElementById('playerTags').innerHTML = s.tags.map(function (t) { return '<span class="card-tag">' + esc(t) + '</span>'; }).join('');
       audioEl.src = AUDIO_BASE + '/' + s.id + '.mp3';
+      showDmOffer(s);
       overlay.classList.add('open');
       audioEl.play().catch(function () {});
       pushHistory(s.id); renderRows();

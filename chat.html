@@ -179,6 +179,10 @@
       state.threads  = res[1].d.threads  || [];
       if (res[1].d.credits != null) setCredits(res[1].d.credits);
       renderList();
+
+      // arrived from a player ("Message Scarlett") — open that conversation straight away
+      var want = new URLSearchParams(location.search).get('creator');
+      if (want && state.creators.some(function (c) { return c.slug === want; })) openChat(want);
     });
   }
 
