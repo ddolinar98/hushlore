@@ -153,8 +153,25 @@
     load();
   });
 
+  /** Same audience rule as the library: gender + who they're into. */
+  function myAud() {
+    try {
+      var a = localStorage.getItem('hl_aud');
+      if (['M','W','L','G'].indexOf(a) > -1) return a;
+      var g = localStorage.getItem('hl_gender'), b = localStorage.getItem('hl_quiz2_branch');
+      if (g === 'woman' && b === 'men')   return 'W';
+      if (g === 'man'   && b === 'women') return 'M';
+      if (g === 'woman' && b === 'women') return 'L';
+      if (g === 'man'   && b === 'men')   return 'G';
+      if (b === 'men')   return 'W';
+      if (b === 'women') return 'M';
+    } catch (_) {}
+    return null;
+  }
+
   function load() {
-    Promise.all([api('/api/chat/creators'), api('/api/chat/threads')]).then(function (res) {
+    var a = myAud();
+    Promise.all([api('/api/chat/creators' + (a ? '?aud=' + a : '')), api('/api/chat/threads')]).then(function (res) {
       state.creators = res[0].d.creators || [];
       state.threads  = res[1].d.threads  || [];
       if (res[1].d.credits != null) setCredits(res[1].d.credits);

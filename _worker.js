@@ -332,15 +332,29 @@ async function addCredits(env, uid, delta, reason, ref) {
   ).bind(crypto.randomUUID(), uid, delta, reason, ref || null, nowISO()).run();
 }
 
-/** Creators available to message. Only shows creators matching the listener's audience. */
+/** Creators available to message — only those who record for this listener's audience.
+    The audience is worked out in the browser (gender + who they're into); we take it once
+    and remember it on the account so the server can personalise later too. */
 async function chatCreators(request, env) {
   const who = await whoAmI(env, request);
   if (!who) return json({ error: 'auth_required' }, 401);
+
+  let aud = new URL(request.url).searchParams.get('aud');
+  if (!['M', 'W', 'L', 'G'].includes(aud)) aud = null;
+  if (aud) {
+    await env.DB.prepare('UPDATE users SET aud = ?1 WHERE id = ?2').bind(aud, who.uid).run();
+  } else {
+    const u = await env.DB.prepare('SELECT aud FROM users WHERE id = ?1').bind(who.uid).first();
+    aud = u && u.aud ? u.aud : null;
+  }
+
   const { results } = await env.DB.prepare(
     `SELECT id, slug, display_name, tagline, bio, avatar, aud, reply_hint
-       FROM creators WHERE chat_enabled = 1 ORDER BY display_name`
-  ).all();
-  return json({ creators: results || [] });
+       FROM creators
+      WHERE chat_enabled = 1 AND (?1 IS NULL OR aud IS NULL OR aud = ?1)
+      ORDER BY display_name`
+  ).bind(aud).all();
+  return json({ creators: results || [], aud: aud });
 }
 
 async function chatMe(request, env) {
