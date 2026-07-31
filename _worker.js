@@ -296,7 +296,7 @@ async function subscribe(request, env) {
    so any payment processor can be wired in later without touching this logic.
 ─────────────────────────────────────────────────────────────────────── */
 
-const FREE_FIRST_MESSAGE = true;   // first message to each creator costs nothing
+const FREE_MESSAGES      = 3;      // free messages a listener gets in total, across all creators
 const MAX_MESSAGE_CHARS  = 2000;
 const MIN_MS_BETWEEN_MSG = 1500;   // basic flood guard
 
@@ -347,9 +347,14 @@ async function chatMe(request, env) {
   const who = await whoAmI(env, request);
   if (!who) return json({ authenticated: false }, 200);
   const sub = await activeSub(env, who.uid);
+  const usedFree = await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM chat_messages m JOIN chat_threads t ON t.id = m.thread_id
+      WHERE t.user_id = ?1 AND m.sender = 'user'`
+  ).bind(who.uid).first();
   return json({
     authenticated: true,
     credits: await creditBalance(env, who.uid),
+    free_left: Math.max(0, FREE_MESSAGES - (usedFree ? usedFree.n : 0)),
     subscribed: !!sub,
     is_creator: !!who.creator,
     creator: who.creator ? { slug: who.creator.slug, display_name: who.creator.display_name } : null
@@ -465,11 +470,13 @@ async function chatSend(request, env) {
   let spent = 0;
   if (found.role === 'user') {
     if (!await activeSub(env, who.uid)) return json({ error: 'subscription_required' }, 402);
+    // free allowance is counted across every conversation, not per creator
     const sent = await env.DB.prepare(
-      "SELECT COUNT(*) AS n FROM chat_messages WHERE thread_id = ?1 AND sender = 'user'"
-    ).bind(found.t.id).first();
-    const isFirst = FREE_FIRST_MESSAGE && (!sent || sent.n === 0);
-    if (!isFirst) {
+      `SELECT COUNT(*) AS n FROM chat_messages m JOIN chat_threads t ON t.id = m.thread_id
+        WHERE t.user_id = ?1 AND m.sender = 'user'`
+    ).bind(who.uid).first();
+    const stillFree = (sent ? sent.n : 0) < FREE_MESSAGES;
+    if (!stillFree) {
       if (await creditBalance(env, who.uid) < 1) {
         return json({ error: 'no_credits', credits: 0 }, 402);
       }
@@ -494,7 +501,7 @@ async function chatSend(request, env) {
   if (found.role === 'creator') {
     await env.DB.prepare(
       'INSERT INTO creator_earnings (id, creator_id, message_id, cents, created_at) VALUES (?1,?2,?3,?4,?5)'
-    ).bind(crypto.randomUUID(), who.creator.id, msgId, who.creator.payout_cents || 40, at).run();
+    ).bind(crypto.randomUUID(), who.creator.id, msgId, who.creator.payout_cents || 12, at).run();
   }
 
   return json({
@@ -556,6 +563,6 @@ async function adminUpsertCreator(request, env) {
      VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)`
   ).bind(crypto.randomUUID(), slug, b.display_name || slug, b.tagline || null, b.bio || null, b.avatar || null,
          b.aud || null, b.chat_enabled ? 1 : 0, b.reply_hint || 'usually replies within a day',
-         b.payout_cents || 40, userId, nowISO()).run();
+         b.payout_cents || 12, userId, nowISO()).run();
   return json({ ok: true, mode: 'created', slug });
 }

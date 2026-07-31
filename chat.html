@@ -77,6 +77,8 @@
     .bundle:hover { border-color:var(--gold); }
     .bundle .l { font-family:var(--sans); color:var(--cream); font-size:16px; font-weight:600; }
     .bundle .r { font-family:var(--sans); color:var(--gold); font-size:16px; font-weight:700; }
+    .bundle .best { font-family:var(--sans); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+      background:var(--gold); color:#1a0d14; border-radius:20px; padding:2px 8px; margin-left:6px; vertical-align:middle; }
     .bundle .each { font-family:var(--sans); font-size:11.5px; color:#8d7684; }
     .ov-close { background:none; border:none; color:#c1a7b8; font-family:var(--sans); font-size:14px; cursor:pointer; width:100%; margin-top:8px; }
   </style>
@@ -103,7 +105,7 @@
   <div class="ch-wrap">
     <div class="ch-list" id="list"><div class="ch-list-h">Creators</div></div>
     <div class="ch-thread hide-mobile" id="thread">
-      <div class="ch-empty" id="empty">Pick a creator to start a conversation.<br />Your first message to each of them is free.</div>
+      <div class="ch-empty" id="empty">Pick a creator to start a conversation.<br />Your first 3 messages are free.</div>
     </div>
   </div>
 </div>
@@ -120,24 +122,33 @@
 <script>
   /* Bundles — prices live here; wire each to the payment processor when it's set up. */
   var BUNDLES = [
-    { credits: 10, price: '€9.99',  each: '€1.00 each', link: '' },
-    { credits: 25, price: '€19.99', each: '€0.80 each', link: '' },
-    { credits: 60, price: '€39.99', each: '€0.67 each', link: '' }
+    { credits: 25,  price: '€9.99',  each: '€0.40 each', link: '' },
+    { credits: 60,  price: '€19.99', each: '€0.33 each', link: '', best: true },
+    { credits: 150, price: '€39.99', each: '€0.27 each', link: '' }
   ];
 
-  var state = { creators: [], threads: [], active: null, poll: null, lastAt: null, credits: 0 };
+  var state = { creators: [], threads: [], active: null, poll: null, lastAt: null, credits: 0, freeLeft: 0 };
   var $ = function (id) { return document.getElementById(id); };
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
   function api(p, opt){ return fetch(p, Object.assign({ credentials:'same-origin' }, opt||{})).then(function(r){ return r.json().then(function(d){ return {ok:r.ok, d:d}; }); }); }
   function timeOf(iso){ var d=new Date(iso); return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
 
-  function setCredits(n){ state.credits = n; $('credN').textContent = n; }
+  function setCredits(n){ state.credits = n; paintCredits(); }
+  function paintCredits() {
+    var line = $('credLine');
+    if (state.freeLeft > 0 && state.credits === 0) {
+      line.innerHTML = '<b>' + state.freeLeft + '</b> free message' + (state.freeLeft === 1 ? '' : 's') + ' left';
+    } else {
+      line.innerHTML = '<b>' + state.credits + '</b> message' + (state.credits === 1 ? '' : 's') + ' left';
+    }
+  }
 
   /* gate: must be signed in with an active subscription */
   api('/api/chat/me').then(function (r) {
     if (!r.d.authenticated) return location.replace('login.html?next=chat.html');
     if (!r.d.subscribed)    return location.replace('result.html?expired=1');
     if (r.d.is_creator)     return location.replace('creator.html');
+    state.freeLeft = r.d.free_left || 0;
     setCredits(r.d.credits);
     load();
   });
@@ -217,9 +228,11 @@
 
   function updateCost() {
     var el = $('cost'); if (!el) return;
-    var first = !document.querySelector('#msgs .msg.me');
-    el.textContent = first ? 'Your first message to ' + state.active.creator.display_name + ' is free.'
-                           : 'Each message you send uses 1 credit — ' + state.credits + ' left.';
+    if (state.freeLeft > 0 && state.credits === 0) {
+      el.textContent = state.freeLeft + ' free message' + (state.freeLeft === 1 ? '' : 's') + ' left, then each one uses a credit. Replies are always free.';
+    } else {
+      el.textContent = 'Each message you send uses 1 credit — ' + state.credits + ' left. Replies are always free.';
+    }
   }
 
   function pull(first) {
@@ -247,7 +260,8 @@
           alert('Message could not be sent.'); return;
         }
         box.value = '';
-        if (r.d.credits != null) setCredits(r.d.credits);
+        if (!r.d.charged && state.freeLeft > 0) state.freeLeft--;
+        if (r.d.credits != null) setCredits(r.d.credits); else paintCredits();
         renderThread([{ sender:'user', body:text, created_at:r.d.created_at }], true);
       });
   }
@@ -255,7 +269,8 @@
   /* buy credits */
   function openBuy() {
     $('bundles').innerHTML = BUNDLES.map(function (b, i) {
-      return '<div class="bundle" data-i="' + i + '"><div><div class="l">' + b.credits + ' messages</div>' +
+      return '<div class="bundle" data-i="' + i + '"><div><div class="l">' + b.credits + ' messages' +
+             (b.best ? ' <span class="best">best value</span>' : '') + '</div>' +
              '<div class="each">' + b.each + '</div></div><div class="r">' + b.price + '</div></div>';
     }).join('');
     [].forEach.call($('bundles').querySelectorAll('.bundle'), function (el) {
