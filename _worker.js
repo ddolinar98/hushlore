@@ -42,6 +42,12 @@ export default {
       if (p === '/api/chat/send')          return requirePost(request, () => chatSend(request, env));
       if (p === '/api/admin/grant-credits')return requirePost(request, () => adminGrantCredits(request, env));
       if (p === '/api/admin/creator')      return requirePost(request, () => adminUpsertCreator(request, env));
+      if (p === '/api/admin/promote')      return requirePost(request, () => adminPromote(request, env));
+      if (p === '/api/admin/overview')     return adminOverview(request, env);
+      if (p === '/api/admin/threads')      return adminThreads(request, env);
+      if (p === '/api/admin/thread')       return adminThread(request, env);
+      if (p === '/api/admin/reply')        return requirePost(request, () => adminReply(request, env));
+      if (p === '/api/admin/block')        return requirePost(request, () => adminBlock(request, env));
     } catch (e) {
       return json({ error: 'server_error' }, 500);
     }
@@ -579,4 +585,131 @@ async function adminUpsertCreator(request, env) {
          b.aud || null, b.chat_enabled ? 1 : 0, b.reply_hint || 'usually replies within a day',
          b.payout_cents || 12, userId, nowISO()).run();
   return json({ ok: true, mode: 'created', slug });
+}
+
+/* ═══════════════════════ admin / moderation ═══════════════════════
+   Read-only over every conversation, plus the ability to step in. Admin replies
+   are sent as 'admin' and shown to the listener as the Hushlore team — never
+   dressed up as the creator.
+──────────────────────────────────────────────────────────────────── */
+
+/** Admin either via a signed-in account flagged is_admin, or the ADMIN_KEY header. */
+async function requireAdmin(request, env) {
+  const key = request.headers.get('x-admin-key');
+  if (key && env.ADMIN_KEY && safeEqual(key, env.ADMIN_KEY)) return { uid: null, viaKey: true };
+  const uid = await readSession(env, request);
+  if (!uid) return null;
+  const u = await env.DB.prepare('SELECT is_admin FROM users WHERE id = ?1').bind(uid).first();
+  return u && u.is_admin ? { uid, viaKey: false } : null;
+}
+
+/** Bootstrap: turn an existing account into an admin (needs the ADMIN_KEY). */
+async function adminPromote(request, env) {
+  if (!env.ADMIN_KEY || !safeEqual(request.headers.get('x-admin-key') || '', env.ADMIN_KEY)) {
+    return json({ error: 'unauthorized' }, 401);
+  }
+  const b = await request.json().catch(() => ({}));
+  const email = normEmail(b.email);
+  const on = b.admin === false ? 0 : 1;
+  const u = await env.DB.prepare('SELECT id FROM users WHERE email = ?1').bind(email).first();
+  if (!u) return json({ error: 'no_such_user' }, 404);
+  await env.DB.prepare('UPDATE users SET is_admin = ?1 WHERE id = ?2').bind(on, u.id).run();
+  return json({ ok: true, email, admin: !!on });
+}
+
+async function adminOverview(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const q = async (sql) => (await env.DB.prepare(sql).first()) || {};
+  const users     = await q('SELECT COUNT(*) AS n FROM users');
+  const subs      = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM subscriptions WHERE status='active' AND expires_at > ?1").bind(nowISO()).first();
+  const threads   = await q('SELECT COUNT(*) AS n FROM chat_threads');
+  const msgs      = await q("SELECT COUNT(*) AS n FROM chat_messages WHERE sender='user'");
+  const replies   = await q("SELECT COUNT(*) AS n FROM chat_messages WHERE sender='creator'");
+  const spent     = await q("SELECT COALESCE(-SUM(delta),0) AS n FROM chat_ledger WHERE reason='message'");
+  const bought    = await q("SELECT COALESCE(SUM(delta),0) AS n FROM chat_ledger WHERE reason='purchase'");
+  const owed      = await q('SELECT COALESCE(SUM(cents),0) AS n FROM creator_earnings WHERE paid_out = 0');
+  return json({
+    users: users.n, active_subs: subs ? subs.n : 0, threads: threads.n,
+    messages_sent: msgs.n, creator_replies: replies.n,
+    credits_bought: bought.n, credits_spent: spent.n, creator_owed_cents: owed.n
+  });
+}
+
+/** Every conversation, newest activity first. */
+async function adminThreads(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const url = new URL(request.url);
+  const creator = url.searchParams.get('creator') || '';
+  const { results } = await env.DB.prepare(
+    `SELECT t.id, t.user_id, t.blocked, t.last_msg_at, t.last_msg_from, t.created_at,
+            c.display_name AS creator_name, c.slug AS creator_slug,
+            u.email AS user_email,
+            (SELECT COUNT(*) FROM chat_messages m WHERE m.thread_id = t.id AND m.sender='user')    AS from_user,
+            (SELECT COUNT(*) FROM chat_messages m WHERE m.thread_id = t.id AND m.sender='creator') AS from_creator,
+            (SELECT body FROM chat_messages m WHERE m.thread_id = t.id ORDER BY created_at DESC LIMIT 1) AS preview
+       FROM chat_threads t
+       JOIN creators c ON c.id = t.creator_id
+       JOIN users u    ON u.id = t.user_id
+      WHERE (?1 = '' OR c.slug = ?1)
+      ORDER BY COALESCE(t.last_msg_at, t.created_at) DESC LIMIT 200`
+  ).bind(creator).all();
+  const { results: cr } = await env.DB.prepare(
+    'SELECT slug, display_name FROM creators ORDER BY display_name').all();
+  return json({ threads: results || [], creators: cr || [] });
+}
+
+/** Full transcript of one conversation, plus what that listener has spent. */
+async function adminThread(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const id = new URL(request.url).searchParams.get('id') || '';
+  const t = await env.DB.prepare(
+    `SELECT t.*, c.display_name AS creator_name, u.email AS user_email, u.created_at AS user_since
+       FROM chat_threads t JOIN creators c ON c.id = t.creator_id JOIN users u ON u.id = t.user_id
+      WHERE t.id = ?1`
+  ).bind(id).first();
+  if (!t) return json({ error: 'not_found' }, 404);
+
+  const { results: messages } = await env.DB.prepare(
+    'SELECT id, sender, body, created_at FROM chat_messages WHERE thread_id = ?1 ORDER BY created_at'
+  ).bind(id).all();
+  const bal = await env.DB.prepare('SELECT credits FROM chat_balances WHERE user_id = ?1').bind(t.user_id).first();
+  const sub = await activeSub(env, t.user_id);
+
+  return json({
+    thread: {
+      id: t.id, creator_name: t.creator_name, user_email: t.user_email, user_since: t.user_since,
+      blocked: !!t.blocked, credits_left: bal ? bal.credits : 0,
+      subscription: subShape(sub)
+    },
+    messages: messages || []
+  });
+}
+
+async function adminReply(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const b = await request.json().catch(() => ({}));
+  const text = String(b.body || '').trim();
+  if (!text) return json({ error: 'empty_message' }, 400);
+  if (text.length > MAX_MESSAGE_CHARS) return json({ error: 'message_too_long' }, 400);
+  const t = await env.DB.prepare('SELECT id FROM chat_threads WHERE id = ?1').bind(String(b.thread || '')).first();
+  if (!t) return json({ error: 'not_found' }, 404);
+
+  const id = crypto.randomUUID(), at = nowISO();
+  await env.DB.prepare(
+    "INSERT INTO chat_messages (id, thread_id, sender, body, created_at) VALUES (?1,?2,'admin',?3,?4)"
+  ).bind(id, t.id, text, at).run();
+  await env.DB.prepare(
+    'UPDATE chat_threads SET last_msg_at = ?1, last_msg_from = ?2, user_unread = user_unread + 1 WHERE id = ?3'
+  ).bind(at, 'admin', t.id).run();
+  return json({ ok: true, id, created_at: at });
+}
+
+async function adminBlock(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const b = await request.json().catch(() => ({}));
+  const on = b.blocked ? 1 : 0;
+  await env.DB.prepare('UPDATE chat_threads SET blocked = ?1 WHERE id = ?2')
+    .bind(on, String(b.thread || '')).run();
+  return json({ ok: true, blocked: !!on });
 }

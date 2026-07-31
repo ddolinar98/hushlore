@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — Admin</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { background: var(--bg); }
+    .ad-page { max-width:1240px; margin:0 auto; padding:0 clamp(16px,3vw,32px) 60px; }
+    .ad-nav { display:flex; align-items:center; justify-content:space-between; padding:20px 0 8px; }
+    .ad-logo { font-family:var(--serif); font-size:24px; color:var(--cream); font-weight:500; }
+    .ad-logo span { color:var(--gold); }
+    .ad-badge { font-family:var(--sans); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+      background:var(--gold); color:#1a0d14; border-radius:20px; padding:3px 10px; font-weight:700; margin-left:10px; }
+    .ad-out { background:none; border:none; color:#8d7684; font-family:var(--sans); font-size:14px; cursor:pointer; }
+
+    .ad-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:16px 0 6px; }
+    .st { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:13px 16px; }
+    .st .k { font-family:var(--sans); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#8d7684; }
+    .st .v { font-family:var(--sans); font-weight:600; font-size:24px; color:var(--cream); margin-top:2px;
+      font-variant-numeric:lining-nums tabular-nums; }
+    .st .v.gold { color:var(--gold); }
+
+    .ad-tools { display:flex; gap:10px; align-items:center; margin:14px 0 0; flex-wrap:wrap; }
+    .ad-tools select, .ad-tools input { background:var(--bg-card); border:1px solid var(--border); border-radius:8px;
+      padding:10px 12px; color:var(--cream); font-family:var(--sans); font-size:14px; }
+
+    .ad-wrap { display:grid; grid-template-columns:minmax(340px,420px) 1fr; gap:16px; margin-top:16px; align-items:start; }
+    @media (max-width:900px){ .ad-wrap{ grid-template-columns:1fr; } }
+
+    .ad-list { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+    .ad-row { padding:12px 14px; border-top:1px solid var(--border); cursor:pointer; }
+    .ad-row:hover { background:var(--bg-elevated); }
+    .ad-row.on { background:rgba(192,51,88,.12); }
+    .ad-row .t { display:flex; justify-content:space-between; gap:10px; align-items:baseline; }
+    .ad-row .who { font-family:var(--sans); font-size:14.5px; color:var(--cream); font-weight:600; }
+    .ad-row .cnt { font-family:var(--sans); font-size:11.5px; color:#a98ea3; white-space:nowrap;
+      font-variant-numeric:lining-nums tabular-nums; }
+    .ad-row .em { font-family:var(--sans); font-size:12px; color:#8d7684; margin-top:2px; }
+    .ad-row .pv { font-family:var(--sans); font-size:12.5px; color:#8d7684; margin-top:4px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ad-row .flag { font-family:var(--sans); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+      background:#7a2233; color:#ffd9e0; border-radius:20px; padding:2px 8px; margin-left:6px; }
+
+    .ad-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; min-height:520px;
+      display:flex; flex-direction:column; }
+    .ad-head { padding:16px 18px; border-bottom:1px solid var(--border); }
+    .ad-head h2 { font-family:var(--serif); font-size:22px; color:var(--cream); font-weight:500; }
+    .ad-meta { display:flex; gap:16px; flex-wrap:wrap; margin-top:8px; }
+    .ad-meta span { font-family:var(--sans); font-size:12.5px; color:#a98ea3; }
+    .ad-meta b { color:var(--cream); }
+
+    .ad-msgs { flex:1; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border-strong) transparent; padding:18px; display:flex; flex-direction:column; gap:10px; max-height:56vh; }
+    .m { max-width:76%; padding:10px 13px; border-radius:14px; font-family:var(--sans); font-size:14.5px;
+      line-height:1.45; white-space:pre-wrap; word-wrap:break-word; }
+    .m.user    { align-self:flex-start; background:var(--bg-elevated); color:var(--cream); border:1px solid var(--border); }
+    .m.creator { align-self:flex-end;  background:var(--gold); color:#1a0d14; }
+    .m.admin   { align-self:center; background:rgba(120,90,200,.18); border:1px solid rgba(150,120,230,.45); color:#e6dcff; max-width:88%; }
+    .m .who { font-family:var(--sans); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; opacity:.75; margin-bottom:3px; }
+    .m .t { font-family:var(--sans); font-size:10.5px; opacity:.6; margin-top:4px; }
+
+    .ad-msgs::-webkit-scrollbar, .ch-msgs::-webkit-scrollbar, .cr-msgs::-webkit-scrollbar { width:8px; }
+    .ad-msgs::-webkit-scrollbar-track, .ch-msgs::-webkit-scrollbar-track, .cr-msgs::-webkit-scrollbar-track { background:transparent; }
+    .ad-msgs::-webkit-scrollbar-thumb, .ch-msgs::-webkit-scrollbar-thumb, .cr-msgs::-webkit-scrollbar-thumb {
+      background:var(--border-strong); border-radius:8px; }
+    .ad-foot { border-top:1px solid var(--border); padding:12px; }
+    .ad-foot textarea { width:100%; box-sizing:border-box; resize:none; background:var(--bg-elevated);
+      border:1px solid var(--border); border-radius:10px; padding:11px 13px; color:var(--cream);
+      font-family:var(--sans); font-size:14.5px; min-height:56px; }
+    .ad-actions { display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+    .btn-send { background:var(--gold); color:#1a0d14; border:none; border-radius:9px; padding:11px 18px;
+      font-family:var(--sans); font-weight:700; font-size:14px; cursor:pointer; }
+    .btn-block { background:none; border:1px solid #7a2233; color:#ff9aab; border-radius:9px; padding:11px 16px;
+      font-family:var(--sans); font-size:13.5px; cursor:pointer; }
+    .ad-warn { font-family:var(--sans); font-size:11.5px; color:#8d7684; margin-top:8px; line-height:1.5; }
+    .ad-empty { flex:1; display:flex; align-items:center; justify-content:center; text-align:center; padding:40px;
+      font-family:var(--sans); color:#8d7684; font-size:15px; line-height:1.6; }
+
+    .gate { max-width:420px; margin:80px auto; background:var(--bg-card); border:1px solid var(--border);
+      border-radius:16px; padding:28px; text-align:center; }
+    .gate h1 { font-family:var(--serif); font-size:26px; color:var(--cream); margin-bottom:8px; }
+    .gate p { font-family:var(--sans); font-size:14px; color:#a98ea3; line-height:1.6; }
+    .gate a { color:var(--gold); }
+  </style>
+</head>
+<body>
+<div class="ad-page" id="app" style="display:none">
+  <div class="ad-nav">
+    <div><span class="ad-logo">Hush<span>lore</span></span><span class="ad-badge">Admin</span></div>
+    <div><span id="whoAmI" style="font-family:var(--sans);font-size:13.5px;color:#a98ea3"></span>
+         <button class="ad-out" id="out">Sign out</button></div>
+  </div>
+
+  <div class="ad-stats" id="stats"></div>
+
+  <div class="ad-tools">
+    <select id="filterCreator"><option value="">All creators</option></select>
+    <input id="search" placeholder="Filter by customer email…" style="flex:1 1 220px" />
+    <button class="ad-out" id="refresh" style="color:#c1a7b8">Refresh</button>
+  </div>
+
+  <div class="ad-wrap">
+    <div class="ad-list" id="list"></div>
+    <div class="ad-panel" id="panel">
+      <div class="ad-empty">Pick a conversation to read it in full.</div>
+    </div>
+  </div>
+</div>
+
+<div class="gate" id="gate" style="display:none">
+  <h1>Admin only</h1>
+  <p id="gateMsg">Checking…</p>
+</div>
+
+<script>
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+  function api(p,o){ return fetch(p, Object.assign({credentials:'same-origin'}, o||{})).then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); }); }
+  function when(iso){ if(!iso) return '—'; var d=new Date(iso); return d.toLocaleDateString()+' '+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
+
+  var state = { threads: [], creators: [], active: null };
+
+  api('/api/admin/overview').then(function (r) {
+    if (!r.ok) {
+      $('gate').style.display = 'block';
+      $('gateMsg').innerHTML = 'This account is not an admin. <a href="login.html?next=admin.html">Sign in</a> with your admin account.';
+      return;
+    }
+    $('app').style.display = 'block';
+    paintStats(r.d);
+    api('/api/auth/me').then(function (m) { if (m.d.email) $('whoAmI').textContent = m.d.email; });
+    loadThreads();
+  });
+
+  function paintStats(s) {
+    var cards = [
+      ['Customers', s.users], ['Active subs', s.active_subs, true],
+      ['Conversations', s.threads], ['Messages sent', s.messages_sent],
+      ['Creator replies', s.creator_replies],
+      ['Credits bought', s.credits_bought], ['Credits used', s.credits_spent],
+      ['Owed to creators', '€' + ((s.creator_owed_cents || 0) / 100).toFixed(2), true]
+    ];
+    $('stats').innerHTML = cards.map(function (c) {
+      return '<div class="st"><div class="k">' + c[0] + '</div><div class="v' + (c[2] ? ' gold' : '') + '">' + c[1] + '</div></div>';
+    }).join('');
+  }
+
+  function loadThreads() {
+    var c = $('filterCreator').value;
+    api('/api/admin/threads' + (c ? '?creator=' + encodeURIComponent(c) : '')).then(function (r) {
+      if (!r.ok) return;
+      state.threads = r.d.threads || [];
+      if (!state.creators.length) {
+        state.creators = r.d.creators || [];
+        $('filterCreator').innerHTML = '<option value="">All creators</option>' +
+          state.creators.map(function (x) { return '<option value="' + esc(x.slug) + '">' + esc(x.display_name) + '</option>'; }).join('');
+      }
+      renderList();
+    });
+  }
+
+  function renderList() {
+    var q = $('search').value.trim().toLowerCase();
+    var rows = state.threads.filter(function (t) { return !q || (t.user_email || '').toLowerCase().indexOf(q) > -1; });
+    if (!rows.length) {
+      $('list').innerHTML = '<div style="padding:18px;font-family:var(--sans);color:#8d7684;font-size:14px">No conversations.</div>';
+      return;
+    }
+    $('list').innerHTML = rows.map(function (t) {
+      return '<div class="ad-row' + (state.active === t.id ? ' on' : '') + '" data-id="' + esc(t.id) + '">' +
+        '<div class="t"><span class="who">' + esc(t.creator_name) +
+          (t.blocked ? '<span class="flag">blocked</span>' : '') + '</span>' +
+          '<span class="cnt">' + t.from_user + ' sent · ' + t.from_creator + ' replied</span></div>' +
+        '<div class="em">' + esc(t.user_email) + '</div>' +
+        '<div class="pv">' + esc(t.preview || 'no messages yet') + '</div>' +
+        '<div class="pv" style="color:#6f5a68">' + when(t.last_msg_at || t.created_at) + '</div>' +
+      '</div>';
+    }).join('');
+    [].forEach.call($('list').querySelectorAll('.ad-row'), function (el) {
+      el.onclick = function () { openThread(el.getAttribute('data-id')); };
+    });
+  }
+
+  function openThread(id) {
+    state.active = id;
+    renderList();
+    api('/api/admin/thread?id=' + encodeURIComponent(id)).then(function (r) {
+      if (!r.ok) return;
+      var t = r.d.thread;
+      var sub = t.subscription && t.subscription.active
+        ? t.subscription.plan + ' until ' + String(t.subscription.expires_at).slice(0, 10) : 'none';
+      $('panel').innerHTML =
+        '<div class="ad-head"><h2>' + esc(t.creator_name) + ' &nbsp;·&nbsp; ' + esc(t.user_email) + '</h2>' +
+          '<div class="ad-meta">' +
+            '<span>Customer since <b>' + when(t.user_since) + '</b></span>' +
+            '<span>Membership <b>' + esc(sub) + '</b></span>' +
+            '<span>Credits left <b>' + t.credits_left + '</b></span>' +
+            '<span>Messages <b>' + r.d.messages.length + '</b></span>' +
+          '</div></div>' +
+        '<div class="ad-msgs" id="msgs"></div>' +
+        '<div class="ad-foot">' +
+          '<textarea id="reply" placeholder="Write to this customer as the Hushlore team…"></textarea>' +
+          '<div class="ad-actions">' +
+            '<button class="btn-send" id="send">Send as Hushlore</button>' +
+            '<button class="btn-block" id="block">' + (t.blocked ? 'Unblock this customer' : 'Block this customer') + '</button>' +
+          '</div>' +
+          '<div class="ad-warn">Your reply is shown to the customer as <b>Hushlore Team</b>, not as ' +
+            esc(t.creator_name) + '. Blocking stops them writing in this conversation.</div>' +
+        '</div>';
+
+      var box = $('msgs');
+      r.d.messages.forEach(function (m) { box.appendChild(bubble(m, t.creator_name)); });
+      box.scrollTop = box.scrollHeight;
+
+      $('send').onclick = function () {
+        var txt = $('reply').value.trim(); if (!txt) return;
+        $('send').disabled = true;
+        api('/api/admin/reply', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ thread: id, body: txt }) }).then(function (res) {
+            $('send').disabled = false;
+            if (!res.ok) { alert('Could not send.'); return; }
+            $('reply').value = '';
+            box.appendChild(bubble({ sender:'admin', body:txt, created_at:res.d.created_at }, t.creator_name));
+            box.scrollTop = box.scrollHeight;
+          });
+      };
+      $('block').onclick = function () {
+        api('/api/admin/block', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ thread: id, blocked: !t.blocked }) }).then(function () { openThread(id); loadThreads(); });
+      };
+    });
+  }
+
+  function bubble(m, creatorName) {
+    var d = document.createElement('div');
+    d.className = 'm ' + m.sender;
+    var who = m.sender === 'user' ? 'Customer' : (m.sender === 'creator' ? creatorName : 'Hushlore Team');
+    d.innerHTML = '<div class="who">' + esc(who) + '</div>' + esc(m.body) + '<div class="t">' + when(m.created_at) + '</div>';
+    return d;
+  }
+
+  $('filterCreator').onchange = loadThreads;
+  $('search').oninput = renderList;
+  $('refresh').onclick = function () { loadThreads(); api('/api/admin/overview').then(function (r) { if (r.ok) paintStats(r.d); }); };
+  $('out').onclick = function () {
+    fetch('/api/auth/logout', { method:'POST', credentials:'same-origin' })
+      .catch(function(){}).then(function(){ location.href = 'login.html'; });
+  };
+</script>
+</body>
+</html>
