@@ -32,6 +32,16 @@ export default {
       if (p === '/api/admin/grant')   return requirePost(request, () => adminGrant(request, env));
       if (p === '/api/subscribe')     return requirePost(request, () => subscribe(request, env));
       if (p.startsWith('/audio/'))    return serveAudio(request, env, p.slice('/audio/'.length));
+
+      // ── creator chat ──────────────────────────────────────────────
+      if (p === '/api/chat/creators')      return chatCreators(request, env);
+      if (p === '/api/chat/me')            return chatMe(request, env);
+      if (p === '/api/chat/threads')       return chatThreads(request, env);
+      if (p === '/api/chat/open')          return requirePost(request, () => chatOpen(request, env));
+      if (p === '/api/chat/messages')      return chatMessages(request, env);
+      if (p === '/api/chat/send')          return requirePost(request, () => chatSend(request, env));
+      if (p === '/api/admin/grant-credits')return requirePost(request, () => adminGrantCredits(request, env));
+      if (p === '/api/admin/creator')      return requirePost(request, () => adminUpsertCreator(request, env));
     } catch (e) {
       return json({ error: 'server_error' }, 500);
     }
@@ -278,4 +288,274 @@ async function subscribe(request, env) {
   } catch (e) {
     return json({ error: 'bad_request' }, 400);
   }
+}
+
+/* ═══════════════════════════ creator chat ═══════════════════════════
+   1 credit = 1 message the listener sends. Creator replies are free and
+   earn the creator a fixed amount. Credits are granted by /api/admin/grant-credits,
+   so any payment processor can be wired in later without touching this logic.
+─────────────────────────────────────────────────────────────────────── */
+
+const FREE_FIRST_MESSAGE = true;   // first message to each creator costs nothing
+const MAX_MESSAGE_CHARS  = 2000;
+const MIN_MS_BETWEEN_MSG = 1500;   // basic flood guard
+
+/** Who is calling: listener, and whether they're also a creator. */
+async function whoAmI(env, request) {
+  const uid = await readSession(env, request);
+  if (!uid) return null;
+  const creator = await env.DB.prepare(
+    'SELECT id, slug, display_name, payout_cents FROM creators WHERE user_id = ?1'
+  ).bind(uid).first();
+  return { uid, creator: creator || null };
+}
+
+/** Stable pseudonym so creators never see a listener's email. */
+function listenerAlias(userId) {
+  let h = 0;
+  for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) >>> 0;
+  return 'Listener #' + h.toString(16).toUpperCase().slice(0, 4).padStart(4, '0');
+}
+
+async function creditBalance(env, uid) {
+  const row = await env.DB.prepare('SELECT credits FROM chat_balances WHERE user_id = ?1').bind(uid).first();
+  return row ? row.credits : 0;
+}
+
+async function addCredits(env, uid, delta, reason, ref) {
+  await env.DB.prepare(
+    `INSERT INTO chat_balances (user_id, credits, updated_at) VALUES (?1, ?2, ?3)
+     ON CONFLICT(user_id) DO UPDATE SET credits = credits + ?2, updated_at = ?3`
+  ).bind(uid, delta, nowISO()).run();
+  await env.DB.prepare(
+    'INSERT INTO chat_ledger (id, user_id, delta, reason, ref, created_at) VALUES (?1,?2,?3,?4,?5,?6)'
+  ).bind(crypto.randomUUID(), uid, delta, reason, ref || null, nowISO()).run();
+}
+
+/** Creators available to message. Only shows creators matching the listener's audience. */
+async function chatCreators(request, env) {
+  const who = await whoAmI(env, request);
+  if (!who) return json({ error: 'auth_required' }, 401);
+  const { results } = await env.DB.prepare(
+    `SELECT id, slug, display_name, tagline, bio, avatar, aud, reply_hint
+       FROM creators WHERE chat_enabled = 1 ORDER BY display_name`
+  ).all();
+  return json({ creators: results || [] });
+}
+
+async function chatMe(request, env) {
+  const who = await whoAmI(env, request);
+  if (!who) return json({ authenticated: false }, 200);
+  const sub = await activeSub(env, who.uid);
+  return json({
+    authenticated: true,
+    credits: await creditBalance(env, who.uid),
+    subscribed: !!sub,
+    is_creator: !!who.creator,
+    creator: who.creator ? { slug: who.creator.slug, display_name: who.creator.display_name } : null
+  });
+}
+
+/** Listener: their conversations. Creator: their inbox. */
+async function chatThreads(request, env) {
+  const who = await whoAmI(env, request);
+  if (!who) return json({ error: 'auth_required' }, 401);
+
+  if (who.creator) {
+    const { results } = await env.DB.prepare(
+      `SELECT t.id, t.user_id, t.last_msg_at, t.last_msg_from, t.creator_unread, t.blocked,
+              (SELECT body FROM chat_messages m WHERE m.thread_id = t.id ORDER BY created_at DESC LIMIT 1) AS preview
+         FROM chat_threads t WHERE t.creator_id = ?1
+        ORDER BY COALESCE(t.last_msg_at, t.created_at) DESC LIMIT 100`
+    ).bind(who.creator.id).all();
+    return json({
+      as: 'creator',
+      threads: (results || []).map(function (t) {
+        return { id: t.id, who: listenerAlias(t.user_id), last_msg_at: t.last_msg_at,
+                 last_msg_from: t.last_msg_from, unread: t.creator_unread, blocked: !!t.blocked, preview: t.preview };
+      })
+    });
+  }
+
+  const { results } = await env.DB.prepare(
+    `SELECT t.id, t.creator_id, t.last_msg_at, t.last_msg_from, t.user_unread,
+            c.display_name, c.avatar, c.slug, c.reply_hint,
+            (SELECT body FROM chat_messages m WHERE m.thread_id = t.id ORDER BY created_at DESC LIMIT 1) AS preview
+       FROM chat_threads t JOIN creators c ON c.id = t.creator_id
+      WHERE t.user_id = ?1 ORDER BY COALESCE(t.last_msg_at, t.created_at) DESC`
+  ).bind(who.uid).all();
+  return json({ as: 'user', credits: await creditBalance(env, who.uid), threads: results || [] });
+}
+
+/** Open (or create) the listener's conversation with a creator. */
+async function chatOpen(request, env) {
+  const who = await whoAmI(env, request);
+  if (!who) return json({ error: 'auth_required' }, 401);
+  if (!await activeSub(env, who.uid)) return json({ error: 'subscription_required' }, 402);
+
+  const body = await request.json().catch(() => ({}));
+  const creator = await env.DB.prepare(
+    'SELECT id, slug, display_name, avatar, reply_hint FROM creators WHERE slug = ?1 AND chat_enabled = 1'
+  ).bind(String(body.slug || '')).first();
+  if (!creator) return json({ error: 'creator_not_found' }, 404);
+
+  let thread = await env.DB.prepare(
+    'SELECT id FROM chat_threads WHERE user_id = ?1 AND creator_id = ?2'
+  ).bind(who.uid, creator.id).first();
+
+  if (!thread) {
+    const id = crypto.randomUUID();
+    await env.DB.prepare(
+      'INSERT INTO chat_threads (id, user_id, creator_id, created_at) VALUES (?1,?2,?3,?4)'
+    ).bind(id, who.uid, creator.id, nowISO()).run();
+    thread = { id };
+  }
+  return json({ thread_id: thread.id, creator, credits: await creditBalance(env, who.uid) });
+}
+
+async function threadFor(env, who, threadId) {
+  const t = await env.DB.prepare('SELECT * FROM chat_threads WHERE id = ?1').bind(threadId).first();
+  if (!t) return null;
+  if (who.creator && t.creator_id === who.creator.id) return { t, role: 'creator' };
+  if (t.user_id === who.uid) return { t, role: 'user' };
+  return null;
+}
+
+/** Poll messages. `?since=<iso>` returns only newer ones. */
+async function chatMessages(request, env) {
+  const who = await whoAmI(env, request);
+  if (!who) return json({ error: 'auth_required' }, 401);
+  const url = new URL(request.url);
+  const found = await threadFor(env, who, url.searchParams.get('thread') || '');
+  if (!found) return json({ error: 'not_found' }, 404);
+
+  const since = url.searchParams.get('since') || '1970-01-01T00:00:00.000Z';
+  const { results } = await env.DB.prepare(
+    'SELECT id, sender, body, created_at FROM chat_messages WHERE thread_id = ?1 AND created_at > ?2 ORDER BY created_at LIMIT 200'
+  ).bind(found.t.id, since).all();
+
+  // mark this side as read
+  const col = found.role === 'creator' ? 'creator_unread' : 'user_unread';
+  await env.DB.prepare('UPDATE chat_threads SET ' + col + ' = 0 WHERE id = ?1').bind(found.t.id).run();
+
+  return json({ role: found.role, messages: results || [], credits: found.role === 'user' ? await creditBalance(env, who.uid) : null });
+}
+
+async function chatSend(request, env) {
+  const who = await whoAmI(env, request);
+  if (!who) return json({ error: 'auth_required' }, 401);
+
+  const body = await request.json().catch(() => ({}));
+  const text = String(body.body || '').trim();
+  if (!text) return json({ error: 'empty_message' }, 400);
+  if (text.length > MAX_MESSAGE_CHARS) return json({ error: 'message_too_long' }, 400);
+
+  const found = await threadFor(env, who, String(body.thread || ''));
+  if (!found) return json({ error: 'not_found' }, 404);
+  if (found.t.blocked) return json({ error: 'thread_blocked' }, 403);
+
+  // flood guard
+  const last = await env.DB.prepare(
+    'SELECT created_at FROM chat_messages WHERE thread_id = ?1 AND sender = ?2 ORDER BY created_at DESC LIMIT 1'
+  ).bind(found.t.id, found.role).first();
+  if (last && Date.now() - new Date(last.created_at).getTime() < MIN_MS_BETWEEN_MSG) {
+    return json({ error: 'too_fast' }, 429);
+  }
+
+  let spent = 0;
+  if (found.role === 'user') {
+    if (!await activeSub(env, who.uid)) return json({ error: 'subscription_required' }, 402);
+    const sent = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM chat_messages WHERE thread_id = ?1 AND sender = 'user'"
+    ).bind(found.t.id).first();
+    const isFirst = FREE_FIRST_MESSAGE && (!sent || sent.n === 0);
+    if (!isFirst) {
+      if (await creditBalance(env, who.uid) < 1) {
+        return json({ error: 'no_credits', credits: 0 }, 402);
+      }
+      spent = 1;
+    }
+  }
+
+  const msgId = crypto.randomUUID();
+  const at = nowISO();
+  await env.DB.prepare(
+    'INSERT INTO chat_messages (id, thread_id, sender, body, created_at) VALUES (?1,?2,?3,?4,?5)'
+  ).bind(msgId, found.t.id, found.role, text, at).run();
+
+  const bump = found.role === 'user' ? 'creator_unread' : 'user_unread';
+  await env.DB.prepare(
+    'UPDATE chat_threads SET last_msg_at = ?1, last_msg_from = ?2, ' + bump + ' = ' + bump + ' + 1 WHERE id = ?3'
+  ).bind(at, found.role, found.t.id).run();
+
+  if (spent) await addCredits(env, who.uid, -1, 'message', msgId);
+
+  // creator replies earn
+  if (found.role === 'creator') {
+    await env.DB.prepare(
+      'INSERT INTO creator_earnings (id, creator_id, message_id, cents, created_at) VALUES (?1,?2,?3,?4,?5)'
+    ).bind(crypto.randomUUID(), who.creator.id, msgId, who.creator.payout_cents || 40, at).run();
+  }
+
+  return json({
+    ok: true, id: msgId, created_at: at, charged: spent,
+    credits: found.role === 'user' ? await creditBalance(env, who.uid) : null
+  });
+}
+
+/** Payment hook — call this from the processor's webhook (or by hand) after a bundle is bought. */
+async function adminGrantCredits(request, env) {
+  if (!env.ADMIN_KEY || !safeEqual(request.headers.get('x-admin-key') || '', env.ADMIN_KEY)) {
+    return json({ error: 'unauthorized' }, 401);
+  }
+  const body = await request.json().catch(() => ({}));
+  const email = normEmail(body.email);
+  const credits = parseInt(body.credits, 10);
+  if (!validEmail(email)) return json({ error: 'invalid_email' }, 400);
+  if (!credits || credits < 1) return json({ error: 'invalid_credits' }, 400);
+
+  const user = await env.DB.prepare('SELECT id FROM users WHERE email = ?1').bind(email).first();
+  if (!user) return json({ error: 'no_such_user', note: 'the buyer must create an account first' }, 404);
+
+  await addCredits(env, user.id, credits, 'purchase', body.ref);
+  return json({ ok: true, email, credits: await creditBalance(env, user.id) });
+}
+
+/** Create or update a creator profile, and link the account they log in with. */
+async function adminUpsertCreator(request, env) {
+  if (!env.ADMIN_KEY || !safeEqual(request.headers.get('x-admin-key') || '', env.ADMIN_KEY)) {
+    return json({ error: 'unauthorized' }, 401);
+  }
+  const b = await request.json().catch(() => ({}));
+  const slug = String(b.slug || '').trim().toLowerCase();
+  if (!/^[a-z0-9-]{2,32}$/.test(slug)) return json({ error: 'invalid_slug' }, 400);
+
+  let userId = null;
+  if (b.login_email) {
+    const u = await env.DB.prepare('SELECT id FROM users WHERE email = ?1').bind(normEmail(b.login_email)).first();
+    if (!u) return json({ error: 'no_such_user', note: 'create the creator an account first' }, 404);
+    userId = u.id;
+  }
+
+  const existing = await env.DB.prepare('SELECT id FROM creators WHERE slug = ?1').bind(slug).first();
+  if (existing) {
+    await env.DB.prepare(
+      `UPDATE creators SET display_name = COALESCE(?2, display_name), tagline = COALESCE(?3, tagline),
+              bio = COALESCE(?4, bio), avatar = COALESCE(?5, avatar), aud = COALESCE(?6, aud),
+              chat_enabled = COALESCE(?7, chat_enabled), reply_hint = COALESCE(?8, reply_hint),
+              payout_cents = COALESCE(?9, payout_cents), user_id = COALESCE(?10, user_id)
+         WHERE id = ?1`
+    ).bind(existing.id, b.display_name || null, b.tagline || null, b.bio || null, b.avatar || null,
+           b.aud || null, b.chat_enabled === undefined ? null : (b.chat_enabled ? 1 : 0),
+           b.reply_hint || null, b.payout_cents || null, userId).run();
+    return json({ ok: true, mode: 'updated', slug });
+  }
+
+  await env.DB.prepare(
+    `INSERT INTO creators (id, slug, display_name, tagline, bio, avatar, aud, chat_enabled, reply_hint, payout_cents, user_id, created_at)
+     VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)`
+  ).bind(crypto.randomUUID(), slug, b.display_name || slug, b.tagline || null, b.bio || null, b.avatar || null,
+         b.aud || null, b.chat_enabled ? 1 : 0, b.reply_hint || 'usually replies within a day',
+         b.payout_cents || 40, userId, nowISO()).run();
+  return json({ ok: true, mode: 'created', slug });
 }

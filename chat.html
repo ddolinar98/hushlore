@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — Messages</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { background: var(--bg); }
+    .ch-page { max-width: 1080px; margin: 0 auto; padding: 0 clamp(16px,4vw,40px) 60px; }
+    .ch-nav { display:flex; align-items:center; justify-content:space-between; padding:22px 0 10px; }
+    .ch-logo { font-family:var(--serif); font-size:26px; color:var(--cream); font-weight:500; text-decoration:none; }
+    .ch-logo span { color: var(--gold); }
+    .ch-navlinks { display:flex; gap:26px; align-items:center; }
+    .ch-navlinks a { font-family:var(--sans); font-size:15px; color:#c1a7b8; text-decoration:none; font-weight:500; }
+    .ch-navlinks a.active { color:var(--cream); border-bottom:2px solid var(--gold); padding-bottom:3px; }
+
+    .ch-head { display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin:18px 0 4px; flex-wrap:wrap; }
+    .ch-head h1 { font-family:var(--serif); font-weight:500; font-size:clamp(28px,4vw,40px); color:var(--cream); }
+    .ch-credits { font-family:var(--sans); font-size:14px; color:#a98ea3; }
+    .ch-credits b { color: var(--gold); }
+    .ch-buy { background:var(--gold); color:#1a0d14; border:none; border-radius:8px; padding:10px 16px;
+      font-family:var(--sans); font-weight:700; font-size:14px; cursor:pointer; margin-left:10px; }
+
+    .ch-wrap { display:grid; grid-template-columns: 300px 1fr; gap:18px; margin-top:22px; }
+    @media (max-width: 800px){ .ch-wrap{ grid-template-columns:1fr; } .ch-thread.hide-mobile{ display:none; } }
+
+    .ch-list { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; overflow:hidden; align-self:start; }
+    .ch-list-h { font-family:var(--sans); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#a98ea3; padding:14px 16px 8px; }
+    .ch-item { display:flex; gap:12px; align-items:center; padding:12px 16px; cursor:pointer; border-top:1px solid var(--border); }
+    .ch-item:hover { background: var(--bg-elevated); }
+    .ch-item.on { background: rgba(192,51,88,.12); }
+    .ch-av { width:40px; height:40px; border-radius:50%; background:var(--bg-elevated); background-size:cover; background-position:center;
+      display:flex; align-items:center; justify-content:center; font-family:var(--serif); color:var(--gold); font-size:18px; flex:0 0 auto; }
+    .ch-item-b { min-width:0; flex:1; }
+    .ch-item-n { font-family:var(--sans); font-size:15px; color:var(--cream); font-weight:600; }
+    .ch-item-p { font-family:var(--sans); font-size:12.5px; color:#8d7684; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ch-dot { width:8px; height:8px; border-radius:50%; background:var(--gold); flex:0 0 auto; }
+
+    .ch-thread { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; display:flex; flex-direction:column; min-height:520px; }
+    .ch-thread-h { display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid var(--border); }
+    .ch-thread-h .n { font-family:var(--sans); font-size:16px; color:var(--cream); font-weight:600; }
+    .ch-thread-h .s { font-family:var(--sans); font-size:12px; color:#8d7684; }
+    .ch-back { display:none; background:none; border:none; color:#c1a7b8; font-size:20px; cursor:pointer; padding:0 4px 0 0; }
+    @media (max-width:800px){ .ch-back{ display:block; } }
+
+    .ch-msgs { flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:10px; max-height:52vh; }
+    .msg { max-width:74%; padding:11px 14px; border-radius:14px; font-family:var(--sans); font-size:15px; line-height:1.45; white-space:pre-wrap; word-wrap:break-word; }
+    .msg.me { align-self:flex-end; background:var(--gold); color:#1a0d14; border-bottom-right-radius:4px; }
+    .msg.them { align-self:flex-start; background:var(--bg-elevated); color:var(--cream); border:1px solid var(--border); border-bottom-left-radius:4px; }
+    .msg-t { font-family:var(--sans); font-size:10.5px; opacity:.6; margin-top:4px; }
+
+    .ch-compose { border-top:1px solid var(--border); padding:12px; display:flex; gap:10px; align-items:flex-end; }
+    .ch-compose textarea { flex:1; resize:none; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px;
+      padding:12px 14px; color:var(--cream); font-family:var(--sans); font-size:15px; min-height:46px; max-height:140px; }
+    .ch-compose textarea:focus { outline:none; border-color:var(--gold); }
+    .ch-send { background:var(--gold); color:#1a0d14; border:none; border-radius:10px; padding:13px 20px;
+      font-family:var(--sans); font-weight:700; font-size:15px; cursor:pointer; }
+    .ch-send:disabled { opacity:.5; cursor:default; }
+    .ch-cost { font-family:var(--sans); font-size:11.5px; color:#8d7684; padding:0 14px 12px; }
+
+    .ch-empty { flex:1; display:flex; align-items:center; justify-content:center; text-align:center; padding:40px 24px;
+      font-family:var(--sans); color:#8d7684; font-size:15px; line-height:1.6; }
+
+    /* buy credits */
+    .ov { position:fixed; inset:0; background:rgba(4,3,5,.82); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; padding:20px; z-index:60; }
+    .ov.open { display:flex; }
+    .ov-card { background:var(--bg-card); border:1px solid var(--border-strong); border-radius:16px; max-width:420px; width:100%; padding:26px; }
+    .ov-card h3 { font-family:var(--serif); font-size:24px; color:var(--cream); margin-bottom:6px; }
+    .ov-card p { font-family:var(--sans); font-size:14px; color:#a98ea3; margin-bottom:18px; line-height:1.5; }
+    .bundle { display:flex; align-items:center; justify-content:space-between; gap:12px; background:var(--bg-elevated);
+      border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px; cursor:pointer; }
+    .bundle:hover { border-color:var(--gold); }
+    .bundle .l { font-family:var(--sans); color:var(--cream); font-size:16px; font-weight:600; }
+    .bundle .r { font-family:var(--sans); color:var(--gold); font-size:16px; font-weight:700; }
+    .bundle .each { font-family:var(--sans); font-size:11.5px; color:#8d7684; }
+    .ov-close { background:none; border:none; color:#c1a7b8; font-family:var(--sans); font-size:14px; cursor:pointer; width:100%; margin-top:8px; }
+  </style>
+</head>
+<body>
+<div class="ch-page">
+  <div class="ch-nav">
+    <a class="ch-logo" href="library.html">Hush<span>lore</span></a>
+    <div class="ch-navlinks">
+      <a href="library.html">Stories</a>
+      <a href="chat.html" class="active">Messages</a>
+      <a href="account.html">Account</a>
+    </div>
+  </div>
+
+  <div class="ch-head">
+    <h1>Messages</h1>
+    <div class="ch-credits">
+      <span id="credLine"><b id="credN">–</b> messages left</span>
+      <button class="ch-buy" id="buyBtn">Get more</button>
+    </div>
+  </div>
+
+  <div class="ch-wrap">
+    <div class="ch-list" id="list"><div class="ch-list-h">Creators</div></div>
+    <div class="ch-thread hide-mobile" id="thread">
+      <div class="ch-empty" id="empty">Pick a creator to start a conversation.<br />Your first message to each of them is free.</div>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov">
+  <div class="ov-card">
+    <h3>Get more messages</h3>
+    <p>Messages you send use one credit each. Replies you receive are always free.</p>
+    <div id="bundles"></div>
+    <button class="ov-close" id="ovClose">Maybe later</button>
+  </div>
+</div>
+
+<script>
+  /* Bundles — prices live here; wire each to the payment processor when it's set up. */
+  var BUNDLES = [
+    { credits: 10, price: '€9.99',  each: '€1.00 each', link: '' },
+    { credits: 25, price: '€19.99', each: '€0.80 each', link: '' },
+    { credits: 60, price: '€39.99', each: '€0.67 each', link: '' }
+  ];
+
+  var state = { creators: [], threads: [], active: null, poll: null, lastAt: null, credits: 0 };
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+  function api(p, opt){ return fetch(p, Object.assign({ credentials:'same-origin' }, opt||{})).then(function(r){ return r.json().then(function(d){ return {ok:r.ok, d:d}; }); }); }
+  function timeOf(iso){ var d=new Date(iso); return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
+
+  function setCredits(n){ state.credits = n; $('credN').textContent = n; }
+
+  /* gate: must be signed in with an active subscription */
+  api('/api/chat/me').then(function (r) {
+    if (!r.d.authenticated) return location.replace('login.html?next=chat.html');
+    if (!r.d.subscribed)    return location.replace('result.html?expired=1');
+    if (r.d.is_creator)     return location.replace('creator.html');
+    setCredits(r.d.credits);
+    load();
+  });
+
+  function load() {
+    Promise.all([api('/api/chat/creators'), api('/api/chat/threads')]).then(function (res) {
+      state.creators = res[0].d.creators || [];
+      state.threads  = res[1].d.threads  || [];
+      if (res[1].d.credits != null) setCredits(res[1].d.credits);
+      renderList();
+    });
+  }
+
+  function threadFor(slug){ return state.threads.filter(function(t){ return t.slug === slug; })[0]; }
+
+  function renderList() {
+    var html = '<div class="ch-list-h">Creators</div>';
+    state.creators.forEach(function (c) {
+      var t = threadFor(c.slug);
+      var initial = (c.display_name || '?').charAt(0);
+      html += '<div class="ch-item' + (state.active && state.active.slug === c.slug ? ' on' : '') + '" data-slug="' + esc(c.slug) + '">' +
+        '<div class="ch-av"' + (c.avatar ? ' style="background-image:url(' + esc(c.avatar) + ')"' : '') + '>' + (c.avatar ? '' : esc(initial)) + '</div>' +
+        '<div class="ch-item-b"><div class="ch-item-n">' + esc(c.display_name) + '</div>' +
+        '<div class="ch-item-p">' + esc(t && t.preview ? t.preview : (c.tagline || c.reply_hint || '')) + '</div></div>' +
+        (t && t.user_unread ? '<div class="ch-dot"></div>' : '') + '</div>';
+    });
+    $('list').innerHTML = html;
+    [].forEach.call($('list').querySelectorAll('.ch-item'), function (el) {
+      el.onclick = function () { openChat(el.getAttribute('data-slug')); };
+    });
+  }
+
+  function openChat(slug) {
+    api('/api/chat/open', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ slug: slug }) })
+      .then(function (r) {
+        if (!r.ok) { alert('Could not open that conversation.'); return; }
+        state.active = { slug: slug, id: r.d.thread_id, creator: r.d.creator };
+        if (r.d.credits != null) setCredits(r.d.credits);
+        state.lastAt = null;
+        renderThread([]);
+        renderList();
+        pull(true);
+        if (state.poll) clearInterval(state.poll);
+        state.poll = setInterval(function(){ pull(false); }, 5000);
+        $('thread').classList.remove('hide-mobile');
+      });
+  }
+
+  function renderThread(msgs, append) {
+    var c = state.active.creator;
+    if (!append) {
+      $('thread').innerHTML =
+        '<div class="ch-thread-h"><button class="ch-back" id="back">‹</button>' +
+        '<div class="ch-av">' + esc((c.display_name||'?').charAt(0)) + '</div>' +
+        '<div><div class="n">' + esc(c.display_name) + '</div><div class="s">' + esc(c.reply_hint || '') + '</div></div></div>' +
+        '<div class="ch-msgs" id="msgs"></div>' +
+        '<div class="ch-compose"><textarea id="box" rows="1" placeholder="Write a message…"></textarea>' +
+        '<button class="ch-send" id="send">Send</button></div>' +
+        '<div class="ch-cost" id="cost"></div>';
+      $('back').onclick = function(){ $('thread').classList.add('hide-mobile'); };
+      $('send').onclick = send;
+      $('box').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+      });
+    }
+    var box = $('msgs');
+    msgs.forEach(function (m) {
+      var d = document.createElement('div');
+      d.className = 'msg ' + (m.sender === 'user' ? 'me' : 'them');
+      d.innerHTML = esc(m.body) + '<div class="msg-t">' + timeOf(m.created_at) + '</div>';
+      box.appendChild(d);
+      state.lastAt = m.created_at;
+    });
+    box.scrollTop = box.scrollHeight;
+    updateCost();
+  }
+
+  function updateCost() {
+    var el = $('cost'); if (!el) return;
+    var first = !document.querySelector('#msgs .msg.me');
+    el.textContent = first ? 'Your first message to ' + state.active.creator.display_name + ' is free.'
+                           : 'Each message you send uses 1 credit — ' + state.credits + ' left.';
+  }
+
+  function pull(first) {
+    if (!state.active) return;
+    api('/api/chat/messages?thread=' + encodeURIComponent(state.active.id) + (state.lastAt ? '&since=' + encodeURIComponent(state.lastAt) : ''))
+      .then(function (r) {
+        if (!r.ok) return;
+        if (r.d.credits != null) setCredits(r.d.credits);
+        if (r.d.messages && r.d.messages.length) renderThread(r.d.messages, !first);
+        else if (first) renderThread([], true);
+      });
+  }
+
+  function send() {
+    var box = $('box'); var text = box.value.trim();
+    if (!text || !state.active) return;
+    $('send').disabled = true;
+    api('/api/chat/send', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ thread: state.active.id, body: text }) })
+      .then(function (r) {
+        $('send').disabled = false;
+        if (!r.ok) {
+          if (r.d.error === 'no_credits') { openBuy(); return; }
+          if (r.d.error === 'too_fast') return;
+          alert('Message could not be sent.'); return;
+        }
+        box.value = '';
+        if (r.d.credits != null) setCredits(r.d.credits);
+        renderThread([{ sender:'user', body:text, created_at:r.d.created_at }], true);
+      });
+  }
+
+  /* buy credits */
+  function openBuy() {
+    $('bundles').innerHTML = BUNDLES.map(function (b, i) {
+      return '<div class="bundle" data-i="' + i + '"><div><div class="l">' + b.credits + ' messages</div>' +
+             '<div class="each">' + b.each + '</div></div><div class="r">' + b.price + '</div></div>';
+    }).join('');
+    [].forEach.call($('bundles').querySelectorAll('.bundle'), function (el) {
+      el.onclick = function () {
+        var b = BUNDLES[+el.getAttribute('data-i')];
+        if (b.link) location.href = b.link;
+        else alert('Checkout is not connected yet — this is where the payment page will open.');
+      };
+    });
+    $('ov').classList.add('open');
+  }
+  $('buyBtn').onclick = openBuy;
+  $('ovClose').onclick = function(){ $('ov').classList.remove('open'); };
+</script>
+</body>
+</html>
