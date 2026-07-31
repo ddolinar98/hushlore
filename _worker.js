@@ -306,6 +306,13 @@ const FREE_MESSAGES      = 3;      // free messages a listener gets in total, ac
 const MAX_MESSAGE_CHARS  = 2000;
 const MIN_MS_BETWEEN_MSG = 1500;   // basic flood guard
 
+/* Posted automatically as "Hushlore Team" every time a listener buys credits.
+   Edit the wording here — it is the one place it lives. */
+const PURCHASE_NOTICE =
+  'This is the Hushlore team. Please keep messages respectful — the creators here are real people, ' +
+  'and they read everything you send themselves. Anything abusive, or any attempt to arrange contact ' +
+  'outside Hushlore, ends the conversation and the account. Other than that: enjoy yourself.';
+
 /** Who is calling: listener, and whether they're also a creator. */
 async function whoAmI(env, request) {
   const uid = await readSession(env, request);
@@ -545,7 +552,32 @@ async function adminGrantCredits(request, env) {
   if (!user) return json({ error: 'no_such_user', note: 'the buyer must create an account first' }, 404);
 
   await addCredits(env, user.id, credits, 'purchase', body.ref);
-  return json({ ok: true, email, credits: await creditBalance(env, user.id) });
+  const notified = await postPurchaseNotice(env, user.id);
+  return json({ ok: true, email, credits: await creditBalance(env, user.id), notice_posted: notified });
+}
+
+/** Drop the house-rules notice into the conversation this listener is most likely
+    to open next. Skipped if it is already the last thing in that thread. */
+async function postPurchaseNotice(env, userId) {
+  const t = await env.DB.prepare(
+    `SELECT id FROM chat_threads WHERE user_id = ?1
+      ORDER BY COALESCE(last_msg_at, created_at) DESC LIMIT 1`
+  ).bind(userId).first();
+  if (!t) return false;
+
+  const last = await env.DB.prepare(
+    'SELECT sender, body FROM chat_messages WHERE thread_id = ?1 ORDER BY created_at DESC LIMIT 1'
+  ).bind(t.id).first();
+  if (last && last.sender === 'admin' && last.body === PURCHASE_NOTICE) return false;
+
+  const at = nowISO();
+  await env.DB.prepare(
+    "INSERT INTO chat_messages (id, thread_id, sender, body, created_at) VALUES (?1,?2,'admin',?3,?4)"
+  ).bind(crypto.randomUUID(), t.id, PURCHASE_NOTICE, at).run();
+  await env.DB.prepare(
+    "UPDATE chat_threads SET last_msg_at = ?1, last_msg_from = 'admin', user_unread = user_unread + 1 WHERE id = ?2"
+  ).bind(at, t.id).run();
+  return true;
 }
 
 /** Create or update a creator profile, and link the account they log in with. */
