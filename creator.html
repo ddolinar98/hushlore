@@ -93,6 +93,8 @@
     </div>
   </div>
 
+  <div id="customs"></div>
+
   <div class="cr-wrap">
     <div class="cr-list" id="list"><div class="cr-list-h">Listeners</div></div>
     <div class="cr-thread hide-mobile" id="thread">
@@ -116,7 +118,38 @@
     setInterval(load, 15000);           // refresh inbox
   });
 
+  function loadCustoms() {
+    api('/api/custom/queue').then(function (r) {
+      if (!r.ok) return;
+      var os = (r.d.orders || []).filter(function (o) { return o.status === 'paid' || o.status === 'recording'; });
+      var box = $('customs');
+      if (!os.length) { box.innerHTML = ''; return; }
+      box.innerHTML = '<div class="cr-list" style="margin-bottom:18px"><div class="cr-list-h">Personal recordings to make</div>' +
+        os.map(function (o) {
+          return '<div class="cr-item" style="cursor:default;display:block">' +
+            '<div class="cr-item-n">' + esc(o.who) + ' · ' + o.minutes + ' min · you earn €' +
+              ((o.payout_cents||0)/100).toFixed(2) + '</div>' +
+            '<div class="cr-item-p" style="white-space:normal">' + esc(o.brief) + '</div>' +
+            '<div style="margin-top:10px"><input type="file" accept="audio/*" data-up="' + esc(o.id) + '" ' +
+              'style="font-family:var(--sans);font-size:13px;color:#c1a7b8" /></div>' +
+            '<div class="cr-item-p" data-st="' + esc(o.id) + '"></div></div>';
+        }).join('') + '</div>';
+      [].forEach.call(box.querySelectorAll('[data-up]'), function (inp) {
+        inp.onchange = function () {
+          var id = inp.getAttribute('data-up'), f = inp.files[0]; if (!f) return;
+          var st = box.querySelector('[data-st="' + id + '"]');
+          st.textContent = 'Uploading…';
+          fetch('/api/custom/deliver?id=' + encodeURIComponent(id), { method:'POST', credentials:'same-origin', body: f })
+            .then(function (r) { return r.json(); })
+            .then(function (d) { st.textContent = d.ok ? 'Sent ✓' : 'Upload failed'; if (d.ok) loadCustoms(); })
+            .catch(function () { st.textContent = 'Upload failed'; });
+        };
+      });
+    });
+  }
+
   function load() {
+    loadCustoms();
     api('/api/chat/threads').then(function (r) {
       state.threads = r.d.threads || [];
       $('stThreads').textContent = state.threads.length;

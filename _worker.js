@@ -44,6 +44,15 @@ export default {
       if (p === '/api/chat/order-status')  return chatOrderStatus(request, env);
       if (p === '/api/admin/orders')       return adminOrders(request, env);
       if (p === '/api/admin/order-paid')   return requirePost(request, () => adminOrderPaid(request, env));
+
+      // ── personal recordings ───────────────────────────────────────
+      if (p === '/api/custom/options')     return customOptions(request, env);
+      if (p === '/api/custom/order')       return requirePost(request, () => customCreate(request, env));
+      if (p === '/api/custom/mine')        return customMine(request, env);
+      if (p === '/api/custom/queue')       return customQueue(request, env);
+      if (p === '/api/custom/deliver')     return requirePost(request, () => customDeliver(request, env));
+      if (p === '/api/custom/paid')        return requirePost(request, () => customMarkPaid(request, env));
+      if (p.startsWith('/custom-audio/'))  return serveCustomAudio(request, env, p.slice('/custom-audio/'.length));
       if (p === '/api/admin/grant-credits')return requirePost(request, () => adminGrantCredits(request, env));
       if (p === '/api/admin/creator')      return requirePost(request, () => adminUpsertCreator(request, env));
       if (p === '/api/admin/promote')      return requirePost(request, () => adminPromote(request, env));
@@ -540,6 +549,163 @@ async function chatSend(request, env) {
     ok: true, id: msgId, created_at: at, charged: spent,
     credits: found.role === 'user' ? await creditBalance(env, who.uid) : null
   });
+}
+
+/* ─────────────────────── personal recordings ───────────────────────
+   A listener commissions a creator to record something only for them.
+   Priced per finished minute; the price is worked out server-side.
+──────────────────────────────────────────────────────────────────── */
+const CUSTOM_PRICE_PER_MIN = 800;               // €8.00 per finished minute
+const CUSTOM_LENGTHS       = [3, 5, 10];        // minutes a listener can pick
+const CUSTOM_PAYOUT_SHARE  = 0.40;              // share of the price the creator earns
+const CUSTOM_BRIEF_MAX     = 1200;
+
+function customPrice(minutes) { return minutes * CUSTOM_PRICE_PER_MIN; }
+
+async function customOptions(request, env) {
+  const uid = await readSession(env, request);
+  if (!uid) return json({ error: 'auth_required' }, 401);
+  return json({
+    per_minute_cents: CUSTOM_PRICE_PER_MIN,
+    options: CUSTOM_LENGTHS.map(function (m) { return { minutes: m, price_cents: customPrice(m) }; }),
+    brief_max: CUSTOM_BRIEF_MAX
+  });
+}
+
+async function customCreate(request, env) {
+  const uid = await readSession(env, request);
+  if (!uid) return json({ error: 'auth_required' }, 401);
+  if (!await activeSub(env, uid)) return json({ error: 'subscription_required' }, 402);
+
+  const b = await request.json().catch(() => ({}));
+  const minutes = parseInt(b.minutes, 10);
+  if (CUSTOM_LENGTHS.indexOf(minutes) === -1) return json({ error: 'invalid_length' }, 400);
+  const brief = String(b.brief || '').trim();
+  if (brief.length < 10) return json({ error: 'brief_too_short' }, 400);
+  if (brief.length > CUSTOM_BRIEF_MAX) return json({ error: 'brief_too_long' }, 400);
+
+  const creator = await env.DB.prepare(
+    'SELECT id, display_name FROM creators WHERE slug = ?1 AND chat_enabled = 1'
+  ).bind(String(b.slug || '')).first();
+  if (!creator) return json({ error: 'creator_not_found' }, 404);
+
+  const price = customPrice(minutes);
+  const id = crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT INTO custom_orders (id, user_id, creator_id, minutes, price_cents, brief, status, payout_cents, created_at)
+     VALUES (?1,?2,?3,?4,?5,?6,'pending',?7,?8)`
+  ).bind(id, uid, creator.id, minutes, price, brief, Math.round(price * CUSTOM_PAYOUT_SHARE), nowISO()).run();
+
+  return json({ ok: true, id, minutes, price_cents: price, creator: creator.display_name });
+}
+
+/** The listener's own commissions. */
+async function customMine(request, env) {
+  const uid = await readSession(env, request);
+  if (!uid) return json({ error: 'auth_required' }, 401);
+  const { results } = await env.DB.prepare(
+    `SELECT o.id, o.minutes, o.price_cents, o.brief, o.status, o.created_at, o.delivered_at,
+            o.decline_note, c.display_name AS creator_name
+       FROM custom_orders o JOIN creators c ON c.id = o.creator_id
+      WHERE o.user_id = ?1 ORDER BY o.created_at DESC LIMIT 50`
+  ).bind(uid).all();
+  return json({ orders: results || [] });
+}
+
+/** What a creator (or admin) still has to record. */
+async function customQueue(request, env) {
+  const who = await whoAmI(env, request);
+  const admin = await requireAdmin(request, env);
+  if (!who && !admin) return json({ error: 'auth_required' }, 401);
+
+  let rows;
+  if (who && who.creator) {
+    rows = await env.DB.prepare(
+      `SELECT o.*, u.email FROM custom_orders o JOIN users u ON u.id = o.user_id
+        WHERE o.creator_id = ?1 AND o.status IN ('paid','recording')
+        ORDER BY o.paid_at`
+    ).bind(who.creator.id).all();
+  } else if (admin) {
+    rows = await env.DB.prepare(
+      `SELECT o.*, u.email, c.display_name AS creator_name
+         FROM custom_orders o JOIN users u ON u.id = o.user_id JOIN creators c ON c.id = o.creator_id
+        ORDER BY o.created_at DESC LIMIT 100`
+    ).all();
+  } else {
+    return json({ error: 'unauthorized' }, 401);
+  }
+  const list = (rows.results || []).map(function (o) {
+    return Object.assign({}, o, { who: listenerAlias(o.user_id), email: admin ? o.email : undefined });
+  });
+  return json({ orders: list });
+}
+
+/** Creator or admin uploads the finished recording. Body is the raw audio. */
+async function customDeliver(request, env) {
+  const who = await whoAmI(env, request);
+  const admin = await requireAdmin(request, env);
+  const url = new URL(request.url);
+  const id = url.searchParams.get('id') || '';
+
+  const o = await env.DB.prepare('SELECT * FROM custom_orders WHERE id = ?1').bind(id).first();
+  if (!o) return json({ error: 'not_found' }, 404);
+  const mayDeliver = admin || (who && who.creator && who.creator.id === o.creator_id);
+  if (!mayDeliver) return json({ error: 'unauthorized' }, 401);
+  if (o.status === 'pending') return json({ error: 'not_paid_yet' }, 402);
+
+  const key = 'customs/' + o.id + '.mp3';
+  await env.AUDIO.put(key, request.body, { httpMetadata: { contentType: 'audio/mpeg' } });
+  await env.DB.prepare(
+    "UPDATE custom_orders SET status='delivered', audio_key=?1, delivered_at=?2 WHERE id=?3"
+  ).bind(key, nowISO(), o.id).run();
+
+  await env.DB.prepare(
+    'INSERT INTO creator_earnings (id, creator_id, message_id, cents, created_at) VALUES (?1,?2,?3,?4,?5)'
+  ).bind(crypto.randomUUID(), o.creator_id, 'custom:' + o.id, o.payout_cents || 0, nowISO()).run();
+
+  return json({ ok: true, id: o.id, status: 'delivered' });
+}
+
+async function customMarkPaid(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const b = await request.json().catch(() => ({}));
+  const o = await env.DB.prepare('SELECT * FROM custom_orders WHERE id = ?1').bind(String(b.id || '')).first();
+  if (!o) return json({ error: 'not_found' }, 404);
+  if (o.status !== 'pending') return json({ ok: true, already: true, status: o.status });
+  await env.DB.prepare("UPDATE custom_orders SET status='paid', paid_at=?1 WHERE id=?2")
+    .bind(nowISO(), o.id).run();
+  return json({ ok: true, status: 'paid' });
+}
+
+/** Only the person who commissioned it can hear it. */
+async function serveCustomAudio(request, env, filename) {
+  if (!/^[a-f0-9-]{36}\.mp3$/i.test(filename)) return new Response('Not found', { status: 404 });
+  const uid = await readSession(env, request);
+  if (!uid) return json({ error: 'auth_required' }, 401);
+
+  const id = filename.replace(/\.mp3$/i, '');
+  const o = await env.DB.prepare(
+    "SELECT user_id, audio_key FROM custom_orders WHERE id = ?1 AND status = 'delivered'"
+  ).bind(id).first();
+  if (!o || !o.audio_key) return new Response('Not found', { status: 404 });
+  if (o.user_id !== uid) return json({ error: 'not_yours' }, 403);
+
+  const obj = await env.AUDIO.get(o.audio_key, { range: request.headers, onlyIf: request.headers });
+  if (!obj) return new Response('Not found', { status: 404 });
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('etag', obj.httpEtag);
+  headers.set('Content-Type', 'audio/mpeg');
+  headers.set('Accept-Ranges', 'bytes');
+  headers.set('Cache-Control', 'private, no-store');
+  if (!obj.body) return new Response(null, { status: 304, headers });
+  if (obj.range && 'offset' in obj.range) {
+    const start = obj.range.offset || 0;
+    const len = obj.range.length != null ? obj.range.length : obj.size - start;
+    headers.set('Content-Range', `bytes ${start}-${start + len - 1}/${obj.size}`);
+    return new Response(obj.body, { status: 206, headers });
+  }
+  return new Response(obj.body, { status: 200, headers });
 }
 
 /* ───────────────────────── credit orders ─────────────────────────

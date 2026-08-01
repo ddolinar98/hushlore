@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — Recorded For You</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { background: var(--bg); }
+    .cu-page { max-width:720px; margin:0 auto; padding:0 clamp(16px,4vw,32px) 70px; }
+    .cu-nav { display:flex; align-items:center; justify-content:space-between; padding:22px 0 10px; }
+    .cu-logo { font-family:var(--serif); font-size:26px; color:var(--cream); text-decoration:none; font-weight:500; }
+    .cu-logo span { color:var(--gold); }
+    .cu-navlinks { display:flex; gap:24px; }
+    .cu-navlinks a { font-family:var(--sans); font-size:15px; color:#c1a7b8; text-decoration:none; font-weight:500; }
+    .cu-navlinks a.active { color:var(--cream); border-bottom:2px solid var(--gold); padding-bottom:3px; }
+
+    .cu-hero { text-align:center; margin:22px 0 6px; }
+    .cu-hero .eyebrow { font-family:var(--sans); font-size:11.5px; letter-spacing:.24em; text-transform:uppercase;
+      color:var(--gold); font-weight:600; }
+    .cu-hero h1 { font-family:var(--serif); font-weight:500; font-size:clamp(30px,5vw,44px); color:var(--cream); margin-top:8px; line-height:1.1; }
+    .cu-hero p { font-family:var(--sans); font-size:15.5px; color:#a98ea3; line-height:1.6; max-width:480px; margin:12px auto 0; }
+
+    .cu-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:26px clamp(18px,4vw,30px); margin-top:26px; }
+    .cu-label { font-family:var(--sans); font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:#a98ea3; margin-bottom:10px; }
+
+    .pick { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+    .opt { border:1px solid var(--border); background:var(--bg-elevated); border-radius:12px; padding:14px 16px; cursor:pointer; text-align:center; }
+    .opt:hover { border-color:var(--border-strong); }
+    .opt.on { border-color:var(--gold); background:rgba(192,51,88,.12); }
+    .opt .who { font-family:var(--sans); font-size:15px; color:var(--cream); font-weight:600; }
+    .opt .sub { font-family:var(--sans); font-size:12px; color:#8d7684; margin-top:3px; }
+    .opt .len { font-family:var(--sans); font-size:20px; color:var(--cream); font-weight:600;
+      font-variant-numeric:lining-nums tabular-nums; }
+    .opt .price { font-family:var(--sans); font-size:14px; color:var(--gold); font-weight:700; margin-top:2px; }
+
+    textarea#brief { width:100%; box-sizing:border-box; min-height:150px; resize:vertical; background:var(--bg-elevated);
+      border:1px solid var(--border); border-radius:12px; padding:14px 16px; color:var(--cream);
+      font-family:var(--sans); font-size:15px; line-height:1.55; }
+    textarea#brief:focus { outline:none; border-color:var(--gold); }
+    .cu-hint { font-family:var(--sans); font-size:12.5px; color:#8d7684; margin-top:8px; line-height:1.6; }
+    .cu-count { float:right; }
+
+    .cu-total { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:22px;
+      padding-top:18px; border-top:1px solid var(--border); flex-wrap:wrap; }
+    .cu-total .k { font-family:var(--sans); font-size:14.5px; color:#a98ea3; }
+    .cu-total .v { font-family:var(--serif); font-size:30px; color:var(--gold); }
+    .cu-go { background:var(--gold); color:#1a0d14; border:none; border-radius:10px; padding:15px 26px;
+      font-family:var(--sans); font-size:15.5px; font-weight:700; cursor:pointer; }
+    .cu-go:disabled { opacity:.45; cursor:default; }
+    .cu-msg { font-family:var(--sans); font-size:14px; margin-top:14px; min-height:20px; }
+    .cu-msg.err { color:#ff7a8a; } .cu-msg.ok { color:#35d07f; }
+
+    .mine { margin-top:34px; }
+    .mine h2 { font-family:var(--serif); font-size:24px; color:var(--cream); font-weight:500; margin-bottom:12px; }
+    .mo { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:10px; }
+    .mo .t { display:flex; justify-content:space-between; gap:12px; align-items:baseline; flex-wrap:wrap; }
+    .mo .n { font-family:var(--sans); font-size:15px; color:var(--cream); font-weight:600; }
+    .mo .b { font-family:var(--sans); font-size:13.5px; color:#8d7684; margin-top:6px; line-height:1.5; }
+    .pill { font-family:var(--sans); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+      border-radius:20px; padding:3px 10px; font-weight:700; }
+    .pill.wait { background:rgba(192,51,88,.18); color:#ffb3c4; }
+    .pill.work { background:rgba(214,168,74,.16); color:#f0d08a; }
+    .pill.done { background:rgba(53,208,127,.14); color:#7ef0b2; }
+    audio { width:100%; margin-top:12px; }
+  </style>
+</head>
+<body>
+<div class="cu-page">
+  <div class="cu-nav">
+    <a class="cu-logo" href="library.html">Hush<span>lore</span></a>
+    <div class="cu-navlinks">
+      <a href="library.html">Stories</a>
+      <a href="chat.html">Messages</a>
+      <a href="custom.html" class="active">Recorded for you</a>
+      <a href="account.html">Account</a>
+    </div>
+  </div>
+
+  <div class="cu-hero">
+    <div class="eyebrow">Recorded for you</div>
+    <h1>Ask her to record<br />something just for you</h1>
+    <p>Not a story from the library — a new one, made only for you, from whatever you describe below.
+       No one else ever hears it.</p>
+  </div>
+
+  <div class="cu-card">
+    <div class="cu-label">Whose voice</div>
+    <div class="pick" id="creators"></div>
+
+    <div class="cu-label" style="margin-top:24px">How long</div>
+    <div class="pick" id="lengths"></div>
+
+    <div class="cu-label" style="margin-top:24px">What should she record
+      <span class="cu-count" id="count"></span></div>
+    <textarea id="brief" placeholder="Tell her the scene, the mood, how it starts — and anything you'd like her to say. The more you give her, the more it will feel like yours."></textarea>
+    <div class="cu-hint">She'll record it in her own voice and style. If a request isn't something she's
+      comfortable with, she can decline it and you won't be charged.</div>
+
+    <div class="cu-total">
+      <div><span class="k">Total</span> <span class="v" id="total">—</span></div>
+      <button class="cu-go" id="go" disabled>Request this recording</button>
+    </div>
+    <div class="cu-msg" id="msg"></div>
+  </div>
+
+  <div class="mine" id="mine"></div>
+</div>
+
+<script>
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+  function api(p,o){ return fetch(p, Object.assign({credentials:'same-origin'}, o||{})).then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); }); }
+  function money(c){ return '€' + (c/100).toFixed(2); }
+  function when(iso){ return iso ? new Date(iso).toLocaleDateString() : ''; }
+
+  var state = { slug:null, minutes:null, perMin:800, options:[], max:1200 };
+
+  function myAud() {
+    try {
+      var a = localStorage.getItem('hl_aud');
+      if (['M','W','L','G'].indexOf(a) > -1) return a;
+      var g = localStorage.getItem('hl_gender'), b = localStorage.getItem('hl_quiz2_branch');
+      if (g === 'woman' && b === 'men')   return 'W';
+      if (g === 'man'   && b === 'women') return 'M';
+      if (g === 'woman' && b === 'women') return 'L';
+      if (g === 'man'   && b === 'men')   return 'G';
+      if (b === 'men')   return 'W';
+      if (b === 'women') return 'M';
+    } catch (_) {}
+    return null;
+  }
+
+  api('/api/chat/me').then(function (r) {
+    if (!r.d.authenticated) return location.replace('login.html?next=custom.html');
+    if (!r.d.subscribed)    return location.replace('result.html?expired=1');
+    start();
+  });
+
+  function start() {
+    var a = myAud();
+    api('/api/chat/creators' + (a ? '?aud=' + a : '')).then(function (r) {
+      var cs = (r.d && r.d.creators) || [];
+      $('creators').innerHTML = cs.map(function (c) {
+        return '<div class="opt" data-slug="' + esc(c.slug) + '"><div class="who">' + esc(c.display_name) + '</div>' +
+               '<div class="sub">' + esc(c.tagline || '') + '</div></div>';
+      }).join('') || '<div class="cu-hint">No creators are taking requests yet.</div>';
+      [].forEach.call($('creators').querySelectorAll('.opt'), function (el) {
+        el.onclick = function () {
+          state.slug = el.getAttribute('data-slug');
+          [].forEach.call($('creators').querySelectorAll('.opt'), function (x) { x.classList.remove('on'); });
+          el.classList.add('on'); refresh();
+        };
+      });
+      // arrived from a conversation → preselect that creator
+      var want = new URLSearchParams(location.search).get('creator');
+      if (want) { var m = $('creators').querySelector('[data-slug="' + want + '"]'); if (m) m.click(); }
+    });
+
+    api('/api/custom/options').then(function (r) {
+      if (!r.ok) return;
+      state.perMin = r.d.per_minute_cents; state.options = r.d.options; state.max = r.d.brief_max;
+      $('lengths').innerHTML = state.options.map(function (o) {
+        return '<div class="opt" data-min="' + o.minutes + '"><div class="len">' + o.minutes + ' min</div>' +
+               '<div class="price">' + money(o.price_cents) + '</div></div>';
+      }).join('');
+      [].forEach.call($('lengths').querySelectorAll('.opt'), function (el) {
+        el.onclick = function () {
+          state.minutes = +el.getAttribute('data-min');
+          [].forEach.call($('lengths').querySelectorAll('.opt'), function (x) { x.classList.remove('on'); });
+          el.classList.add('on'); refresh();
+        };
+      });
+    });
+
+    loadMine();
+  }
+
+  $('brief').addEventListener('input', refresh);
+
+  function refresh() {
+    var n = $('brief').value.trim().length;
+    $('count').textContent = n + ' / ' + state.max;
+    $('total').textContent = state.minutes ? money(state.minutes * state.perMin) : '—';
+    $('go').disabled = !(state.slug && state.minutes && n >= 10 && n <= state.max);
+  }
+
+  $('go').onclick = function () {
+    $('go').disabled = true; $('msg').className = 'cu-msg'; $('msg').textContent = 'Sending your request…';
+    api('/api/custom/order', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ slug: state.slug, minutes: state.minutes, brief: $('brief').value.trim() }) })
+      .then(function (r) {
+        if (!r.ok) {
+          $('go').disabled = false; $('msg').className = 'cu-msg err';
+          $('msg').textContent = ({ brief_too_short:'Tell her a little more first.',
+            invalid_length:'Pick how long it should be.', creator_not_found:'That creator is not taking requests.' })[r.d.error]
+            || 'Something went wrong. Please try again.';
+          return;
+        }
+        $('msg').className = 'cu-msg ok';
+        $('msg').textContent = 'Request sent to ' + r.d.creator + '. You\'ll be asked to pay before she records.';
+        $('brief').value = ''; refresh(); loadMine();
+      });
+  };
+
+  function loadMine() {
+    api('/api/custom/mine').then(function (r) {
+      var os = (r.d && r.d.orders) || [];
+      if (!os.length) { $('mine').innerHTML = ''; return; }
+      $('mine').innerHTML = '<h2>Your requests</h2>' + os.map(function (o) {
+        var pill = o.status === 'delivered' ? '<span class="pill done">Ready</span>'
+                 : o.status === 'pending'   ? '<span class="pill wait">Awaiting payment</span>'
+                 : o.status === 'declined'  ? '<span class="pill wait">Declined</span>'
+                 : '<span class="pill work">Recording</span>';
+        return '<div class="mo"><div class="t"><span class="n">' + esc(o.creator_name) + ' · ' +
+          o.minutes + ' min · ' + money(o.price_cents) + '</span>' + pill + '</div>' +
+          '<div class="b">' + esc(o.brief).slice(0, 200) + (o.brief.length > 200 ? '…' : '') + '</div>' +
+          (o.status === 'delivered'
+            ? '<audio controls preload="none" src="/custom-audio/' + esc(o.id) + '.mp3"></audio>'
+            : '') +
+          (o.status === 'declined' && o.decline_note
+            ? '<div class="b">She passed on this one: ' + esc(o.decline_note) + '</div>' : '') +
+          '</div>';
+      }).join('');
+    });
+  }
+</script>
+</body>
+</html>
