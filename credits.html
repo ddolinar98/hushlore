@@ -55,7 +55,7 @@
 <script>
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
-  function money(c){ return '€' + (c/100).toFixed(2); }
+  function money(c){ return '$' + (c/100).toFixed(2); }
 
   var orderId = new URLSearchParams(location.search).get('order') || '';
   var poll = null;

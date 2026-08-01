@@ -115,7 +115,7 @@
   var $ = function(id){ return document.getElementById(id); };
   function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
   function api(p,o){ return fetch(p, Object.assign({credentials:'same-origin'}, o||{})).then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); }); }
-  function money(c){ return '€' + (c/100).toFixed(2); }
+  function money(c){ return '$' + (c/100).toFixed(2); }
   function when(iso){ return iso ? new Date(iso).toLocaleDateString() : ''; }
 
   var state = { slug:null, minutes:null, perMin:800, options:[], max:1200 };

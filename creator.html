@@ -127,7 +127,7 @@
       box.innerHTML = '<div class="cr-list" style="margin-bottom:18px"><div class="cr-list-h">Personal recordings to make</div>' +
         os.map(function (o) {
           return '<div class="cr-item" style="cursor:default;display:block">' +
-            '<div class="cr-item-n">' + esc(o.who) + ' · ' + o.minutes + ' min · you earn €' +
+            '<div class="cr-item-n">' + esc(o.who) + ' · ' + o.minutes + ' min · you earn $' +
               ((o.payout_cents||0)/100).toFixed(2) + '</div>' +
             '<div class="cr-item-p" style="white-space:normal">' + esc(o.brief) + '</div>' +
             '<div style="margin-top:10px"><input type="file" accept="audio/*" data-up="' + esc(o.id) + '" ' +

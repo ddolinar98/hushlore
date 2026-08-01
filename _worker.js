@@ -555,7 +555,7 @@ async function chatSend(request, env) {
    A listener commissions a creator to record something only for them.
    Priced per finished minute; the price is worked out server-side.
 ──────────────────────────────────────────────────────────────────── */
-const CUSTOM_PRICE_PER_MIN = 800;               // €8.00 per finished minute
+const CUSTOM_PRICE_PER_MIN = 800;               // $8.00 per finished minute
 const CUSTOM_LENGTHS       = [3, 5, 10];        // minutes a listener can pick
 const CUSTOM_PAYOUT_SHARE  = 0.40;              // share of the price the creator earns
 const CUSTOM_BRIEF_MAX     = 1200;
@@ -566,7 +566,7 @@ async function customOptions(request, env) {
   const uid = await readSession(env, request);
   if (!uid) return json({ error: 'auth_required' }, 401);
   return json({
-    per_minute_cents: CUSTOM_PRICE_PER_MIN,
+    per_minute_cents: CUSTOM_PRICE_PER_MIN, currency: CURRENCY,
     options: CUSTOM_LENGTHS.map(function (m) { return { minutes: m, price_cents: customPrice(m) }; }),
     brief_max: CUSTOM_BRIEF_MAX
   });
@@ -595,6 +595,8 @@ async function customCreate(request, env) {
     `INSERT INTO custom_orders (id, user_id, creator_id, minutes, price_cents, brief, status, payout_cents, created_at)
      VALUES (?1,?2,?3,?4,?5,?6,'pending',?7,?8)`
   ).bind(id, uid, creator.id, minutes, price, brief, Math.round(price * CUSTOM_PAYOUT_SHARE), nowISO()).run();
+  // currency is fixed site-wide; recorded so old orders stay readable if it ever changes
+  await env.DB.prepare('UPDATE custom_orders SET currency = ?1 WHERE id = ?2').bind(CURRENCY, id).run();
 
   return json({ ok: true, id, minutes, price_cents: price, creator: creator.display_name });
 }
@@ -714,6 +716,7 @@ async function serveCustomAudio(request, env, filename) {
    processor is set up, put its payment-page URL in `link` and the buyer
    goes straight there; the processor then calls /api/admin/order-paid.
 ──────────────────────────────────────────────────────────────────── */
+const CURRENCY = 'USD';           // everything on the site is priced in dollars
 const BUNDLES = {
   b25:  { credits: 25,  price_cents:  999, link: '' },
   b60:  { credits: 60,  price_cents: 1999, link: '' },
@@ -731,9 +734,9 @@ async function chatCreateOrder(request, env) {
 
   const id = crypto.randomUUID();
   await env.DB.prepare(
-    `INSERT INTO chat_orders (id, user_id, credits, price_cents, status, created_at)
-     VALUES (?1, ?2, ?3, ?4, 'pending', ?5)`
-  ).bind(id, uid, bundle.credits, bundle.price_cents, nowISO()).run();
+    `INSERT INTO chat_orders (id, user_id, credits, price_cents, currency, status, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, 'pending', ?6)`
+  ).bind(id, uid, bundle.credits, bundle.price_cents, CURRENCY, nowISO()).run();
 
   // once a processor is configured, send them straight to it with the order attached
   const checkout = bundle.link

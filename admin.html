@@ -159,7 +159,7 @@
       $('orders').innerHTML = '<div class="ord"><div class="ord-h">Orders waiting for payment</div>' +
         os.map(function (o) {
           return '<div class="ord-r"><span class="em">' + esc(o.email) + '</span>' +
-            '<span class="amt">' + o.credits + ' msgs · €' + (o.price_cents/100).toFixed(2) + '</span>' +
+            '<span class="amt">' + o.credits + ' msgs · $' + (o.price_cents/100).toFixed(2) + '</span>' +
             '<span class="dt">' + when(o.created_at) + '</span>' +
             '<button class="btn-paid" data-order="' + esc(o.id) + '">Mark paid</button></div>';
         }).join('') + '</div>';
@@ -182,7 +182,7 @@
       ['Conversations', s.threads], ['Messages sent', s.messages_sent],
       ['Creator replies', s.creator_replies],
       ['Credits bought', s.credits_bought], ['Credits used', s.credits_spent],
-      ['Owed to creators', '€' + ((s.creator_owed_cents || 0) / 100).toFixed(2), true]
+      ['Owed to creators', '$' + ((s.creator_owed_cents || 0) / 100).toFixed(2), true]
     ];
     $('stats').innerHTML = cards.map(function (c) {
       return '<div class="st"><div class="k">' + c[0] + '</div><div class="v' + (c[2] ? ' gold' : '') + '">' + c[1] + '</div></div>';
