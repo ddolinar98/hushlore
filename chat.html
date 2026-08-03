@@ -70,6 +70,11 @@
     .ch-send:disabled { opacity:.5; cursor:default; }
     .ch-cost { font-family:var(--sans); font-size:11.5px; color:#8d7684; padding:0 14px 12px; }
 
+    .ch-ask { display:flex; align-items:center; gap:10px; margin:0 12px 12px; padding:11px 14px; border-radius:10px;
+      text-decoration:none; background:linear-gradient(135deg,rgba(214,168,74,.12),rgba(107,16,48,.09));
+      border:1px solid var(--border); font-family:var(--sans); font-size:13.5px; color:#c1a7b8; line-height:1.45; }
+    .ch-ask:hover { border-color:var(--gold); }
+    .ch-ask b { color:var(--gold); white-space:nowrap; }
     .ch-blank { flex:1; display:flex; align-items:center; justify-content:center; text-align:center; padding:30px 24px;
       font-family:var(--sans); color:#8d7684; font-size:14.5px; line-height:1.6; }
     .ch-empty { flex:1; display:flex; align-items:center; justify-content:center; text-align:center; padding:40px 24px;
@@ -243,9 +248,13 @@
           'Tell her which story you\'ve been playing, or what you\'d like to hear next.</div>' +
         '<div class="ch-compose"><textarea id="box" rows="1" placeholder="Write a message…"></textarea>' +
         '<button class="ch-send" id="send">Send</button></div>' +
-        '<div class="ch-cost" id="cost"></div>';
+        '<div class="ch-cost" id="cost"></div>' +
+        '<a class="ch-ask" id="askCustom" href="#">' +
+          '<span>♪</span><span>Want ' + esc(c.display_name) + ' to record something just for you? ' +
+          '<b>Ask her →</b></span></a>';
       $('back').onclick = function(){ $('thread').classList.add('hide-mobile'); $('list').classList.remove('hide-mobile'); };
       $('send').onclick = send;
+      $('askCustom').href = 'custom.html?creator=' + encodeURIComponent(state.active.slug);
       $('box').addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
       });

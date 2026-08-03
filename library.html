@@ -111,6 +111,7 @@
     .player-dm-txt { flex: 1; min-width: 0; line-height: 1.35; }
     .player-dm-txt b { display: block; font-family: var(--sans); font-size: 14.5px; color: var(--cream); font-weight: 600; }
     .player-dm-txt em { font-family: var(--sans); font-size: 12.5px; color: #a98ea3; font-style: normal; }
+    .player-custom { background: linear-gradient(135deg, rgba(214,168,74,.13), rgba(107,16,48,.10)); margin-top: 10px; }
     .player-dm-go { font-family: var(--sans); font-size: 13px; font-weight: 700; color: #1a0d14;
       background: var(--gold); border-radius: 8px; padding: 9px 14px; white-space: nowrap; flex: 0 0 auto; }
     .player audio { width: 100%; margin-top: 18px; }
@@ -176,6 +177,14 @@
             <em id="playerDmSub"></em>
           </span>
           <span class="player-dm-go">Message →</span>
+        </a>
+        <a class="player-dm player-custom" id="playerCustom" href="#" style="display:none">
+          <span class="player-dm-av">♪</span>
+          <span class="player-dm-txt">
+            <b id="playerCustomName"></b>
+            <em>Describe it and she records it — for you alone. From $8 a minute.</em>
+          </span>
+          <span class="player-dm-go">Ask →</span>
         </a>
       </div>
     </div>
@@ -450,13 +459,22 @@
     function showDmOffer(s) {
       const el = document.getElementById('playerDm');
       const slug = dmBySlugName[s.voice];
-      if (!slug) { el.style.display = 'none'; return; }
+      if (!slug) {
+        el.style.display = 'none';
+        document.getElementById('playerCustom').style.display = 'none';
+        return;
+      }
       document.getElementById('playerDmAv').textContent = (s.voice || '?').charAt(0);
       document.getElementById('playerDmName').textContent = 'Message ' + s.voice;
       document.getElementById('playerDmSub').textContent =
         'She recorded this. Tell her what you thought.';
       el.href = 'chat.html?creator=' + encodeURIComponent(slug);
       el.style.display = 'flex';
+
+      const cu = document.getElementById('playerCustom');
+      document.getElementById('playerCustomName').textContent = 'Want one just for you?';
+      cu.href = 'custom.html?creator=' + encodeURIComponent(slug);
+      cu.style.display = 'flex';
     }
     function openPlayer(s) {
       document.getElementById('playerImg').style.backgroundImage = 'url(' + s.img + ')';
