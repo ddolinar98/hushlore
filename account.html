@@ -57,6 +57,29 @@
     .ac-row .v { font-family: var(--sans); font-size: 16px; color: var(--cream); font-weight: 600; text-align: right; }
     .ac-row .v.badge { color: #35d07f; }
 
+    /* Cancelling is deliberately plain and one click from here. Burying it is
+       what generates chargebacks, and a chargeback costs far more than the
+       membership it saves. */
+    .ac-cancel { margin-top: 20px; text-align: center; }
+    .ac-cancel-link { background: none; border: none; font-family: var(--sans); font-size: 13.5px;
+      color: #a98ea3; text-decoration: underline; cursor: pointer; padding: 4px; }
+    .ac-cancel-link:hover { color: var(--cream); }
+    .ac-cancel-confirm, .ac-cancel-done { display: none; }
+    .ac-cancel.confirming .ac-cancel-confirm { display: block; }
+    .ac-cancel.confirming .ac-cancel-link { display: none; }
+    .ac-cancel.cancelled .ac-cancel-done { display: block; }
+    .ac-cancel.cancelled > .ac-cancel-link, .ac-cancel.cancelled .ac-cancel-confirm { display: none; }
+    .ac-cancel-confirm p, .ac-cancel-done p { font-family: var(--sans); font-size: 14px; line-height: 1.55;
+      color: #c1a7b8; background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+    .ac-cancel-confirm b, .ac-cancel-done b { color: var(--cream); }
+    .ac-cancel-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .ac-btn-ghost, .ac-btn-danger { font-family: var(--sans); font-size: 14px; font-weight: 600;
+      border-radius: 10px; padding: 11px 18px; cursor: pointer; }
+    .ac-btn-ghost { background: var(--gold); border: none; color: #fff; }
+    .ac-btn-danger { background: none; border: 1px solid var(--border-strong); color: #c1a7b8; }
+    .ac-btn-danger:hover { color: var(--cream); border-color: var(--gold); }
+
     .ac-foot { border-top: 1px solid var(--border); margin-top: 28px; padding-top: 22px; text-align: center; }
     .ac-foot a { font-family: var(--sans); font-size: 14px; color: #a98ea3; text-decoration: none; margin: 0 10px; }
     .ac-foot a:hover { color: var(--cream); }
@@ -123,12 +146,29 @@
         <div class="ac-row"><span class="k">Membership Type</span><span class="v" id="infPlan">1-Month membership</span></div>
         <div class="ac-row"><span class="k">Membership Status</span><span class="v badge">Active</span></div>
         <div class="ac-row"><span class="k">Messages left</span><span class="v" id="infCredits">—</span></div>
+
+        <div class="ac-cancel" id="cancelBox" style="display:none">
+          <button type="button" class="ac-cancel-link" id="cancelStart">Cancel membership</button>
+
+          <div class="ac-cancel-confirm" id="cancelConfirm">
+            <p>Your membership will not renew. You keep everything until
+               <b id="cancelUntil"></b> — nothing is taken away before then.</p>
+            <div class="ac-cancel-actions">
+              <button type="button" class="ac-btn-ghost" id="cancelBack">Keep it</button>
+              <button type="button" class="ac-btn-danger" id="cancelGo">Cancel membership</button>
+            </div>
+          </div>
+
+          <div class="ac-cancel-done" id="cancelDone">
+            <p>Cancelled. Your access runs until <b id="cancelDoneUntil"></b>.</p>
+            <button type="button" class="ac-cancel-link" id="cancelUndo">Turn renewal back on</button>
+          </div>
+        </div>
       </div>
 
       <div class="ac-foot">
         <a href="terms.html">Terms &amp; Conditions</a><span class="sep">|</span>
         <a href="privacy.html">Privacy Policy</a><span class="sep">|</span>
-        <a href="#" id="manageLink">Manage</a><span class="sep">|</span>
         <a href="#" id="logoutLink">Logout</a>
       </div>
     </div>
@@ -258,13 +298,64 @@
         }
         if (d.sub && d.sub.active) {
           planEl.textContent = PLAN_LABEL[d.sub.plan] || planEl.textContent;
-          if (statusEl) statusEl.textContent = 'Active — renews ' + String(d.sub.expires_at).slice(0, 10);
+          showSub(d.sub);
         } else if (statusEl) {
           statusEl.textContent = 'No active membership';
           statusEl.classList.remove('badge');
         }
       })
       .catch(function () {});
+
+    /* ── cancelling ──────────────────────────────────────────────────
+       Cancelling stops the renewal. It does not end access that has already
+       been paid for, and the copy says so plainly — someone who thinks
+       cancelling deletes their remaining month will ask the bank instead. */
+    const cancelBox = document.getElementById('cancelBox');
+
+    function niceDate(iso) {
+      const d = new Date(iso);
+      return isNaN(d) ? String(iso).slice(0, 10)
+        : d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    function showSub(sub) {
+      const until = niceDate(sub.expires_at);
+      if (statusEl) {
+        statusEl.textContent = sub.renews === false
+          ? 'Cancelled — access until ' + until
+          : 'Active — renews ' + until;
+        statusEl.classList.toggle('badge', sub.renews !== false);
+      }
+      document.getElementById('cancelUntil').textContent = until;
+      document.getElementById('cancelDoneUntil').textContent = until;
+      cancelBox.style.display = 'block';
+      cancelBox.classList.toggle('cancelled', sub.renews === false);
+      cancelBox.classList.remove('confirming');
+    }
+    function subAction(path, btn) {
+      btn.disabled = true;
+      fetch(path, { method: 'POST', credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.sub) showSub(d.sub);
+          else alert('Something went wrong. Email hello@hushlorewhisper.com and we will sort it out.');
+        })
+        .catch(function () {
+          alert('Something went wrong. Email hello@hushlorewhisper.com and we will sort it out.');
+        })
+        .then(function () { btn.disabled = false; });
+    }
+    document.getElementById('cancelStart').addEventListener('click', function () {
+      cancelBox.classList.add('confirming');
+    });
+    document.getElementById('cancelBack').addEventListener('click', function () {
+      cancelBox.classList.remove('confirming');
+    });
+    document.getElementById('cancelGo').addEventListener('click', function () {
+      subAction('/api/sub/cancel', this);
+    });
+    document.getElementById('cancelUndo').addEventListener('click', function () {
+      subAction('/api/sub/resume', this);
+    });
 
     // message credits (creator chat)
     fetch('/api/chat/me', { credentials: 'same-origin' })
@@ -288,8 +379,6 @@
           window.location.href = 'index.html';
         });
     });
-    // Manage = Stripe customer portal (add link when the new Stripe account is set up)
-    document.getElementById('manageLink').addEventListener('click', function (e) { e.preventDefault(); alert('Manage your membership — coming soon. For anything urgent, email hello@hushlorewhisper.com'); });
 
     /* analytics */
     const HL_SB_URL = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
