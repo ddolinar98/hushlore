@@ -32,6 +32,9 @@ export default {
       if (p === '/api/admin/grant')   return requirePost(request, () => adminGrant(request, env));
       if (p === '/api/subscribe')     return requirePost(request, () => subscribe(request, env));
       if (p.startsWith('/audio/'))    return serveAudio(request, env, p.slice('/audio/'.length));
+      if (p.startsWith('/preview/'))  return servePreview(request, env, p.slice('/preview/'.length));
+      if (p === '/api/sub/cancel')    return requirePost(request, () => subCancel(request, env));
+      if (p === '/api/sub/resume')    return requirePost(request, () => subResume(request, env));
 
       // ── creator chat ──────────────────────────────────────────────
       if (p === '/api/chat/creators')      return chatCreators(request, env);
@@ -147,14 +150,47 @@ function sessionCookie(value, maxAge) {
 
 async function activeSub(env, userId) {
   return await env.DB.prepare(
-    `SELECT plan, expires_at FROM subscriptions
+    `SELECT id, plan, expires_at, cancelled_at FROM subscriptions
       WHERE user_id = ?1 AND status = 'active' AND expires_at > ?2
       ORDER BY expires_at DESC LIMIT 1`
   ).bind(userId, nowISO()).first();
 }
 
 function subShape(sub) {
-  return sub ? { active: true, plan: sub.plan, expires_at: sub.expires_at } : { active: false };
+  if (!sub) return { active: false };
+  return {
+    active: true, plan: sub.plan, expires_at: sub.expires_at,
+    // Cancelling stops the renewal, it does not take away what was paid for.
+    renews: !sub.cancelled_at, cancelled_at: sub.cancelled_at || null
+  };
+}
+
+/** Stop the membership renewing. Access continues to the date already paid for. */
+async function subCancel(request, env) {
+  const uid = await readSession(env, request);
+  if (!uid) return json({ error: 'auth_required' }, 401);
+
+  const sub = await activeSub(env, uid);
+  if (!sub) return json({ error: 'no_active_membership' }, 404);
+  if (sub.cancelled_at) return json({ ok: true, sub: subShape(sub) });
+
+  const at = nowISO();
+  await env.DB.prepare('UPDATE subscriptions SET cancelled_at = ?1 WHERE id = ?2')
+    .bind(at, sub.id).run();
+  return json({ ok: true, sub: subShape(Object.assign({}, sub, { cancelled_at: at })) });
+}
+
+/** Undo a cancellation, as long as the membership has not lapsed yet. */
+async function subResume(request, env) {
+  const uid = await readSession(env, request);
+  if (!uid) return json({ error: 'auth_required' }, 401);
+
+  const sub = await activeSub(env, uid);
+  if (!sub) return json({ error: 'no_active_membership' }, 404);
+
+  await env.DB.prepare('UPDATE subscriptions SET cancelled_at = NULL WHERE id = ?1')
+    .bind(sub.id).run();
+  return json({ ok: true, sub: subShape(Object.assign({}, sub, { cancelled_at: null })) });
 }
 
 /** Adds months on top of an existing expiry so renewals stack instead of reset. */
@@ -258,6 +294,23 @@ async function adminGrant(request, env) {
 }
 
 /* ───────────────────────── protected audio ───────────────────────── */
+
+/** The 10-second taste on the result page. Deliberately open to anyone: it is
+    the only audio a visitor hears before deciding to pay. Cached hard, because
+    these never change and every visitor hits one. */
+async function servePreview(request, env, filename) {
+  if (!/^[a-z0-9][a-z0-9-]*\.mp3$/i.test(filename)) return new Response('Not found', { status: 404 });
+
+  const obj = await env.AUDIO.get('previews/' + filename);
+  if (!obj) return new Response('Not found', { status: 404 });
+
+  const headers = new Headers();
+  headers.set('Content-Type', 'audio/mpeg');
+  headers.set('etag', obj.httpEtag);
+  headers.set('Accept-Ranges', 'bytes');
+  headers.set('Cache-Control', 'public, max-age=86400');
+  return new Response(obj.body, { status: 200, headers });
+}
 
 async function serveAudio(request, env, filename) {
   if (!/^[a-z0-9][a-z0-9-]*\.mp3$/i.test(filename)) return new Response('Not found', { status: 404 });

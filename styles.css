@@ -1814,6 +1814,94 @@ p {
 }
 
 /* ====================================
+   Ten-second taste (result page)
+   ==================================== */
+
+.taste {
+  max-width: 580px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 0.25rem;
+}
+.taste-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 18px;
+  background: linear-gradient(135deg, rgba(107,16,48,0.32), rgba(23,11,21,0.9));
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--cream);
+  font-family: var(--sans);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.1s;
+}
+.taste-btn:hover { border-color: var(--gold-bright); }
+.taste-btn:active { transform: scale(0.995); }
+.taste-icon {
+  flex: 0 0 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #fff;
+  font-size: 0.95rem;
+  padding-left: 3px;                 /* optical centring of the ▶ glyph */
+}
+.taste-btn.playing .taste-icon { padding-left: 0; }
+.taste-txt { flex: 1 1 auto; min-width: 0; }
+.taste-txt b {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.taste-txt em {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.8rem;
+  font-style: normal;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.taste-age {
+  flex: 0 0 auto;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 2px 5px;
+}
+.taste-bar {
+  height: 2px;
+  margin-top: 8px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.taste-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--gold-bright);
+}
+.taste-after {
+  display: none;
+  margin-top: 10px;
+  text-align: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.6);
+}
+.taste.done .taste-after { display: block; }
+
+/* ====================================
    Social proof live counter
    ==================================== */
 

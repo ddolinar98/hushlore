@@ -77,6 +77,21 @@
       <p class="match-reveal-lead" id="matchLead"></p>
     </section>
 
+    <!-- The only audio anyone hears before paying. Ten seconds, from the middle
+         of the story rather than the opening, because the opening sells nothing. -->
+    <section class="taste" id="taste" style="display:none;">
+      <button class="taste-btn" id="tasteBtn" type="button" aria-label="Play a ten second preview">
+        <span class="taste-icon" id="tasteIcon">▶</span>
+        <span class="taste-txt">
+          <b id="tasteLabel">Hear 10 seconds of it</b>
+          <em id="tasteMeta"></em>
+        </span>
+        <span class="taste-age">18+</span>
+      </button>
+      <div class="taste-bar"><i id="tasteFill"></i></div>
+      <p class="taste-after" id="tasteAfter">That was 10 seconds of <span id="tasteLen"></span>. The rest is below.</p>
+    </section>
+
     <!-- Offer hero + story collage -->
     <section class="offer-hero">
       <h1>Experience pleasure<br /><span class="italic">like never before.</span></h1>
@@ -500,6 +515,90 @@
       document.getElementById('matchLead').textContent = outcome.lead;
       document.getElementById('matchReveal').style.display = 'block';
     }
+
+    /* ====================================
+       Ten-second taste
+
+       One clip per outcome per audience, cut from the middle of the recording.
+       Nothing here is behind the paywall — this is the audio that has to earn
+       the sale, so the visitor gets to hear the voice before being asked to pay.
+       ==================================== */
+    const TASTE = {
+      M: {
+        'best-friends-untold': ['best-friends-untold-straight-m-01', "I'm Just Going to Say It", 'Scarlett', '22 min'],
+        'commanding-embrace': ['commanding-embrace-straight-m-01', "Look at Me", 'Scarlett', '13 min'],
+        'enemys-confession': ['enemys-confession-straight-m-01', "After Everyone's Gone", 'Scarlett', '20 min'],
+        'forbidden-whispers': ['forbidden-whispers-straight-m-01', "Our Secret", 'Scarlett', '15 min'],
+        'midnight-surrender': ['midnight-surrender-straight-m-01', "Every Inch", 'Vivienne', '14 min'],
+        'slow-devotion': ['slow-devotion-straight-m-01', "Come Home to Me", 'Grace', '15 min']
+      },
+      W: {
+        'best-friends-untold': ['best-friends-untold-straight-w-01', "All This Time", 'Julian', '18 min'],
+        'commanding-embrace': ['commanding-embrace-straight-w-01', "On My Time", 'Julian', '13 min'],
+        'enemys-confession': ['enemys-confession-straight-w-02', "Admit It", 'Julian', '19 min'],
+        'forbidden-whispers': ['forbidden-whispers-straight-w-01', "Don't Make a Sound", 'Julian', '17 min'],
+        'midnight-surrender': ['midnight-surrender-straight-w-01', "Give In", 'Julian', '19 min'],
+        'slow-devotion': ['slow-devotion-straight-w-02', "Stay", 'Julian', '20 min']
+      },
+      L: {
+        'slow-devotion': ['slow-devotion-lesbian-01', "First Time", 'Vivienne', '20 min']
+      },
+      G: {
+        'commanding-embrace': ['commanding-embrace-gay-01', "Let Me Take Over", 'Julian', '17 min'],
+        'slow-devotion': ['slow-devotion-gay-01', "Stay the Night", 'Julian', '17 min']
+      }
+    };
+
+    // Same derivation the library uses, so the taste is in the voice they will
+    // actually get. A woman into women must not be sold a man's voice.
+    function tasteAud() {
+      var a, g, b;
+      try {
+        a = localStorage.getItem('hl_aud');
+        if (a && TASTE[a]) return a;
+        g = localStorage.getItem('hl_gender');
+        b = localStorage.getItem('hl_quiz2_branch');
+      } catch (_) {}
+      if (g === 'woman') return b === 'women' ? 'L' : 'W';
+      if (g === 'man')   return b === 'men'   ? 'G' : 'M';
+      return b === 'men' ? 'W' : 'M';                  // legacy: branch = who they want
+    }
+
+    (function () {
+      var set = TASTE[tasteAud()] || TASTE.M;
+      // The newer audiences do not have all six outcomes recorded yet; any
+      // story in the right voice beats no taste at all.
+      var pick = set[key] || set[Object.keys(set)[0]];
+      if (!pick) return;
+
+      var wrap = document.getElementById('taste');
+      var btn = document.getElementById('tasteBtn');
+      var icon = document.getElementById('tasteIcon');
+      var fill = document.getElementById('tasteFill');
+      var audio = new Audio('/preview/' + pick[0] + '.mp3');
+      audio.preload = 'none';
+
+      document.getElementById('tasteMeta').textContent = '“' + pick[1] + '” · ' + pick[2] + '’s voice';
+      document.getElementById('tasteLen').textContent = pick[3];
+      wrap.style.display = 'block';
+
+      btn.addEventListener('click', function () {
+        if (!audio.paused) { audio.pause(); return; }
+        audio.play().then(function () { hlTrack('taste_play', { answer_text: pick[0] }); })
+                    .catch(function () {});
+      });
+      audio.addEventListener('play',  function () { icon.textContent = '❚❚'; btn.classList.add('playing'); });
+      audio.addEventListener('pause', function () { icon.textContent = '▶';  btn.classList.remove('playing'); });
+      audio.addEventListener('timeupdate', function () {
+        if (audio.duration) fill.style.width = (audio.currentTime / audio.duration * 100) + '%';
+      });
+      audio.addEventListener('ended', function () {
+        icon.textContent = '▶';
+        document.getElementById('tasteLabel').textContent = 'Play it again';
+        wrap.classList.add('done');
+        hlTrack('taste_finished', { answer_text: pick[0] });
+      });
+    })();
 
     // Social proof — consistent per day, 31–72 range
     (function() {
