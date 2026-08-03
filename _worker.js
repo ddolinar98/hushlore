@@ -450,9 +450,11 @@ async function chatOpen(request, env) {
 
   if (!thread) {
     const id = crypto.randomUUID();
+    const at = nowISO();
     await env.DB.prepare(
       'INSERT INTO chat_threads (id, user_id, creator_id, created_at) VALUES (?1,?2,?3,?4)'
-    ).bind(id, who.uid, creator.id, nowISO()).run();
+    ).bind(id, who.uid, creator.id, at).run();
+    await postHouseRules(env, id, at);
     thread = { id };
   }
   return json({ thread_id: thread.id, creator, credits: await creditBalance(env, who.uid) });
@@ -783,8 +785,7 @@ async function adminOrderPaid(request, env) {
   ).bind(nowISO(), b.processor || 'manual', b.ref || null, o.id).run();
 
   await addCredits(env, o.user_id, o.credits, 'purchase', o.id);
-  const notified = await postPurchaseNotice(env, o.user_id);
-  return json({ ok: true, credits: await creditBalance(env, o.user_id), notice_posted: notified });
+  return json({ ok: true, credits: await creditBalance(env, o.user_id) });
 }
 
 /** Payment hook — call this from the processor's webhook (or by hand) after a bundle is bought. */
@@ -802,31 +803,23 @@ async function adminGrantCredits(request, env) {
   if (!user) return json({ error: 'no_such_user', note: 'the buyer must create an account first' }, 404);
 
   await addCredits(env, user.id, credits, 'purchase', body.ref);
-  const notified = await postPurchaseNotice(env, user.id);
-  return json({ ok: true, email, credits: await creditBalance(env, user.id), notice_posted: notified });
+  return json({ ok: true, email, credits: await creditBalance(env, user.id) });
 }
 
-/** Drop the house-rules notice into the conversation this listener is most likely
-    to open next. Skipped if it is already the last thing in that thread. */
-async function postPurchaseNotice(env, userId) {
-  const t = await env.DB.prepare(
-    `SELECT id FROM chat_threads WHERE user_id = ?1
-      ORDER BY COALESCE(last_msg_at, created_at) DESC LIMIT 1`
-  ).bind(userId).first();
-  if (!t) return false;
+/** Open a new conversation with the house rules, so they are read once, at the
+    start, instead of interrupting a conversation already under way. */
+async function postHouseRules(env, threadId, at) {
+  const existing = await env.DB.prepare(
+    'SELECT 1 AS n FROM chat_messages WHERE thread_id = ?1 AND body = ?2 LIMIT 1'
+  ).bind(threadId, PURCHASE_NOTICE).first();
+  if (existing) return false;
 
-  const last = await env.DB.prepare(
-    'SELECT sender, body FROM chat_messages WHERE thread_id = ?1 ORDER BY created_at DESC LIMIT 1'
-  ).bind(t.id).first();
-  if (last && last.sender === 'admin' && last.body === PURCHASE_NOTICE) return false;
-
-  const at = nowISO();
   await env.DB.prepare(
     "INSERT INTO chat_messages (id, thread_id, sender, body, created_at) VALUES (?1,?2,'admin',?3,?4)"
-  ).bind(crypto.randomUUID(), t.id, PURCHASE_NOTICE, at).run();
+  ).bind(crypto.randomUUID(), threadId, PURCHASE_NOTICE, at).run();
   await env.DB.prepare(
     "UPDATE chat_threads SET last_msg_at = ?1, last_msg_from = 'admin', user_unread = user_unread + 1 WHERE id = ?2"
-  ).bind(at, t.id).run();
+  ).bind(at, threadId).run();
   return true;
 }
 
