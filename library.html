@@ -117,6 +117,32 @@
     .player audio { width: 100%; margin-top: 18px; }
     .player-close { position: absolute; top: 12px; right: 12px; z-index: 3; width: 34px; height: 34px; border-radius: 50%;
       background: rgba(8,6,8,0.6); border: none; color: #fff; font-size: 18px; cursor: pointer; }
+
+    /* resume + skip + sleep timer */
+    .player-resume { display: none; margin-top: 10px; font-family: var(--sans); font-size: 12.5px; color: #a98ea3; }
+    .player-resume.on { display: block; }
+    .player-resume button { background: none; border: none; padding: 0 0 0 6px; color: var(--gold);
+      font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; }
+    .player-tools { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .player-skip { font-family: var(--sans); font-size: 12.5px; font-weight: 600; color: #cbb4c5;
+      background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px;
+      padding: 7px 11px; cursor: pointer; }
+    .player-skip:hover { border-color: var(--gold); color: var(--cream); }
+    .player-sleep { margin-left: auto; position: relative; }
+    .player-sleep summary { list-style: none; font-family: var(--sans); font-size: 12.5px; font-weight: 600;
+      color: #cbb4c5; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px;
+      padding: 7px 11px; cursor: pointer; }
+    .player-sleep summary::-webkit-details-marker { display: none; }
+    .player-sleep[open] summary, .player-sleep.armed summary { border-color: var(--gold); color: var(--cream); }
+    .player-sleep-menu { position: absolute; right: 0; bottom: calc(100% + 6px); z-index: 4; min-width: 160px;
+      background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: 10px; padding: 6px; }
+    .player-sleep-menu button { display: block; width: 100%; text-align: left; background: none; border: none;
+      color: #cbb4c5; font-family: var(--sans); font-size: 13px; padding: 8px 10px; border-radius: 6px; cursor: pointer; }
+    .player-sleep-menu button:hover { background: var(--bg-elevated); color: var(--cream); }
+
+    /* how far into a story you already are */
+    .card-progress { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; height: 3px; background: rgba(0,0,0,0.45); }
+    .card-progress i { display: block; height: 100%; background: var(--gold); }
   </style>
 </head>
 <body>
@@ -169,7 +195,24 @@
         <div class="player-eyebrow" id="playerVoice"></div>
         <h3 id="playerTitle"></h3>
         <div class="player-tags" id="playerTags"></div>
-        <audio id="playerAudio" controls preload="none"></audio>
+        <audio id="playerAudio" controls preload="none" playsinline></audio>
+        <p class="player-resume" id="playerResume">
+          Picking up at <b id="playerResumeAt"></b>.<button type="button" id="playerRestart">Start over</button>
+        </p>
+        <div class="player-tools">
+          <button class="player-skip" type="button" id="skipBack">↺ 15s</button>
+          <button class="player-skip" type="button" id="skipFwd">15s ↻</button>
+          <details class="player-sleep" id="sleepBox">
+            <summary id="sleepLabel">☾ Sleep timer</summary>
+            <div class="player-sleep-menu">
+              <button type="button" data-sleep="15">In 15 minutes</button>
+              <button type="button" data-sleep="30">In 30 minutes</button>
+              <button type="button" data-sleep="45">In 45 minutes</button>
+              <button type="button" data-sleep="end">At the end of this story</button>
+              <button type="button" data-sleep="off">Off</button>
+            </div>
+          </details>
+        </div>
         <a class="player-dm" id="playerDm" href="#" style="display:none">
           <span class="player-dm-av" id="playerDmAv"></span>
           <span class="player-dm-txt">
@@ -305,6 +348,12 @@
     function getSaved() { try { return JSON.parse(localStorage.getItem('hl_saved') || '{}'); } catch (_) { return {}; } }
     function toggleSaved(id) { const s = getSaved(); if (s[id]) delete s[id]; else s[id] = 1; try { localStorage.setItem('hl_saved', JSON.stringify(s)); } catch (_) {} return !!s[id]; }
 
+    function progressHTML(id) {
+      const mark = getPos()[id];
+      if (!mark || !mark.d) return '';
+      const pct = Math.min(100, Math.round(mark.t / mark.d * 100));
+      return '<div class="card-progress"><i style="width:' + pct + '%"></i></div>';
+    }
     function cardHTML(s) {
       const saved = getSaved();
       return '' +
@@ -318,6 +367,7 @@
               '<div class="card-sub"><span class="card-dur">⏳ ' + esc(s.len) + '</span><span class="card-views">▷ ' + esc(s.views) + '</span></div>' +
               '<div class="card-tags">' + s.tags.map(function (t) { return '<span class="card-tag">' + esc(t) + '</span>'; }).join('') + '</div>' +
             '</div>' +
+            progressHTML(s.id) +
           '</div>' +
         '</div>';
     }
@@ -480,19 +530,156 @@
       cu.href = 'custom.html?creator=' + encodeURIComponent(slug);
       cu.style.display = 'flex';
     }
+    /* ── where you left off ──────────────────────────────────────────
+       These are 15–25 minute stories, listened to in bed on a phone. Losing
+       your place because the screen locked or a call came in is the fastest
+       way to make someone stop listening, so position is kept per story.
+       A story played to the end drops its mark, so it starts clean next time. */
+    const RESUME_MIN = 25;    // below this it is not worth resuming
+    const RESUME_TAIL = 40;   // this close to the end, treat it as finished
+
+    function getPos() { try { return JSON.parse(localStorage.getItem('hl_pos') || '{}'); } catch (_) { return {}; } }
+    function setPos(id, t, dur) {
+      try {
+        const p = getPos();
+        if (t < RESUME_MIN || (dur && t > dur - RESUME_TAIL)) delete p[id];
+        else p[id] = { t: Math.floor(t), d: Math.floor(dur || 0) };
+        localStorage.setItem('hl_pos', JSON.stringify(p));
+      } catch (_) {}
+    }
+    function clockOf(sec) {
+      const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+      return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    let current = null;
+
     function openPlayer(s) {
+      current = s;
       document.getElementById('playerImg').style.backgroundImage = 'url(' + s.img + ')';
       document.getElementById('playerVoice').textContent = s.voice + '  ·  ' + s.len + '  ·  ' + chili(s.heat);
       document.getElementById('playerTitle').textContent = s.title;
       document.getElementById('playerTags').innerHTML = s.tags.map(function (t) { return '<span class="card-tag">' + esc(t) + '</span>'; }).join('');
       audioEl.src = AUDIO_BASE + '/' + s.id + '.mp3';
+
+      const mark = getPos()[s.id];
+      const resume = document.getElementById('playerResume');
+      resume.classList.toggle('on', !!mark);
+      if (mark) {
+        document.getElementById('playerResumeAt').textContent = clockOf(mark.t);
+        // The metadata has to be loaded before a seek will take.
+        audioEl.addEventListener('loadedmetadata', function once() {
+          audioEl.removeEventListener('loadedmetadata', once);
+          try { audioEl.currentTime = mark.t; } catch (_) {}
+        });
+      }
+
       showDmOffer(s);
+      setNowPlaying(s);
       overlay.classList.add('open');
       audioEl.play().catch(function () {});
       pushHistory(s.id); renderRows();
       hlTrack('story_play', { answer_text: s.id });
     }
-    function closePlayer() { overlay.classList.remove('open'); audioEl.pause(); }
+    function closePlayer() {
+      rememberNow();
+      overlay.classList.remove('open');
+      audioEl.pause();
+      sleepOff();
+      current = null;
+      renderRows();
+    }
+
+    function rememberNow() {
+      if (current && audioEl.currentTime) setPos(current.id, audioEl.currentTime, audioEl.duration);
+    }
+    // Throttled: timeupdate fires several times a second and this writes to disk.
+    let lastSave = 0;
+    audioEl.addEventListener('timeupdate', function () {
+      const now = Date.now();
+      if (now - lastSave > 4000) { lastSave = now; rememberNow(); }
+    });
+    audioEl.addEventListener('pause', rememberNow);
+    audioEl.addEventListener('ended', function () {
+      if (current) { setPos(current.id, 0, 0); renderRows(); }
+    });
+    window.addEventListener('pagehide', rememberNow);
+    document.addEventListener('visibilitychange', function () { if (document.hidden) rememberNow(); });
+
+    document.getElementById('playerRestart').addEventListener('click', function () {
+      audioEl.currentTime = 0;
+      document.getElementById('playerResume').classList.remove('on');
+      audioEl.play().catch(function () {});
+    });
+    document.getElementById('skipBack').addEventListener('click', function () {
+      audioEl.currentTime = Math.max(0, audioEl.currentTime - 15);
+    });
+    document.getElementById('skipFwd').addEventListener('click', function () {
+      audioEl.currentTime = Math.min(audioEl.duration || 1e9, audioEl.currentTime + 15);
+    });
+
+    /* ── sleep timer ─────────────────────────────────────────────────
+       Most of this listening happens on the way to sleep. Fading out over the
+       last stretch rather than cutting is the whole point — a hard stop wakes
+       you up, which is exactly what the timer is meant to avoid. */
+    const FADE_SECS = 20;
+    let sleepTimer = null, fadeTimer = null, sleepAtEnd = false;
+
+    function sleepOff() {
+      clearTimeout(sleepTimer); clearInterval(fadeTimer);
+      sleepTimer = fadeTimer = null; sleepAtEnd = false;
+      audioEl.volume = 1;
+      document.getElementById('sleepBox').classList.remove('armed');
+      document.getElementById('sleepLabel').textContent = '☾ Sleep timer';
+    }
+    function fadeOutAndStop() {
+      const step = 1 / (FADE_SECS * 4);
+      fadeTimer = setInterval(function () {
+        audioEl.volume = Math.max(0, audioEl.volume - step);
+        if (audioEl.volume <= 0.001) { audioEl.pause(); sleepOff(); }
+      }, 250);
+    }
+    function sleepIn(minutes) {
+      sleepOff();
+      const label = document.getElementById('sleepLabel');
+      document.getElementById('sleepBox').classList.add('armed');
+      label.textContent = '☾ ' + minutes + ' min';
+      sleepTimer = setTimeout(fadeOutAndStop, Math.max(0, minutes * 60 - FADE_SECS) * 1000);
+    }
+    document.querySelector('.player-sleep-menu').addEventListener('click', function (e) {
+      const b = e.target.closest('button[data-sleep]');
+      if (!b) return;
+      const v = b.getAttribute('data-sleep');
+      document.getElementById('sleepBox').removeAttribute('open');
+      if (v === 'off') { sleepOff(); return; }
+      if (v === 'end') {
+        sleepOff();
+        sleepAtEnd = true;
+        document.getElementById('sleepBox').classList.add('armed');
+        document.getElementById('sleepLabel').textContent = '☾ At the end';
+        return;
+      }
+      sleepIn(parseInt(v, 10));
+    });
+    audioEl.addEventListener('ended', function () { if (sleepAtEnd) sleepOff(); });
+
+    /* ── lock screen ─────────────────────────────────────────────────
+       Without this the phone shows a nameless audio source and the play button
+       on the lock screen does nothing — for a 20-minute story with the screen
+       off, that is the only set of controls the listener has. */
+    function setNowPlaying(s) {
+      if (!('mediaSession' in navigator)) return;
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: s.title, artist: s.voice, album: 'Hushlore',
+        artwork: [{ src: s.img, sizes: '512x512', type: 'image/jpeg' }]
+      });
+      const set = function (a, fn) { try { navigator.mediaSession.setActionHandler(a, fn); } catch (_) {} };
+      set('play',  function () { audioEl.play().catch(function () {}); });
+      set('pause', function () { audioEl.pause(); });
+      set('seekbackward', function () { audioEl.currentTime = Math.max(0, audioEl.currentTime - 15); });
+      set('seekforward',  function () { audioEl.currentTime = Math.min(audioEl.duration || 1e9, audioEl.currentTime + 15); });
+      set('seekto', function (d) { if (d.seekTime != null) audioEl.currentTime = d.seekTime; });
+    }
     document.getElementById('playerClose').addEventListener('click', closePlayer);
     overlay.addEventListener('click', function (e) { if (e.target === overlay) closePlayer(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePlayer(); });
