@@ -1902,6 +1902,42 @@ p {
 .taste.done .taste-after { display: block; }
 
 /* ====================================
+   Adult content notice (at the pay button)
+   ==================================== */
+
+.adult-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 520px;
+  margin: 0 auto 1rem;
+  padding: 14px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: left;
+}
+.adult-notice-badge {
+  flex: 0 0 auto;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--cream);
+  background: var(--burgundy);
+  border-radius: 3px;
+  padding: 4px 7px;
+  margin-top: 1px;
+}
+.adult-notice p {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.adult-notice b { color: rgba(255,255,255,0.82); font-weight: 600; }
+
+/* ====================================
    Social proof live counter
    ==================================== */
 
