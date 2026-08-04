@@ -1902,6 +1902,76 @@ p {
 .taste.done .taste-after { display: block; }
 
 /* ====================================
+   Waitlist (stands in for checkout until billing is live)
+   ==================================== */
+
+.waitlist, .waitlist-done { display: none; max-width: 520px; margin: 0 auto; }
+.waitlist.open { display: block; }
+.waitlist-done.on { display: block; }
+.waitlist-lead {
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 12px;
+}
+.waitlist-lead b { color: var(--cream); font-weight: 600; }
+.waitlist-row { display: flex; gap: 8px; }
+.waitlist-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 14px 15px;
+  color: var(--cream);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+}
+.waitlist-row input::placeholder { color: #6b5265; }
+.waitlist-row input:focus { outline: none; border-color: var(--gold-bright); }
+.waitlist-row button {
+  flex: 0 0 auto;
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius);
+  padding: 14px 22px;
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.waitlist-row button:hover { background: var(--gold-bright); }
+.waitlist-row button:disabled { opacity: 0.5; cursor: default; }
+.waitlist-err {
+  min-height: 18px;
+  margin-top: 8px;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--gold-bright);
+  text-align: center;
+}
+.waitlist-done {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.72);
+  text-align: center;
+  padding: 18px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+}
+
+@media (max-width: 420px) {
+  .waitlist-row { flex-wrap: wrap; }
+  .waitlist-row button { width: 100%; }
+}
+
+/* ====================================
    Adult content notice (at the pay button)
    ==================================== */
 

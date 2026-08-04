@@ -196,7 +196,7 @@
         (prohibited under EU UCPD and FTC §5). For beta, consider framing
         as "Founding member price" without the strikethrough.
       -->
-      <div class="pricing-tier" data-tier="1m" data-price="21.00" data-link="https://buy.stripe.com/14AfZh9l69lZebl0jCfAc00">
+      <div class="pricing-tier" data-tier="1m" data-price="21.00">
         <div class="pricing-radio"></div>
         <div class="pricing-tier-mid">
           <div class="pricing-tier-title">1 - Month Membership</div>
@@ -214,7 +214,7 @@
         </div>
       </div>
 
-      <div class="pricing-tier popular selected" data-tier="3m" data-price="32.99" data-link="https://buy.stripe.com/9B6bJ140M69N1ozeasfAc01">
+      <div class="pricing-tier popular selected" data-tier="3m" data-price="32.99">
         <div class="pricing-radio"></div>
         <div class="pricing-tier-mid">
           <div class="pricing-tier-title">3 - Month Membership</div>
@@ -232,7 +232,7 @@
         </div>
       </div>
 
-      <div class="pricing-tier" data-tier="6m" data-price="49.99" data-link="https://buy.stripe.com/4gM9AT1SE1Tx8R1aYgfAc02">
+      <div class="pricing-tier" data-tier="6m" data-price="49.99">
         <div class="pricing-radio"></div>
         <div class="pricing-tier-mid">
           <div class="pricing-tier-title">6 - Month Membership</div>
@@ -270,9 +270,27 @@
         </p>
       </div>
 
-      <a href="https://buy.stripe.com/9B6bJ140M69N1ozeasfAc01"
-         id="continueBtn"
-         class="continue-cta">Continue</a>
+      <!-- No processor is live yet, so nothing can be charged. Rather than send
+           people to a checkout that must not take their money, hold the plan
+           they chose against their address and write to them when it opens. -->
+      <button type="button" id="continueBtn" class="continue-cta">Continue</button>
+
+      <form class="waitlist" id="waitlistForm">
+        <p class="waitlist-lead">
+          <b>Membership opens shortly.</b>
+          Leave your email and you get in first — at the price you just picked.
+        </p>
+        <div class="waitlist-row">
+          <input type="email" id="waitlistEmail" required placeholder="you@email.com"
+                 autocomplete="email" aria-label="Your email" />
+          <button type="submit" id="waitlistGo">Notify me</button>
+        </div>
+        <p class="waitlist-err" id="waitlistErr"></p>
+      </form>
+
+      <p class="waitlist-done" id="waitlistDone">
+        You are on the list. We will write to you the day it opens — nothing else.
+      </p>
 
       <!-- Guarantee badge -->
       <div class="guarantee-badge">
@@ -630,7 +648,6 @@
       tier.addEventListener('click', () => {
         document.querySelectorAll('.pricing-tier').forEach(t => t.classList.remove('selected'));
         tier.classList.add('selected');
-        continueBtn.href = tier.dataset.link;
         try { localStorage.setItem('hl_plan_price', tier.dataset.price); } catch (_) {}
         hlTrack('plan_select', { answer_text: tier.dataset.price, question_id: key });
       });
@@ -642,10 +659,47 @@
       if (selInit) { try { localStorage.setItem('hl_plan_price', selInit.dataset.price); } catch (_) {} }
     })();
 
+    const waitlistForm = document.getElementById('waitlistForm');
+    const waitlistErr = document.getElementById('waitlistErr');
+
     continueBtn.addEventListener('click', () => {
       const sel = document.querySelector('.pricing-tier.selected');
       if (sel) { try { localStorage.setItem('hl_plan_price', sel.dataset.price); } catch (_) {} }
-      hlTrack('stripe_click', { answer_text: sel ? sel.dataset.price : null, question_id: key });
+      hlTrack('checkout_click', { answer_text: sel ? sel.dataset.price : null, question_id: key });
+      continueBtn.style.display = 'none';
+      waitlistForm.classList.add('open');
+      document.getElementById('waitlistEmail').focus();
+    });
+
+    waitlistForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const go = document.getElementById('waitlistGo');
+      const sel = document.querySelector('.pricing-tier.selected');
+      waitlistErr.textContent = '';
+      go.disabled = true;
+
+      fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('waitlistEmail').value,
+          plan: sel ? sel.dataset.tier : null,
+          price: sel ? sel.dataset.price : null,
+          outcome: key,
+          aud: tasteAud()
+        })
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (!d.ok) throw new Error(d.error || 'failed');
+          waitlistForm.classList.remove('open');
+          document.getElementById('waitlistDone').classList.add('on');
+          hlTrack('waitlist_join', { answer_text: sel ? sel.dataset.price : null, question_id: key });
+        })
+        .catch(() => {
+          waitlistErr.textContent = 'That did not go through. Check the address and try again.';
+          go.disabled = false;
+        });
     });
 
     /* ====================================

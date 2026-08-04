@@ -33,6 +33,7 @@ export default {
       if (p === '/api/subscribe')     return requirePost(request, () => subscribe(request, env));
       if (p.startsWith('/audio/'))    return serveAudio(request, env, p.slice('/audio/'.length));
       if (p.startsWith('/preview/'))  return servePreview(request, env, p.slice('/preview/'.length));
+      if (p === '/api/waitlist')      return requirePost(request, () => joinWaitlist(request, env));
       if (p === '/api/sub/cancel')    return requirePost(request, () => subCancel(request, env));
       if (p === '/api/sub/resume')    return requirePost(request, () => subResume(request, env));
 
@@ -163,6 +164,29 @@ function subShape(sub) {
     // Cancelling stops the renewal, it does not take away what was paid for.
     renews: !sub.cancelled_at, cancelled_at: sub.cancelled_at || null
   };
+}
+
+/** Hold a place until billing exists. Someone who picked a plan and left their
+    address is the warmest lead this site can produce, so the tier and the quiz
+    match are kept alongside — that is what the first launch email is written to. */
+async function joinWaitlist(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const email = normEmail(b.email);
+  if (!validEmail(email)) return json({ error: 'invalid_email' }, 400);
+
+  const clip = (v, n) => (v == null ? null : String(v).slice(0, n));
+  await env.DB.prepare(
+    `INSERT INTO waitlist (id, email, plan, price, outcome, aud, created_at)
+     VALUES (?1,?2,?3,?4,?5,?6,?7)
+     ON CONFLICT(email) DO UPDATE SET
+       plan = excluded.plan, price = excluded.price,
+       outcome = excluded.outcome, aud = excluded.aud`
+  ).bind(
+    crypto.randomUUID(), email, clip(b.plan, 8), clip(b.price, 12),
+    clip(b.outcome, 40), clip(b.aud, 2), nowISO()
+  ).run();
+
+  return json({ ok: true });
 }
 
 /** Stop the membership renewing. Access continues to the date already paid for. */
