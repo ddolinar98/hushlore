@@ -22,7 +22,17 @@ const BLOCKED = /^\/(\.|wrangler\.toml|package(-lock)?\.json|.*\.(sql|py|toml|en
 
 export default {
   async fetch(request, env) {
-    const p = new URL(request.url).pathname;
+    const url = new URL(request.url);
+
+    // One canonical host. The session cookie is set without a Domain attribute,
+    // so it belongs to exactly the host that issued it — were www served as a
+    // second site, anyone who signed in on the apex would look signed out there.
+    if (url.hostname.startsWith('www.')) {
+      url.hostname = url.hostname.slice(4);
+      return Response.redirect(url.toString(), 301);
+    }
+
+    const p = url.pathname;
     if (BLOCKED.test(p)) return new Response('Not found', { status: 404 });
     try {
       if (p === '/api/auth/register') return requirePost(request, () => register(request, env));
