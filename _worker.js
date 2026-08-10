@@ -15,6 +15,11 @@
  */
 
 const SESSION_DAYS = 30;
+
+/** Made-to-order recordings. Off until the AN 5196 §9.4.1 controls exist:
+    signed performer agreements, validated government ID, and review of every
+    upload before it reaches the customer. */
+const CUSTOMS_ENABLED = false;
 const PBKDF2_ITER = 100000;
 
 /** Never serve config / source / data files, whatever ends up in the deploy. */
@@ -60,6 +65,16 @@ export default {
       if (p === '/api/admin/order-paid')   return requirePost(request, () => adminOrderPaid(request, env));
 
       // ── personal recordings ───────────────────────────────────────
+      // Off for launch. Letting a performer upload a file makes her a "content
+      // provider" under Mastercard AN 5196 §9.4.1, which requires a written
+      // agreement, validated government ID for every performer, and review of
+      // every upload before release. None of that is in place yet, and the
+      // application to the processor says so — so the switch has to actually be
+      // off, not merely unused. Flip it back on once those controls exist and
+      // the change has been declared to the acquirer.
+      if (p === '/api/custom/options' || p.startsWith('/api/custom/') || p.startsWith('/custom-audio/')) {
+        if (!CUSTOMS_ENABLED) return json({ error: 'not_available' }, 404);
+      }
       if (p === '/api/custom/options')     return customOptions(request, env);
       if (p === '/api/custom/order')       return requirePost(request, () => customCreate(request, env));
       if (p === '/api/custom/mine')        return customMine(request, env);
@@ -67,6 +82,9 @@ export default {
       if (p === '/api/custom/deliver')     return requirePost(request, () => customDeliver(request, env));
       if (p === '/api/custom/paid')        return requirePost(request, () => customMarkPaid(request, env));
       if (p.startsWith('/custom-audio/'))  return serveCustomAudio(request, env, p.slice('/custom-audio/'.length));
+      if (p === '/custom' || p === '/custom.html') {
+        if (!CUSTOMS_ENABLED) return new Response('Not found', { status: 404 });
+      }
       if (p === '/api/admin/grant-credits')return requirePost(request, () => adminGrantCredits(request, env));
       if (p === '/api/admin/creator')      return requirePost(request, () => adminUpsertCreator(request, env));
       if (p === '/api/admin/promote')      return requirePost(request, () => adminPromote(request, env));

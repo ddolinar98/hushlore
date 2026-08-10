@@ -153,7 +153,6 @@
       <div class="lib-navlinks">
         <a href="library.html" class="active">Stories</a>
         <a href="chat.html">Messages</a>
-        <a href="custom.html">Recorded for you</a>
         <a href="account.html" id="accountLink">Account</a>
       </div>
     </nav>
@@ -525,10 +524,9 @@
       el.href = 'chat.html?creator=' + encodeURIComponent(slug);
       el.style.display = 'flex';
 
-      const cu = document.getElementById('playerCustom');
-      document.getElementById('playerCustomName').textContent = 'Want one just for you?';
-      cu.href = 'custom.html?creator=' + encodeURIComponent(slug);
-      cu.style.display = 'flex';
+      // Personal recordings are off for launch (see CUSTOMS_ENABLED in _worker.js),
+      // so the offer must not appear -- a dead link reads worse than no offer.
+      document.getElementById('playerCustom').style.display = 'none';
     }
     /* ── where you left off ──────────────────────────────────────────
        These are 15–25 minute stories, listened to in bed on a phone. Losing

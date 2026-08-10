@@ -104,7 +104,6 @@
     <div class="ch-navlinks">
       <a href="library.html">Stories</a>
       <a href="chat.html" class="active">Messages</a>
-      <a href="custom.html">Recorded for you</a>
       <a href="account.html">Account</a>
     </div>
   </div>
@@ -254,7 +253,6 @@
           '<b>Ask her →</b></span></a>';
       $('back').onclick = function(){ $('thread').classList.add('hide-mobile'); $('list').classList.remove('hide-mobile'); };
       $('send').onclick = send;
-      $('askCustom').href = 'custom.html?creator=' + encodeURIComponent(state.active.slug);
       $('box').addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
       });
