@@ -93,6 +93,8 @@ export default {
       if (p === '/api/admin/thread')       return adminThread(request, env);
       if (p === '/api/admin/reply')        return requirePost(request, () => adminReply(request, env));
       if (p === '/api/admin/block')        return requirePost(request, () => adminBlock(request, env));
+      if (p === '/api/admin/incidents')    return adminIncidents(request, env);
+      if (p === '/api/admin/incident')     return requirePost(request, () => adminAddIncident(request, env));
     } catch (e) {
       return json({ error: 'server_error' }, 500);
     }
@@ -926,6 +928,76 @@ async function postHouseRules(env, threadId, at) {
     "UPDATE chat_threads SET last_msg_at = ?1, last_msg_from = 'admin', user_unread = user_unread + 1 WHERE id = ?2"
   ).bind(at, threadId).run();
   return true;
+}
+
+/** The complaints and takedown log, and the monthly return built from it.
+    The Self-Attestation commits us to reporting to CCBill by the second Monday
+    of each month even when nothing happened, so a nil return has to be as easy
+    to produce as a populated one. */
+async function adminIncidents(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+
+  const url = new URL(request.url);
+  // Default to last month: the report is filed early in the month for the one before.
+  const now = new Date();
+  const prev = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const month = /^\d{4}-\d{2}$/.test(url.searchParams.get('month') || '')
+    ? url.searchParams.get('month')
+    : prev.toISOString().slice(0, 7);
+
+  const rows = (await env.DB.prepare(
+    `SELECT * FROM incidents WHERE substr(occurred_on, 1, 7) = ?1 ORDER BY occurred_on`
+  ).bind(month).all()).results || [];
+
+  const complaints = rows.filter(r => r.kind === 'complaint').length;
+  const violations = rows.filter(r => r.kind === 'violation').length;
+  const byKind = {};
+  rows.forEach(r => { byKind[r.kind] = (byKind[r.kind] || 0) + 1; });
+
+  return json({
+    month,
+    report: {
+      urls: [...new Set(rows.map(r => r.url).filter(Boolean))],
+      violations,
+      complaints,
+      types: byKind,
+      actions: rows.map(r => r.action).filter(Boolean)
+    },
+    incidents: rows,
+    // Second Monday of the month following the one reported on.
+    due: secondMonday(month)
+  });
+}
+
+function secondMonday(month) {
+  const [y, m] = month.split('-').map(Number);
+  const d = new Date(Date.UTC(y, m, 1));                 // first of the NEXT month
+  let mondays = 0;
+  while (true) {
+    if (d.getUTCDay() === 1 && ++mondays === 2) break;
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return d.toISOString().slice(0, 10);
+}
+
+async function adminAddIncident(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const b = await request.json().catch(() => ({}));
+
+  const on = /^\d{4}-\d{2}-\d{2}$/.test(b.occurred_on || '') ? b.occurred_on : nowISO().slice(0, 10);
+  const kinds = ['complaint', 'takedown_request', 'appeal', 'violation', 'other'];
+  const kind = kinds.includes(b.kind) ? b.kind : 'other';
+  const clip = (v, n) => (v == null ? null : String(v).slice(0, n));
+
+  await env.DB.prepare(
+    `INSERT INTO incidents (id, occurred_on, url, kind, source, detail, action, resolved_on, created_at)
+     VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)`
+  ).bind(crypto.randomUUID(), on, clip(b.url, 300), kind, clip(b.source, 60),
+         clip(b.detail, 2000), clip(b.action, 2000),
+         /^\d{4}-\d{2}-\d{2}$/.test(b.resolved_on || '') ? b.resolved_on : null,
+         nowISO()).run();
+
+  return json({ ok: true });
 }
 
 /** Create or update a creator profile, and link the account they log in with. */

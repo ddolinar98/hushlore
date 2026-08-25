@@ -97,6 +97,36 @@
     .gate h1 { font-family:var(--serif); font-size:26px; color:var(--cream); margin-bottom:8px; }
     .gate p { font-family:var(--sans); font-size:14px; color:#a98ea3; line-height:1.6; }
     .gate a { color:var(--gold); }
+
+    /* Complaints and takedowns, and the return owed to CCBill each month. */
+    .inc { background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
+      padding:20px 22px; margin-bottom:18px; }
+    .inc-head { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+    .inc-head h2 { font-family:var(--serif); font-weight:500; font-size:20px; color:var(--cream); }
+    .inc-due { font-family:var(--sans); font-size:12.5px; color:#a98ea3; }
+    .inc-due b { color:var(--gold-bright); }
+    .inc-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin-bottom:14px; }
+    .inc-stat { background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .inc-stat b { display:block; font-family:var(--sans); font-size:22px; color:var(--cream);
+      font-variant-numeric:lining-nums tabular-nums; }
+    .inc-stat span { font-family:var(--sans); font-size:11.5px; letter-spacing:.06em;
+      text-transform:uppercase; color:var(--muted); }
+    .inc-report { width:100%; box-sizing:border-box; background:var(--bg-elevated);
+      border:1px solid var(--border); border-radius:10px; padding:14px; color:#cbb4c5;
+      font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; line-height:1.6;
+      white-space:pre-wrap; min-height:120px; }
+    .inc-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:12px 0; }
+    .inc-row input, .inc-row select, .inc-row textarea { background:var(--bg-elevated);
+      border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--cream);
+      font-family:var(--sans); font-size:13.5px; }
+    .inc-row textarea { flex:1 1 100%; min-height:56px; resize:vertical; }
+    .inc-add { background:var(--gold); border:none; border-radius:8px; padding:10px 16px;
+      color:#fff; font-family:var(--sans); font-size:13.5px; font-weight:600; cursor:pointer; }
+    .inc-log { margin-top:8px; }
+    .inc-item { border-top:1px solid var(--border); padding:10px 0; font-family:var(--sans);
+      font-size:13px; color:#c1a7b8; line-height:1.55; }
+    .inc-item b { color:var(--cream); }
+    .inc-none { font-family:var(--sans); font-size:13px; color:var(--muted); padding:10px 0; }
   </style>
 </head>
 <body>
@@ -116,6 +146,41 @@
   </div>
 
   <div id="orders"></div>
+
+
+  <div class="inc" id="incidents">
+    <div class="inc-head">
+      <h2>Complaints &amp; takedowns</h2>
+      <input type="month" id="incMonth" />
+      <span class="inc-due" id="incDue"></span>
+    </div>
+
+    <div class="inc-grid" id="incStats"></div>
+
+    <textarea class="inc-report" id="incReport" readonly></textarea>
+    <div class="inc-row">
+      <button class="inc-add" id="incCopy" type="button">Copy report</button>
+      <span class="inc-due">Send to CCBill by the date above, even when it is nil.</span>
+    </div>
+
+    <div class="inc-row">
+      <input type="date" id="incDate" />
+      <select id="incKind">
+        <option value="complaint">Complaint</option>
+        <option value="takedown_request">Takedown request</option>
+        <option value="appeal">Appeal</option>
+        <option value="violation">Violation</option>
+        <option value="other">Other</option>
+      </select>
+      <input id="incSource" placeholder="Source (customer, performer, public…)" style="flex:1 1 200px" />
+      <input id="incUrl" placeholder="URL (optional)" style="flex:1 1 220px" />
+      <textarea id="incDetail" placeholder="What was reported"></textarea>
+      <textarea id="incAction" placeholder="What was done about it"></textarea>
+      <button class="inc-add" id="incSave" type="button">Record it</button>
+    </div>
+
+    <div class="inc-log" id="incLog"></div>
+  </div>
 
   <div class="ad-wrap">
     <div class="ad-list" id="list"></div>
@@ -137,6 +202,85 @@
   function when(iso){ if(!iso) return '—'; var d=new Date(iso); return d.toLocaleDateString()+' '+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
 
   var state = { threads: [], creators: [], active: null };
+
+
+  /* ── complaints, takedowns, and the monthly return ─────────────────
+     CCBill is owed a report by the second Monday of each month whether or not
+     anything happened, so the nil case has to be one click too. */
+  function loadIncidents() {
+    var m = $('incMonth').value;
+    api('/api/admin/incidents' + (m ? '?month=' + m : '')).then(function (r) {
+      if (!r.ok) return;
+      var d = r.d;
+      if (!$('incMonth').value) $('incMonth').value = d.month;
+      $('incDue').innerHTML = 'Due to CCBill by <b>' + esc(d.due) + '</b>';
+
+      var rep = d.report;
+      $('incStats').innerHTML =
+        stat(rep.violations, 'Violations') +
+        stat(rep.complaints, 'Complaints') +
+        stat(d.incidents.length, 'Entries') +
+        stat(rep.urls.length, 'URLs affected');
+
+      var lines = ['Hushlore - hushlorewhisper.com', 'Content report for ' + d.month, ''];
+      if (!d.incidents.length) {
+        lines.push('No violations, complaints or takedown requests were received this month.');
+        lines.push('No content was removed.');
+      } else {
+        lines.push('URLs with content violations: ' + (rep.urls.length ? rep.urls.join(', ') : 'none'));
+        lines.push('Number of violations: ' + rep.violations);
+        lines.push('Complaints received: ' + rep.complaints);
+        lines.push('Types: ' + Object.keys(rep.types).map(function (k) {
+          return k.replace(/_/g, ' ') + ' x' + rep.types[k]; }).join(', '));
+        lines.push('');
+        lines.push('Actions taken:');
+        d.incidents.forEach(function (i) {
+          lines.push('  ' + i.occurred_on + '  [' + i.kind.replace(/_/g, ' ') + ']  ' +
+                     (i.action || 'no action recorded'));
+        });
+      }
+      $('incReport').value = lines.join('\n');
+
+      $('incLog').innerHTML = d.incidents.length
+        ? d.incidents.map(function (i) {
+            return '<div class="inc-item"><b>' + esc(i.occurred_on) + '</b> &middot; ' +
+              esc(i.kind.replace(/_/g, ' ')) + (i.source ? ' &middot; ' + esc(i.source) : '') +
+              (i.url ? '<br />' + esc(i.url) : '') +
+              (i.detail ? '<br />' + esc(i.detail) : '') +
+              (i.action ? '<br /><b>Action:</b> ' + esc(i.action) : '') +
+              (i.resolved_on ? '<br />Resolved ' + esc(i.resolved_on) : '') + '</div>';
+          }).join('')
+        : '<div class="inc-none">Nothing recorded for this month.</div>';
+    });
+  }
+  function stat(n, label) {
+    return '<div class="inc-stat"><b>' + n + '</b><span>' + label + '</span></div>';
+  }
+
+  $('incMonth').addEventListener('change', loadIncidents);
+  $('incCopy').addEventListener('click', function () {
+    $('incReport').select();
+    try { document.execCommand('copy'); this.textContent = 'Copied'; } catch (_) {}
+    var b = this; setTimeout(function () { b.textContent = 'Copy report'; }, 1500);
+  });
+  $('incSave').addEventListener('click', function () {
+    var body = {
+      occurred_on: $('incDate').value || undefined,
+      kind: $('incKind').value,
+      source: $('incSource').value,
+      url: $('incUrl').value,
+      detail: $('incDetail').value,
+      action: $('incAction').value
+    };
+    if (!body.detail) { alert('Say what was reported.'); return; }
+    api('/api/admin/incident', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body) }).then(function (r) {
+        if (!r.ok) { alert('Could not save that.'); return; }
+        ['incSource','incUrl','incDetail','incAction'].forEach(function (id) { $(id).value = ''; });
+        loadIncidents();
+      });
+  });
+  loadIncidents();
 
   api('/api/admin/overview').then(function (r) {
     if (!r.ok) {
