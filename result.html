@@ -27,17 +27,6 @@
 </head>
 <body>
 
-  <!--
-    LIMITED OFFER countdown bar.
-    Persistent via localStorage so it doesn't reset on every page load
-    (resetting countdowns are prohibited under EU UCPD Art. 6).
-    Default duration: 10 minutes.
-  -->
-  <div class="offer-countdown" id="countdownBar">
-    <span class="offer-countdown-text">Limited offer!</span>
-    <span class="offer-countdown-time" id="countdownTime">10:00</span>
-    <a href="#pricing" class="offer-countdown-cta">Start now</a>
-  </div>
 
   <main>
 
@@ -45,6 +34,7 @@
     <section class="brand-mark">
       <h1 class="brand-mark-name">Hush<span class="accent">lore</span></h1>
       <span class="brand-mark-tagline">Audio Romance</span>
+      <p class="brand-signin">Already a member? <a href="login.html?next=library.html">Sign in</a></p>
     </section>
 
     <!-- Shown when the library sent someone here because their membership lapsed -->
@@ -180,25 +170,7 @@
       <h2>Choose your <span class="italic">membership</span></h2>
 
       <!-- Social proof live counter -->
-      <div class="social-proof-live">
-        <span class="live-dot"></span>
-        <span id="buyersToday">47 people</span> purchased in the last 24 hours
-      </div>
-
-      <!--
-        PLACEHOLDER pricing. Strikethrough "was" prices must be REAL prices
-        you've actually charged before, or it's a fictitious price reduction
-        (prohibited under EU UCPD and FTC §5). For beta, consider framing
-        as "Founding member price" without the strikethrough.
-      -->
-      <div class="pricing-tier" data-tier="1m" data-price="21.00">
-        <div class="pricing-radio"></div>
-        <div class="pricing-tier-mid">
-          <div class="pricing-tier-title">1 - Month Membership</div>
-          <div class="pricing-tier-prices">
-            <span class="pricing-tier-was">$39.99</span>
-            <span class="pricing-tier-now">$21.00</span>
-          </div>
+      
         </div>
         <div class="pricing-tier-right">
           <div class="pricing-tier-perday">
@@ -453,7 +425,8 @@
       <div class="footer-links">
         <a href="privacy.html">Privacy</a>
         <a href="terms.html">Terms</a>
-        <a href="compliance.html">Content Policy</a>
+        <a href="compliance.html">Complaints &amp; Content Removal</a>
+        <a rel="nofollow" target="_blank" href="https://www.ccbillcomplaintform.com/ccbill/form/CCBillContentRemovalRequest1/formperma/sBK2jfIoZWAFw2hRRt5Rv2PQncscFzpvOH6bPcwopas">Report to CCBill</a>
         <a href="contact.html">Contact</a>
       </div>
     </div>
@@ -627,14 +600,6 @@
       });
     })();
 
-    // Social proof — consistent per day, 31–72 range
-    (function() {
-      const d = new Date();
-      const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
-      const n = 31 + (seed % 42);
-      document.getElementById('buyersToday').textContent = n + ' people';
-    })();
-
     /* ====================================
        Pricing tier selection
        ==================================== */
@@ -697,32 +662,6 @@
           go.disabled = false;
         });
     });
-
-    /* ====================================
-       Persistent countdown (localStorage-backed)
-       Does NOT reset on reload — to stay within EU UCPD compliance,
-       a "limited offer" must be genuinely time-limited per user.
-       ==================================== */
-    (function () {
-      const DURATION_SEC = 10 * 60; // 10 minutes
-      const KEY = 'hushlore_offer_started';
-      let startTime = parseInt(localStorage.getItem(KEY), 10);
-      if (!startTime || isNaN(startTime)) {
-        startTime = Date.now();
-        localStorage.setItem(KEY, String(startTime));
-      }
-      const el = document.getElementById('countdownTime');
-      function tick() {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        const remaining = Math.max(0, DURATION_SEC - elapsed);
-        const m = Math.floor(remaining / 60);
-        const s = remaining % 60;
-        el.textContent =
-          String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-        if (remaining > 0) setTimeout(tick, 1000);
-      }
-      tick();
-    })();
 
     /* ====================================
        Continue → checkout (gated by T&Cs checkbox)
