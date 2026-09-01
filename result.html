@@ -482,30 +482,12 @@
 
     const key = getOutcome();
     try { localStorage.setItem('hushlore_outcome', key); } catch (_) {}
-
-    /* ====================================
-       Analytics — Supabase (same table as quiz2)
-       ==================================== */
-    const HL_SB_URL = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
-    const HL_SB_KEY = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
-    function hlSid() {
       try {
         let s = sessionStorage.getItem('hl_sid');
         if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hl_sid', s); }
         return s;
       } catch (e) { return 'anon-' + Date.now().toString(36); }
     }
-    function hlTrack(event, extras) {
-      let branch = null;
-      try { branch = localStorage.getItem('hl_quiz2_branch'); } catch (e) {}
-      const payload = Object.assign({ session_id: hlSid(), event: event, branch: branch }, extras || {});
-      fetch(HL_SB_URL, {
-        method: 'POST', keepalive: true,
-        headers: { 'apikey': HL_SB_KEY, 'Authorization': 'Bearer ' + HL_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify(payload)
-      }).catch(function(){});
-    }
-    hlTrack('result_view', { answer_text: key });
 
     // Show match reveal section
     const outcome = outcomes[key];
@@ -584,8 +566,7 @@
 
       btn.addEventListener('click', function () {
         if (!audio.paused) { audio.pause(); return; }
-        audio.play().then(function () { hlTrack('taste_play', { answer_text: pick[0] }); })
-                    .catch(function () {});
+        audio.play().catch(function () {});
       });
       audio.addEventListener('play',  function () { icon.textContent = '❚❚'; btn.classList.add('playing'); });
       audio.addEventListener('pause', function () { icon.textContent = '▶';  btn.classList.remove('playing'); });
@@ -596,7 +577,6 @@
         icon.textContent = '▶';
         document.getElementById('tasteLabel').textContent = 'Play it again';
         wrap.classList.add('done');
-        hlTrack('taste_finished', { answer_text: pick[0] });
       });
     })();
 
@@ -610,7 +590,6 @@
         document.querySelectorAll('.pricing-tier').forEach(t => t.classList.remove('selected'));
         tier.classList.add('selected');
         try { localStorage.setItem('hl_plan_price', tier.dataset.price); } catch (_) {}
-        hlTrack('plan_select', { answer_text: tier.dataset.price, question_id: key });
       });
     });
 
@@ -626,7 +605,6 @@
     continueBtn.addEventListener('click', () => {
       const sel = document.querySelector('.pricing-tier.selected');
       if (sel) { try { localStorage.setItem('hl_plan_price', sel.dataset.price); } catch (_) {} }
-      hlTrack('checkout_click', { answer_text: sel ? sel.dataset.price : null, question_id: key });
       continueBtn.style.display = 'none';
       waitlistForm.classList.add('open');
       document.getElementById('waitlistEmail').focus();
@@ -655,7 +633,6 @@
           if (!d.ok) throw new Error(d.error || 'failed');
           waitlistForm.classList.remove('open');
           document.getElementById('waitlistDone').classList.add('on');
-          hlTrack('waitlist_join', { answer_text: sel ? sel.dataset.price : null, question_id: key });
         })
         .catch(() => {
           waitlistErr.textContent = 'That did not go through. Check the address and try again.';

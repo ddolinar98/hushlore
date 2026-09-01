@@ -480,7 +480,6 @@
       resultsEmpty.classList.toggle('hidden', res.length !== 0);
       resultsSection.classList.remove('hidden');
       rowsEl.classList.add('hidden');
-      hlTrack('library_search', { answer_text: q || (cat + '/' + voice) });
     }
     function clearSearch() {
       document.getElementById('searchInput').value = ''; catSel.value = ''; voiceSel.value = '';
@@ -585,7 +584,6 @@
       overlay.classList.add('open');
       audioEl.play().catch(function () {});
       pushHistory(s.id); renderRows();
-      hlTrack('story_play', { answer_text: s.id });
     }
     function closePlayer() {
       rememberNow();
@@ -691,16 +689,6 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePlayer(); });
 
     /* analytics */
-    const HL_SB_URL = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
-    const HL_SB_KEY = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
-    function hlSid() { try { let s = sessionStorage.getItem('hl_sid'); if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hl_sid', s); } return s; } catch (e) { return 'anon-' + Date.now().toString(36); } }
-    function hlTrack(event, extras) {
-      let branch = null; try { branch = localStorage.getItem('hl_quiz2_branch'); } catch (e) {}
-      fetch(HL_SB_URL, { method: 'POST', keepalive: true,
-        headers: { 'apikey': HL_SB_KEY, 'Authorization': 'Bearer ' + HL_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify(Object.assign({ session_id: hlSid(), event: event, branch: branch }, extras || {})) }).catch(function () {});
-    }
-    hlTrack('library_view', { answer_text: key });
   </script>
 
   <!-- Required on every content page: the complaints and content-removal route. -->

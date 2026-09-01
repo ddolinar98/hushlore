@@ -118,9 +118,6 @@
 
   <script>
     /* Analytics — Supabase (same table as quiz2) */
-    const HL_SB_URL = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
-    const HL_SB_KEY = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
-    function hlSid() {
       try {
         let s = sessionStorage.getItem('hl_sid');
         if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hl_sid', s); }
@@ -163,10 +160,6 @@
             libBtn.href = 'login.html?new=1&next=' + encodeURIComponent(afterAuth);
           });
       }
-      fetch(HL_SB_URL, {
-        method: 'POST', keepalive: true,
-        headers: { 'apikey': HL_SB_KEY, 'Authorization': 'Bearer ' + HL_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ session_id: hlSid(), event: 'purchase_complete', branch: branch, answer_text: match })
       }).catch(function(){});
     })();
   </script>

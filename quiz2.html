@@ -840,11 +840,6 @@ var TESTIMONIALS = [
   { text: "I always thought I was weird for wanting more. This made me feel like I'm not broken — I'm just specific. It's the most 'me' thing on my phone and nobody knows it's there.", author: "Charlotte R." }
 ];
 
-/* ════════════════════════════════════════
-   ANALYTICS — Supabase
-════════════════════════════════════════ */
-var SB_URL  = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
-var SB_KEY  = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
 var SESSION_ID = (function() {
   try {
     var s = sessionStorage.getItem('hl_sid');
@@ -861,14 +856,10 @@ fetch('https://ipapi.co/json/')
   .catch(function() {})
   .then(function() { render(); track('quiz_start', { step: 0 }); });
 
-function track(event, extras) {
-  var payload = Object.assign({ session_id: SESSION_ID, event: event, branch: branch || null, country: USER_COUNTRY }, extras || {});
-  fetch(SB_URL, {
-    method: 'POST',
-    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-    body: JSON.stringify(payload)
-  }).catch(function() {});
-}
+// The Supabase project this reported to was deleted, so every call 404'd on a
+// hostname that no longer resolves. Kept as a no-op because the quiz calls it
+// from a dozen places, and render() hangs off the same promise chain.
+function track(event, extras) {}
 
 /* ════════════════════════════════════════
    STEP LOGIC
