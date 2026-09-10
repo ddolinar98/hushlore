@@ -95,6 +95,8 @@ export default {
       if (p === '/api/admin/block')        return requirePost(request, () => adminBlock(request, env));
       if (p === '/api/admin/incidents')    return adminIncidents(request, env);
       if (p === '/api/admin/incident')     return requirePost(request, () => adminAddIncident(request, env));
+      if (p === '/api/admin/cancellations') return adminCancellations(request, env);
+      if (p === '/api/admin/cancel-done')   return requirePost(request, () => adminCancelDone(request, env));
     } catch (e) {
       return json({ error: 'server_error' }, 500);
     }
@@ -229,8 +231,12 @@ async function subCancel(request, env) {
   if (sub.cancelled_at) return json({ ok: true, sub: subShape(sub) });
 
   const at = nowISO();
-  await env.DB.prepare('UPDATE subscriptions SET cancelled_at = ?1 WHERE id = ?2')
-    .bind(at, sub.id).run();
+  // processor_cancelled_at is cleared too: a customer who cancels, resumes and
+  // cancels again needs stopping at CCBill a second time, and if the old mark
+  // survived, the second cancellation would show as already handled.
+  await env.DB.prepare(
+    'UPDATE subscriptions SET cancelled_at = ?1, processor_cancelled_at = NULL WHERE id = ?2'
+  ).bind(at, sub.id).run();
   return json({ ok: true, sub: subShape(Object.assign({}, sub, { cancelled_at: at })) });
 }
 
@@ -242,8 +248,9 @@ async function subResume(request, env) {
   const sub = await activeSub(env, uid);
   if (!sub) return json({ error: 'no_active_membership' }, 404);
 
-  await env.DB.prepare('UPDATE subscriptions SET cancelled_at = NULL WHERE id = ?1')
-    .bind(sub.id).run();
+  await env.DB.prepare(
+    'UPDATE subscriptions SET cancelled_at = NULL, processor_cancelled_at = NULL WHERE id = ?1'
+  ).bind(sub.id).run();
   return json({ ok: true, sub: subShape(Object.assign({}, sub, { cancelled_at: null })) });
 }
 
@@ -928,6 +935,42 @@ async function postHouseRules(env, threadId, at) {
     "UPDATE chat_threads SET last_msg_at = ?1, last_msg_from = 'admin', user_unread = user_unread + 1 WHERE id = ?2"
   ).bind(at, threadId).run();
   return true;
+}
+
+/** Cancellations still to be stopped at the processor.
+
+    Cancelling on the site records the intent; the card is only stopped when
+    someone cancels it at CCBill too. Until that call can be made from here,
+    it is a manual step - and a missed one means charging a customer who was
+    told they would not be charged, which is the fastest route to a chargeback.
+    So the outstanding ones have to be impossible to miss. */
+async function adminCancellations(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+
+  const rows = (await env.DB.prepare(
+    `SELECT s.id, s.plan, s.cancelled_at, s.expires_at, s.processor_cancelled_at, u.email
+       FROM subscriptions s JOIN users u ON u.id = s.user_id
+      WHERE s.cancelled_at IS NOT NULL
+      ORDER BY s.cancelled_at DESC
+      LIMIT 200`
+  ).all()).results || [];
+
+  return json({
+    pending: rows.filter(r => !r.processor_cancelled_at),
+    done:    rows.filter(r => r.processor_cancelled_at).slice(0, 20)
+  });
+}
+
+async function adminCancelDone(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const b = await request.json().catch(() => ({}));
+  const id = String(b.id || '');
+  if (!id) return json({ error: 'missing_id' }, 400);
+
+  await env.DB.prepare(
+    'UPDATE subscriptions SET processor_cancelled_at = ?1 WHERE id = ?2 AND cancelled_at IS NOT NULL'
+  ).bind(nowISO(), id).run();
+  return json({ ok: true });
 }
 
 /** The complaints and takedown log, and the monthly return built from it.

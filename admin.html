@@ -127,6 +127,28 @@
       font-size:13px; color:#c1a7b8; line-height:1.55; }
     .inc-item b { color:var(--cream); }
     .inc-none { font-family:var(--sans); font-size:13px; color:var(--muted); padding:10px 0; }
+
+    /* Cancellations still to be stopped at CCBill. Sits at the top and shouts
+       when there is anything outstanding: a missed one means charging a
+       customer who was told they would not be charged. */
+    .cx { border:1px solid var(--border); border-radius:14px; padding:20px 22px; margin-bottom:18px;
+      background:var(--bg-card); }
+    .cx.due { border-color:var(--gold-bright); background:linear-gradient(140deg,rgba(224,69,110,.14),var(--bg-card) 60%); }
+    .cx-head { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+    .cx-head h2 { font-family:var(--serif); font-weight:500; font-size:20px; color:var(--cream); }
+    .cx-count { font-family:var(--sans); font-size:12px; font-weight:700; letter-spacing:.06em;
+      text-transform:uppercase; border-radius:20px; padding:4px 11px; background:var(--bg-elevated);
+      color:var(--muted); border:1px solid var(--border); }
+    .cx.due .cx-count { background:var(--gold); color:#fff; border-color:var(--gold); }
+    .cx-note { font-family:var(--sans); font-size:12.5px; color:#a98ea3; line-height:1.55; margin-bottom:12px; }
+    .cx-item { display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+      border-top:1px solid var(--border); padding:12px 0; font-family:var(--sans); font-size:13.5px; color:#c1a7b8; }
+    .cx-item b { color:var(--cream); }
+    .cx-item .grow { flex:1 1 220px; }
+    .cx-done { background:var(--gold); border:none; border-radius:8px; padding:9px 14px; color:#fff;
+      font-family:var(--sans); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
+    .cx-none { font-family:var(--sans); font-size:13px; color:var(--muted); padding:8px 0; }
+    .cx-old { margin-top:14px; font-family:var(--sans); font-size:12px; color:var(--muted); }
   </style>
 </head>
 <body>
@@ -147,6 +169,20 @@
 
   <div id="orders"></div>
 
+
+
+  <div class="cx" id="cancels">
+    <div class="cx-head">
+      <h2>Cancellations to stop at CCBill</h2>
+      <span class="cx-count" id="cxCount">0</span>
+    </div>
+    <p class="cx-note">
+      Cancelling on the site records the intent. The card keeps billing until it is
+      also cancelled in the CCBill admin portal, so clear these the same day.
+    </p>
+    <div id="cxList"></div>
+    <div class="cx-old" id="cxOld"></div>
+  </div>
 
   <div class="inc" id="incidents">
     <div class="inc-head">
@@ -203,6 +239,48 @@
 
   var state = { threads: [], creators: [], active: null };
 
+
+
+  /* ── cancellations awaiting action at the processor ─────────────── */
+  function loadCancellations() {
+    api('/api/admin/cancellations').then(function (r) {
+      if (!r.ok) return;
+      var pending = r.d.pending || [], done = r.d.done || [];
+      var box = $('cancels');
+
+      $('cxCount').textContent = pending.length
+        ? pending.length + ' waiting' : 'nothing waiting';
+      box.classList.toggle('due', pending.length > 0);
+
+      $('cxList').innerHTML = pending.length
+        ? pending.map(function (c) {
+            return '<div class="cx-item">' +
+              '<span class="grow"><b>' + esc(c.email) + '</b><br />' +
+                'cancelled ' + esc(String(c.cancelled_at).slice(0, 10)) +
+                ' &middot; ' + esc(c.plan) + ' plan' +
+                ' &middot; access to ' + esc(String(c.expires_at).slice(0, 10)) + '</span>' +
+              '<button class="cx-done" data-id="' + esc(c.id) + '">Stopped at CCBill</button>' +
+            '</div>';
+          }).join('')
+        : '<div class="cx-none">Nothing waiting. Every cancellation has been stopped at CCBill.</div>';
+
+      $('cxOld').textContent = done.length
+        ? 'Last handled: ' + done.slice(0, 3).map(function (c) {
+            return c.email + ' (' + String(c.processor_cancelled_at).slice(0, 10) + ')'; }).join(', ')
+        : '';
+
+      Array.prototype.forEach.call($('cxList').querySelectorAll('.cx-done'), function (b) {
+        b.onclick = function () {
+          b.disabled = true;
+          api('/api/admin/cancel-done', { method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: b.getAttribute('data-id') }) })
+            .then(function (x) { if (x.ok) loadCancellations(); else b.disabled = false; });
+        };
+      });
+    });
+  }
+  loadCancellations();
 
   /* ── complaints, takedowns, and the monthly return ─────────────────
      CCBill is owed a report by the second Monday of each month whether or not
