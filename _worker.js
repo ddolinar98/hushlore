@@ -52,6 +52,11 @@ export default {
       if (p === '/api/sub/cancel')    return requirePost(request, () => subCancel(request, env));
       if (p === '/api/sub/resume')    return requirePost(request, () => subResume(request, env));
 
+      // ── CCBill ────────────────────────────────────────────────────
+      if (p === '/api/ccbill/checkout') return ccbillCheckout(request, env);
+      if (p === '/api/ccbill/webhook')  return ccbillWebhook(request, env);
+      if (p === '/api/admin/payments')  return adminPayments(request, env);
+
       // ── creator chat ──────────────────────────────────────────────
       if (p === '/api/chat/creators')      return chatCreators(request, env);
       if (p === '/api/chat/me')            return chatMe(request, env);
@@ -421,6 +426,290 @@ async function subscribe(request, env) {
   } catch (e) {
     return json({ error: 'bad_request' }, 400);
   }
+}
+
+/* ═══════════════════════════ CCBill billing ═══════════════════════════
+   Memberships are billed by CCBill (client account 955601, subaccount 0000).
+   The buyer leaves the site for a CCBill-hosted form, pays there, and CCBill
+   tells us what happened twice over: the browser comes back to /thanks, and a
+   server-to-server postback hits /api/ccbill/webhook. Only the postback is
+   trusted - the redirect is just something for the customer to look at.
+─────────────────────────────────────────────────────────────────────── */
+
+const CCBILL = {
+  account:  '955601',
+  subacc:   '0000',
+  flexId:   'c27de3ed-0b35-4df0-b599-8b757e96f226',
+  currency: '840'          // USD, ISO 4217 numeric - CCBill wants the number
+};
+
+/* The three memberships, exactly as they were set up in Pricing Admin. The
+   period is in days and must match the pricing option there to the day, or
+   CCBill rejects the form. */
+const CCBILL_PLANS = {
+  '1m': { priceId: '2666',  months: 1, price: '21.00', days: '30'  },
+  '3m': { priceId: '575',   months: 3, price: '32.99', days: '90'  },
+  '6m': { priceId: '12839', months: 6, price: '49.99', days: '180' }
+};
+
+const CCBILL_REBILLS = '99';   // keep renewing; CCBill treats 99 as open-ended
+
+/* MD5, because that is what CCBill signs its forms with and Web Crypto in
+   Workers does not offer it. Not used for anything security-critical on our
+   side - it only proves to CCBill that the price in the link is one we set. */
+function md5(input) {
+  function rl(n, c) { return (n << c) | (n >>> (32 - c)); }
+  function au(x, y) {
+    const l = (x & 0xFFFF) + (y & 0xFFFF);
+    return (((x >> 16) + (y >> 16) + (l >> 16)) << 16) | (l & 0xFFFF);
+  }
+  function cmn(q, a, b, x, s, t) { return au(rl(au(au(a, q), au(x, t)), s), b); }
+  function ff(a,b,c,d,x,s,t){ return cmn((b & c) | (~b & d), a, b, x, s, t); }
+  function gg(a,b,c,d,x,s,t){ return cmn((b & d) | (c & ~d), a, b, x, s, t); }
+  function hh(a,b,c,d,x,s,t){ return cmn(b ^ c ^ d, a, b, x, s, t); }
+  function ii(a,b,c,d,x,s,t){ return cmn(c ^ (b | ~d), a, b, x, s, t); }
+
+  const bytes = new TextEncoder().encode(input);
+  const n = ((bytes.length + 8) >> 6) + 1, x = new Array(n * 16).fill(0);
+  for (let i = 0; i < bytes.length; i++) x[i >> 2] |= bytes[i] << ((i % 4) * 8);
+  x[bytes.length >> 2] |= 0x80 << ((bytes.length % 4) * 8);
+  x[n * 16 - 2] = bytes.length * 8;
+
+  let a = 1732584193, b = -271733879, c = -1732584194, d = 271733878;
+  for (let i = 0; i < x.length; i += 16) {
+    const oa = a, ob = b, oc = c, od = d;
+    a=ff(a,b,c,d,x[i],7,-680876936);      d=ff(d,a,b,c,x[i+1],12,-389564586);
+    c=ff(c,d,a,b,x[i+2],17,606105819);    b=ff(b,c,d,a,x[i+3],22,-1044525330);
+    a=ff(a,b,c,d,x[i+4],7,-176418897);    d=ff(d,a,b,c,x[i+5],12,1200080426);
+    c=ff(c,d,a,b,x[i+6],17,-1473231341);  b=ff(b,c,d,a,x[i+7],22,-45705983);
+    a=ff(a,b,c,d,x[i+8],7,1770035416);    d=ff(d,a,b,c,x[i+9],12,-1958414417);
+    c=ff(c,d,a,b,x[i+10],17,-42063);      b=ff(b,c,d,a,x[i+11],22,-1990404162);
+    a=ff(a,b,c,d,x[i+12],7,1804603682);   d=ff(d,a,b,c,x[i+13],12,-40341101);
+    c=ff(c,d,a,b,x[i+14],17,-1502002290); b=ff(b,c,d,a,x[i+15],22,1236535329);
+    a=gg(a,b,c,d,x[i+1],5,-165796510);    d=gg(d,a,b,c,x[i+6],9,-1069501632);
+    c=gg(c,d,a,b,x[i+11],14,643717713);   b=gg(b,c,d,a,x[i],20,-373897302);
+    a=gg(a,b,c,d,x[i+5],5,-701558691);    d=gg(d,a,b,c,x[i+10],9,38016083);
+    c=gg(c,d,a,b,x[i+15],14,-660478335);  b=gg(b,c,d,a,x[i+4],20,-405537848);
+    a=gg(a,b,c,d,x[i+9],5,568446438);     d=gg(d,a,b,c,x[i+14],9,-1019803690);
+    c=gg(c,d,a,b,x[i+3],14,-187363961);   b=gg(b,c,d,a,x[i+8],20,1163531501);
+    a=gg(a,b,c,d,x[i+13],5,-1444681467);  d=gg(d,a,b,c,x[i+2],9,-51403784);
+    c=gg(c,d,a,b,x[i+7],14,1735328473);   b=gg(b,c,d,a,x[i+12],20,-1926607734);
+    a=hh(a,b,c,d,x[i+5],4,-378558);       d=hh(d,a,b,c,x[i+8],11,-2022574463);
+    c=hh(c,d,a,b,x[i+11],16,1839030562);  b=hh(b,c,d,a,x[i+14],23,-35309556);
+    a=hh(a,b,c,d,x[i+1],4,-1530992060);   d=hh(d,a,b,c,x[i+4],11,1272893353);
+    c=hh(c,d,a,b,x[i+7],16,-155497632);   b=hh(b,c,d,a,x[i+10],23,-1094730640);
+    a=hh(a,b,c,d,x[i+13],4,681279174);    d=hh(d,a,b,c,x[i],11,-358537222);
+    c=hh(c,d,a,b,x[i+3],16,-722521979);   b=hh(b,c,d,a,x[i+6],23,76029189);
+    a=hh(a,b,c,d,x[i+9],4,-640364487);    d=hh(d,a,b,c,x[i+12],11,-421815835);
+    c=hh(c,d,a,b,x[i+15],16,530742520);   b=hh(b,c,d,a,x[i+2],23,-995338651);
+    a=ii(a,b,c,d,x[i],6,-198630844);      d=ii(d,a,b,c,x[i+7],10,1126891415);
+    c=ii(c,d,a,b,x[i+14],15,-1416354905); b=ii(b,c,d,a,x[i+5],21,-57434055);
+    a=ii(a,b,c,d,x[i+12],6,1700485571);   d=ii(d,a,b,c,x[i+3],10,-1894986606);
+    c=ii(c,d,a,b,x[i+10],15,-1051523);    b=ii(b,c,d,a,x[i+1],21,-2054922799);
+    a=ii(a,b,c,d,x[i+8],6,1873313359);    d=ii(d,a,b,c,x[i+15],10,-30611744);
+    c=ii(c,d,a,b,x[i+6],15,-1560198380);  b=ii(b,c,d,a,x[i+13],21,1309151649);
+    a=ii(a,b,c,d,x[i+4],6,-145523070);    d=ii(d,a,b,c,x[i+11],10,-1120210379);
+    c=ii(c,d,a,b,x[i+2],15,718787259);    b=ii(b,c,d,a,x[i+9],21,-343485551);
+    a = au(a, oa); b = au(b, ob); c = au(c, oc); d = au(d, od);
+  }
+  const hex = '0123456789abcdef';
+  return [a, b, c, d].map(function (w) {
+    let s = '';
+    for (let i = 0; i < 4; i++) {
+      const byte = (w >>> (i * 8)) & 255;
+      s += hex[(byte >>> 4) & 15] + hex[byte & 15];
+    }
+    return s;
+  }).join('');
+}
+
+/** Send the buyer to CCBill's form. Requires an account, because the postback
+    has to land on a user - a payment with nobody to give access to is a refund
+    waiting to happen. */
+async function ccbillCheckout(request, env) {
+  const url = new URL(request.url);
+  const plan = String(url.searchParams.get('plan') || '');
+  const p = CCBILL_PLANS[plan];
+  if (!p) return json({ error: 'unknown_plan' }, 400);
+
+  const uid = await readSession(env, request);
+  if (!uid) {
+    return Response.redirect(new URL('/account?buy=' + plan, url).toString(), 302);
+  }
+  if (!env.CCBILL_SALT) return json({ error: 'billing_not_configured' }, 503);
+
+  const user = await env.DB.prepare('SELECT email FROM users WHERE id = ?1').bind(uid).first();
+
+  // CCBill signs the price so the link cannot be edited into a cheaper one.
+  // The order of the fields in the digest is fixed by CCBill and is not ours.
+  const digest = md5(
+    p.price + p.days + p.price + p.days + CCBILL_REBILLS + CCBILL.currency + env.CCBILL_SALT
+  );
+
+  const q = new URLSearchParams({
+    clientAccnum:     CCBILL.account,
+    clientSubacc:     CCBILL.subacc,
+    initialPrice:     p.price,
+    initialPeriod:    p.days,
+    recurringPrice:   p.price,
+    recurringPeriod:  p.days,
+    numRebills:       CCBILL_REBILLS,
+    currencyCode:     CCBILL.currency,
+    formDigest:       digest,
+    // Passthrough. CCBill hands these back untouched on every postback for the
+    // life of the subscription, which is how a renewal two years from now still
+    // knows whose membership it is.
+    'x_uid':  uid,
+    'x_plan': plan
+  });
+  if (user && user.email) q.set('email', user.email);
+
+  return Response.redirect(
+    'https://api.ccbill.com/wap-frontflex/flexforms/' + CCBILL.flexId + '?' + q.toString(), 302
+  );
+}
+
+/** Read a postback whichever way CCBill sends it. */
+async function ccbillParams(request) {
+  const out = {};
+  new URL(request.url).searchParams.forEach(function (v, k) { out[k] = v; });
+  if (request.method === 'POST') {
+    const body = await request.text();
+    new URLSearchParams(body).forEach(function (v, k) { out[k] = v; });
+  }
+  return out;
+}
+
+/** The only thing CCBill says that we act on.
+
+    Authentication is a secret in the URL, agreed with CCBill when the webhook
+    was registered. CCBill does not sign postbacks, so the alternative would be
+    trusting an IP range - and a payment endpoint that anyone can POST to is how
+    free memberships get handed out. */
+async function ccbillWebhook(request, env) {
+  const url = new URL(request.url);
+  if (!env.CCBILL_WEBHOOK_KEY ||
+      !safeEqual(url.searchParams.get('key') || '', env.CCBILL_WEBHOOK_KEY)) {
+    return new Response('forbidden', { status: 403 });
+  }
+
+  const d = await ccbillParams(request);
+  const event = d.eventType || d.eventGroupType || 'unknown';
+  const subId = d.subscriptionId || d.subscription_id || null;
+  const txn   = d.transactionId || d.newTransactionId || d.transaction_id || null;
+  const uid   = d['x_uid'] || d['X-uid'] || null;
+  const plan  = d['x_plan'] || d['X-plan'] || null;
+  const at    = nowISO();
+
+  // Written before anything is granted. CCBill retries a postback it thinks
+  // failed, and the unique index is what stops a retry paying out twice.
+  try {
+    await env.DB.prepare(
+      `INSERT INTO payment_events
+         (id, event, processor, processor_ref, transaction_id, user_id, email, plan, amount, currency, raw, created_at)
+       VALUES (?1,?2,'ccbill',?3,?4,?5,?6,?7,?8,?9,?10,?11)`
+    ).bind(
+      crypto.randomUUID(), event, subId, txn, uid, normEmail(d.email) || null, plan,
+      d.billedInitialPrice || d.billedRecurringPrice || d.accountingAmount || null,
+      d.billedCurrencyCode || d.currencyCode || null,
+      JSON.stringify(d), at
+    ).run();
+  } catch (e) {
+    // Already seen. Say yes so CCBill stops retrying.
+    return json({ ok: true, duplicate: true });
+  }
+
+  const note = await ccbillApply(env, event, { subId, uid, plan, email: normEmail(d.email), at });
+  await env.DB.prepare(
+    'UPDATE payment_events SET handled = ?1 WHERE processor_ref IS ?2 AND transaction_id IS ?3 AND event = ?4'
+  ).bind(note, subId, txn, event).run();
+
+  return json({ ok: true, handled: note });
+}
+
+/** What each CCBill event does to the membership. Anything not listed is logged
+    and ignored on purpose - CCBill sends a lot that does not change access. */
+async function ccbillApply(env, event, ctx) {
+  const bySubId = ctx.subId
+    ? await env.DB.prepare(
+        'SELECT id, user_id, plan, expires_at FROM subscriptions WHERE processor_sub_id = ?1 ORDER BY created_at DESC LIMIT 1'
+      ).bind(ctx.subId).first()
+    : null;
+
+  switch (event) {
+    case 'NewSaleSuccess': {
+      if (!ctx.uid) return 'no user id on the postback - grant by hand';
+      const p = CCBILL_PLANS[ctx.plan];
+      if (!p) return 'unknown plan "' + ctx.plan + '" - grant by hand';
+      if (bySubId) return 'already granted';
+      const expires = await grantAccess(env, ctx.uid, ctx.plan, p.months, 'ccbill', ctx.subId);
+      if (ctx.subId) {
+        await env.DB.prepare(
+          `UPDATE subscriptions SET processor_sub_id = ?1
+            WHERE user_id = ?2 AND processor_sub_id IS NULL AND expires_at = ?3`
+        ).bind(ctx.subId, ctx.uid, expires).run();
+      }
+      return 'granted ' + ctx.plan + ' to ' + expires;
+    }
+
+    case 'RenewalSuccess': {
+      const uid = (bySubId && bySubId.user_id) || ctx.uid;
+      if (!uid) return 'no membership matches this subscription id';
+      const plan = (bySubId && bySubId.plan) || ctx.plan;
+      const p = CCBILL_PLANS[plan];
+      if (!p) return 'unknown plan on renewal - extend by hand';
+      const expires = await grantAccess(env, uid, plan, p.months, 'ccbill-renewal', ctx.subId);
+      if (ctx.subId) {
+        await env.DB.prepare(
+          `UPDATE subscriptions SET processor_sub_id = ?1
+            WHERE user_id = ?2 AND processor_sub_id IS NULL AND expires_at = ?3`
+        ).bind(ctx.subId, uid, expires).run();
+      }
+      return 'renewed to ' + expires;
+    }
+
+    // Stopped at CCBill's end - by us, by them, or by the customer through
+    // CCBill's own support. Access runs to the date already paid for, and the
+    // manual queue is marked done because the processor is where it happened.
+    case 'Cancellation': {
+      if (!bySubId) return 'no membership matches this subscription id';
+      await env.DB.prepare(
+        'UPDATE subscriptions SET cancelled_at = COALESCE(cancelled_at, ?1), processor_cancelled_at = ?1 WHERE id = ?2'
+      ).bind(ctx.at, bySubId.id).run();
+      return 'cancelled, access runs to ' + bySubId.expires_at;
+    }
+
+    case 'Expiration':
+      if (!bySubId) return 'no membership matches this subscription id';
+      await env.DB.prepare(
+        "UPDATE subscriptions SET status = 'expired' WHERE id = ?1"
+      ).bind(bySubId.id).run();
+      return 'expired';
+
+    // Money went back. Access goes with it, the same minute - a refunded
+    // customer who can still listen is a customer who refunds again.
+    case 'Refund':
+    case 'Chargeback':
+    case 'Void':
+      if (!bySubId) return 'no membership matches this subscription id';
+      await env.DB.prepare(
+        "UPDATE subscriptions SET status = 'refunded', expires_at = ?1, cancelled_at = COALESCE(cancelled_at, ?1), processor_cancelled_at = ?1 WHERE id = ?2"
+      ).bind(ctx.at, bySubId.id).run();
+      return 'access revoked (' + event + ')';
+
+    default:
+      return 'logged only';
+  }
+}
+
+/** The last ten postbacks, for the admin console. */
+async function adminPayments(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const r = await env.DB.prepare(
+    `SELECT event, processor_ref, user_id, email, plan, amount, currency, handled, created_at
+       FROM payment_events ORDER BY created_at DESC LIMIT 25`
+  ).all();
+  return json({ events: r.results || [] });
 }
 
 /* ═══════════════════════════ creator chat ═══════════════════════════
