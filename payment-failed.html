@@ -30,7 +30,7 @@
   <div class="rt">
     <a class="rt-logo" href="/">Hushlore</a>
 
-    <h1>That didn't <span class="italic">go through</span></h1>
+    <h1 id="rtTitle">That didn't <span class="italic">go through</span></h1>
     <p>Nothing was charged. Your card was declined, or the payment was cancelled
        before it finished.</p>
 
@@ -46,12 +46,41 @@
       </ul>
     </div>
 
-    <a class="rt-btn" href="/result#pricing">Try again</a>
+    <a class="rt-btn" id="rtBtn" href="/result#pricing">Try again</a>
 
     <p class="rt-small">
       Still stuck? Write to <!--email_off--><a href="mailto:support@hushlorewhisper.com">support@hushlorewhisper.com</a><!--/email_off-->
       and tell us which card you used. We answer every message.
     </p>
   </div>
+
+  <!--
+    Both kinds of purchase come back here when they fail, because the denial
+    address is set per payment flow and not per purchase. Someone whose credit
+    purchase was declined must not be sent to buy a membership they already
+    have, so the page asks whether there is an unfinished credit order and
+    points the button back at the conversation when there is.
+  -->
+  <script>
+  (function () {
+    var id = null;
+    try { id = localStorage.getItem('hl_credit_order'); } catch (_) {}
+    if (!id) return;
+
+    fetch('/api/chat/order-status?id=' + encodeURIComponent(id), { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        // Only an order still waiting to be paid means this was the credit
+        // purchase that just failed; a paid one is left over from last time.
+        if (!d.order || d.order.status !== 'pending') return;
+        document.getElementById('rtTitle').innerHTML =
+          'Those credits <span class="italic">weren\'t bought</span>';
+        var b = document.getElementById('rtBtn');
+        b.textContent = 'Back to the conversation';
+        b.href = '/chat';
+      })
+      .catch(function () {});
+  })();
+  </script>
 </body>
 </html>
