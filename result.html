@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="styles.css?v=20260926d" />
+  <link rel="stylesheet" href="styles.css?v=20260926e" />
 
   <!-- Facebook Pixel -->
   <script>
@@ -594,7 +594,15 @@
     continueBtn.addEventListener('click', () => {
       const sel = document.querySelector('.pricing-tier.selected');
       if (!sel || !consentBox.checked) return;
-      try { localStorage.setItem('hl_plan_price', sel.dataset.price); } catch (_) {}
+      try {
+        localStorage.setItem('hl_plan_price', sel.dataset.price);
+        /* Read once by /thanks to report the sale, then deleted. Without a
+           marker that only exists after a real checkout, a reload of the
+           confirmation page would report the purchase again. */
+        localStorage.setItem('hl_pending_purchase', JSON.stringify({
+          plan: sel.dataset.tier, value: Number(sel.dataset.price)
+        }));
+      } catch (_) {}
       continueBtn.disabled = true;
       continueBtn.textContent = 'One moment…';
       location.href = '/api/ccbill/checkout?plan=' + sel.dataset.tier;

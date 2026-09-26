@@ -9,8 +9,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20260926d" />
+  <link rel="stylesheet" href="styles.css?v=20260926e" />
 
+  <!-- Facebook Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1813144372979449');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1813144372979449&ev=PageView&noscript=1"/></noscript>
   <style>
     body { background: var(--bg); }
     .rt { max-width: 620px; margin: 0 auto; padding: 90px clamp(20px, 6vw, 40px) 90px; text-align: center; }
@@ -64,8 +75,25 @@
   -->
   <script>
   (function () {
-    var id = null;
+    function report(value, name) {
+      if (typeof fbq === 'undefined' || !value) return;
+      fbq('track', 'Purchase', {
+        content_name: name, content_type: 'product',
+        currency: 'USD', value: Number(value)
+      });
+    }
+
+    var id = null, pending = null;
     try { id = localStorage.getItem('hl_credit_order'); } catch (_) {}
+
+    /* A membership leaves a marker behind on the pricing page. It is removed
+       the moment the sale is reported, so a reload reports nothing. */
+    try {
+      var raw = localStorage.getItem('hl_pending_purchase');
+      if (raw) { pending = JSON.parse(raw); localStorage.removeItem('hl_pending_purchase'); }
+    } catch (_) {}
+    if (pending && !id) report(pending.value, 'Hushlore membership ' + (pending.plan || ''));
+
     if (!id) return;
 
     fetch('/api/chat/order-status?id=' + encodeURIComponent(id), { credentials: 'same-origin' })
@@ -73,6 +101,7 @@
       .then(function (d) {
         if (!d.order || d.order.status !== 'paid') return;
         try { localStorage.removeItem('hl_credit_order'); } catch (_) {}
+        report((d.order.price_cents || 0) / 100, 'Hushlore credits ' + d.order.credits);
         document.getElementById('rtTitle').innerHTML =
           'Credits <span class="italic">added</span>';
         document.getElementById('rtLead').textContent =
