@@ -600,8 +600,20 @@ async function ccbillWebhook(request, env) {
   const event = d.eventType || d.eventGroupType || 'unknown';
   const subId = d.subscriptionId || d.subscription_id || null;
   const txn   = d.transactionId || d.newTransactionId || d.transaction_id || null;
-  const uid   = d['x_uid'] || d['X-uid'] || null;
-  const plan  = d['x_plan'] || d['X-plan'] || null;
+
+  // CCBill hands passthrough fields back under its own prefix: what we sent as
+  // `x_uid` arrives as `X-x_uid`. Match on the tail of the name so it does not
+  // matter how many prefixes they decide to put in front of it.
+  const passthrough = (name) => {
+    const want = name.toLowerCase();
+    for (const k of Object.keys(d)) {
+      const kk = k.toLowerCase();
+      if (kk === want || kk.endsWith('-' + want) || kk.endsWith('_' + want)) return d[k];
+    }
+    return null;
+  };
+  const uid   = passthrough('x_uid') || passthrough('uid');
+  const plan  = passthrough('x_plan') || passthrough('plan');
   const at    = nowISO();
 
   // Written before anything is granted. CCBill retries a postback it thinks
