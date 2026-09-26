@@ -19,6 +19,15 @@
   document,'script','https://connect.facebook.net/en_US/fbevents.js');
   fbq('init', '1813144372979449');
   fbq('track', 'PageView');
+  /* Opening the quiz is the first real step of the funnel, so it gets an event
+     of its own. PageView alone cannot be optimised against, because every page
+     on the site fires it. */
+  fbq('track', 'ViewContent', {
+    content_name: 'Hushlore Quiz',
+    content_category: 'quiz',
+    currency: 'USD',
+    value: 32.99
+  });
   </script>
   <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1813144372979449&ev=PageView&noscript=1"/></noscript>
 

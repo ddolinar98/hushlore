@@ -294,7 +294,7 @@ function submitEmail(e) {
     localStorage.setItem('hushlore_answers', JSON.stringify({ single: answers, multi: multiAnswers }));
   } catch (_) {}
 
-  if (typeof fbq !== 'undefined') fbq('track', 'Lead', { content_name: 'Quiz Email', content_category: outcome });
+  if (typeof fbq !== 'undefined') fbq('track', 'Lead', { content_name: 'Quiz Email', content_category: outcome, currency: 'USD', value: 32.99 });
 
   // Through our own worker: the MailerLite token lives as a Cloudflare secret,
   // not in a file the browser downloads.
