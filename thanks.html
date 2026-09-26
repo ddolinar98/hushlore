@@ -30,8 +30,8 @@
   <div class="rt">
     <a class="rt-logo" href="/">Hushlore</a>
 
-    <h1>You're <span class="italic">in</span></h1>
-    <p>Your membership is active. Everything in the library is open to you now.</p>
+    <h1 id="rtTitle">You're <span class="italic">in</span></h1>
+    <p id="rtLead">Your membership is active. Everything in the library is open to you now.</p>
 
     <!-- The descriptor is here, not only on the receipt. Someone who cannot place
          a line on their statement disputes it, and on adult billing a dispute
@@ -46,7 +46,7 @@
       </ul>
     </div>
 
-    <a class="rt-btn" href="/library">Start listening</a>
+    <a class="rt-btn" id="rtBtn" href="/library">Start listening</a>
 
     <p class="rt-small">
       If the library still says you have no membership, give it a minute and
@@ -54,5 +54,36 @@
       If it persists, write to us and we will sort it out the same day.
     </p>
   </div>
+
+  <!--
+    CCBill sends every approved payment back to this one page, memberships and
+    message credits alike, because the return address is set per payment flow
+    and not per purchase. The order id is left behind in this browser when the
+    credits are bought, so the page can tell which of the two just happened and
+    stop telling a credit buyer their membership is active.
+  -->
+  <script>
+  (function () {
+    var id = null;
+    try { id = localStorage.getItem('hl_credit_order'); } catch (_) {}
+    if (!id) return;
+
+    fetch('/api/chat/order-status?id=' + encodeURIComponent(id), { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.order || d.order.status !== 'paid') return;
+        try { localStorage.removeItem('hl_credit_order'); } catch (_) {}
+        document.getElementById('rtTitle').innerHTML =
+          'Credits <span class="italic">added</span>';
+        document.getElementById('rtLead').textContent =
+          d.order.credits + ' message credits are on your account. Your balance is now ' +
+          d.credits + '.';
+        var b = document.getElementById('rtBtn');
+        b.textContent = 'Back to the conversation';
+        b.href = '/chat';
+      })
+      .catch(function () {});
+  })();
+  </script>
 </body>
 </html>

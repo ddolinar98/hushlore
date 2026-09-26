@@ -326,6 +326,9 @@
           body: JSON.stringify({ bundle: b.id }) }).then(function (r) {
             el.style.opacity = '';
             if (!r.ok) { alert('Could not start that order. Please try again.'); return; }
+            // Remembered so the page CCBill returns to knows this was a credit
+            // purchase, not a membership, and can say the right thing.
+            try { localStorage.setItem('hl_credit_order', r.d.order_id); } catch (_) {}
             // payment processor configured → straight to it; otherwise show the pending order
             location.href = r.d.checkout_url || ('credits.html?order=' + encodeURIComponent(r.d.order_id));
           });

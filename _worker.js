@@ -454,6 +454,37 @@ const CCBILL_PLANS = {
 
 const CCBILL_REBILLS = '99';   // keep renewing; CCBill treats 99 as open-ended
 
+/* One-off purchases (message credits) bill on their own subaccount - CCBill
+   keeps recurring and single billing apart, and the card schemes expect it.
+   The period is what CCBill shows the buyer as the access term; credits do not
+   expire on our side, so a year is the honest figure to print. */
+const CCBILL_ONEOFF_SUBACC = '0001';
+const CCBILL_ONEOFF_DAYS   = '365';
+
+/** Digest for a single charge. Fewer fields than the recurring one, and the
+    order is CCBill's, not ours. */
+function ccbillSingleDigest(price, days, salt) {
+  return md5(price + days + CCBILL.currency + salt);
+}
+
+/** The CCBill link for one bundle of credits, with the order id riding along
+    so the postback can be matched back to it. */
+function ccbillCreditsLink(env, orderId, uid, priceCents) {
+  const price = (priceCents / 100).toFixed(2);
+  const q = new URLSearchParams({
+    clientAccnum:  CCBILL.account,
+    clientSubacc:  CCBILL_ONEOFF_SUBACC,
+    initialPrice:  price,
+    initialPeriod: CCBILL_ONEOFF_DAYS,
+    currencyCode:  CCBILL.currency,
+    formDigest:    ccbillSingleDigest(price, CCBILL_ONEOFF_DAYS, env.CCBILL_SALT),
+    'x_uid':   uid,
+    'x_kind':  'credits',
+    'x_order': orderId
+  });
+  return 'https://api.ccbill.com/wap-frontflex/flexforms/' + CCBILL.flexId + '?' + q.toString();
+}
+
 /* MD5, because that is what CCBill signs its forms with and Web Crypto in
    Workers does not offer it. Not used for anything security-critical on our
    side - it only proves to CCBill that the price in the link is one we set. */
@@ -614,6 +645,8 @@ async function ccbillWebhook(request, env) {
   };
   const uid   = passthrough('x_uid') || passthrough('uid');
   const plan  = passthrough('x_plan') || passthrough('plan');
+  const kind  = passthrough('x_kind') || 'membership';
+  const order = passthrough('x_order');
   const at    = nowISO();
 
   // Written before anything is granted. CCBill retries a postback it thinks
@@ -634,7 +667,7 @@ async function ccbillWebhook(request, env) {
     return json({ ok: true, duplicate: true });
   }
 
-  const note = await ccbillApply(env, event, { subId, uid, plan, email: normEmail(d.email), at });
+  const note = await ccbillApply(env, event, { subId, uid, plan, kind, order, email: normEmail(d.email), at });
   await env.DB.prepare(
     'UPDATE payment_events SET handled = ?1 WHERE processor_ref IS ?2 AND transaction_id IS ?3 AND event = ?4'
   ).bind(note, subId, txn, event).run();
@@ -650,6 +683,38 @@ async function ccbillApply(env, event, ctx) {
         'SELECT id, user_id, plan, expires_at FROM subscriptions WHERE processor_sub_id = ?1 ORDER BY created_at DESC LIMIT 1'
       ).bind(ctx.subId).first()
     : null;
+
+  // Credits are a single charge against an order, not a membership. They have
+  // nothing to do with expiry dates, so they are settled before the switch.
+  if (ctx.kind === 'credits') {
+    if (event !== 'NewSaleSuccess' && event !== 'Refund' &&
+        event !== 'Chargeback' && event !== 'Void') return 'logged only';
+    if (!ctx.order) return 'credit sale with no order id - settle by hand';
+
+    const o = await env.DB.prepare(
+      'SELECT id, user_id, credits, status FROM chat_orders WHERE id = ?1'
+    ).bind(ctx.order).first();
+    if (!o) return 'order ' + ctx.order + ' not found';
+
+    if (event === 'NewSaleSuccess') {
+      if (o.status === 'paid') return 'order already paid';
+      await env.DB.prepare(
+        "UPDATE chat_orders SET status='paid', paid_at=?1, processor='ccbill', processor_ref=?2 WHERE id=?3"
+      ).bind(ctx.at, ctx.subId, o.id).run();
+      await addCredits(env, o.user_id, o.credits, 'purchase', o.id);
+      return 'added ' + o.credits + ' credits';
+    }
+
+    // Money went back, so the credits go with it. The balance is allowed to go
+    // negative: someone who spends and then charges back must not be able to
+    // buy their way back to zero by repeating it.
+    if (o.status !== 'paid') return 'order was not paid, nothing to take back';
+    await env.DB.prepare(
+      "UPDATE chat_orders SET status='refunded' WHERE id=?1"
+    ).bind(o.id).run();
+    await addCredits(env, o.user_id, -o.credits, 'refund', o.id);
+    return 'took back ' + o.credits + ' credits (' + event + ')';
+  }
 
   switch (event) {
     case 'NewSaleSuccess': {
@@ -1158,10 +1223,7 @@ async function chatCreateOrder(request, env) {
      VALUES (?1, ?2, ?3, ?4, ?5, 'pending', ?6)`
   ).bind(id, uid, bundle.credits, bundle.price_cents, CURRENCY, nowISO()).run();
 
-  // once a processor is configured, send them straight to it with the order attached
-  const checkout = bundle.link
-    ? bundle.link + (bundle.link.indexOf('?') > -1 ? '&' : '?') + 'order=' + encodeURIComponent(id)
-    : null;
+  const checkout = env.CCBILL_SALT ? ccbillCreditsLink(env, id, uid, bundle.price_cents) : null;
   return json({
     ok: true, order_id: id, credits: bundle.credits,
     price_cents: bundle.price_cents, checkout_url: checkout
