@@ -470,12 +470,6 @@
 
     const key = getOutcome();
     try { localStorage.setItem('hushlore_outcome', key); } catch (_) {}
-      try {
-        let s = sessionStorage.getItem('hl_sid');
-        if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hl_sid', s); }
-        return s;
-      } catch (e) { return 'anon-' + Date.now().toString(36); }
-    }
 
     // Show match reveal section
     const outcome = outcomes[key];
