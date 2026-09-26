@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="styles.css?v=20260926b" />
+  <link rel="stylesheet" href="styles.css?v=20260926c" />
 
   <!-- Facebook Pixel -->
   <script>
@@ -251,8 +251,7 @@
         <input type="checkbox" id="consentBox" />
         <span>
           I agree to the <a href="terms.html">Terms</a> and
-          <a href="privacy.html">Privacy Policy</a>, and I want access straight
-          away &mdash; which means giving up the 14-day right to withdraw.
+          <a href="privacy.html">Privacy Policy</a>.
         </span>
       </label>
 
@@ -278,15 +277,16 @@
       </div>
 
       <!--
-        HONEST payment badges only. Removed McAfee/VeriSign/Norton from
-        the reference design — those require actual paid certification.
+        Only the card brands this account actually accepts, taken from the
+        billing options on the CCBill subaccount. Advertising a method the
+        checkout cannot offer loses the sale at the last step and is the kind
+        of thing a compliance review picks up.
       -->
       <div class="payment-logos">
         <span class="payment-logo">Visa</span>
         <span class="payment-logo">Mastercard</span>
-        <span class="payment-logo dark">Stripe</span>
-        <span class="payment-logo paypal">PayPal</span>
-        <span class="payment-logo">Amex</span>
+        <span class="payment-logo">Maestro</span>
+        <span class="payment-logo">JCB</span>
       </div>
     </section>
 
