@@ -467,9 +467,23 @@ function ccbillSingleDigest(price, days, salt) {
   return md5(price + days + CCBILL.currency + salt);
 }
 
+/** What CCBill told us about this buyer last time they paid. Handing it back
+    means a returning customer types their card and nothing else. The card
+    itself always has to be re-entered on this form - only CCBill's token API
+    can skip that, and it needs credentials we do not have yet. */
+async function ccbillKnownBuyer(env, uid) {
+  const row = await env.DB.prepare(
+    `SELECT raw FROM payment_events
+      WHERE user_id = ?1 AND event = 'NewSaleSuccess'
+      ORDER BY created_at DESC LIMIT 1`
+  ).bind(uid).first();
+  if (!row) return {};
+  try { return JSON.parse(row.raw) || {}; } catch (_) { return {}; }
+}
+
 /** The CCBill link for one bundle of credits, with the order id riding along
     so the postback can be matched back to it. */
-function ccbillCreditsLink(env, orderId, uid, priceCents) {
+async function ccbillCreditsLink(env, orderId, uid, priceCents) {
   const price = (priceCents / 100).toFixed(2);
   const q = new URLSearchParams({
     clientAccnum:  CCBILL.account,
@@ -482,6 +496,24 @@ function ccbillCreditsLink(env, orderId, uid, priceCents) {
     'x_kind':  'credits',
     'x_order': orderId
   });
+
+  const b = await ccbillKnownBuyer(env, uid);
+  const prefill = {
+    email:          b.email,
+    customer_fname: b.firstName,
+    customer_lname: b.lastName,
+    address1:       b.address1,
+    city:           b.city,
+    // CCBill writes XX for countries that have no state list; sending it back
+    // would fail the form's own validation.
+    state:          b.state === 'XX' ? null : b.state,
+    zipcode:        b.postalCode,
+    country:        b.country
+  };
+  for (const k of Object.keys(prefill)) {
+    if (prefill[k]) q.set(k, String(prefill[k]));
+  }
+
   return 'https://api.ccbill.com/wap-frontflex/flexforms/' + CCBILL.flexId + '?' + q.toString();
 }
 
@@ -1223,7 +1255,7 @@ async function chatCreateOrder(request, env) {
      VALUES (?1, ?2, ?3, ?4, ?5, 'pending', ?6)`
   ).bind(id, uid, bundle.credits, bundle.price_cents, CURRENCY, nowISO()).run();
 
-  const checkout = env.CCBILL_SALT ? ccbillCreditsLink(env, id, uid, bundle.price_cents) : null;
+  const checkout = env.CCBILL_SALT ? await ccbillCreditsLink(env, id, uid, bundle.price_cents) : null;
   return json({
     ok: true, order_id: id, credits: bundle.credits,
     price_cents: bundle.price_cents, checkout_url: checkout
