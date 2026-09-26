@@ -48,7 +48,7 @@
 
     <a class="rt-btn" id="rtBtn" href="/library">Start listening</a>
 
-    <p class="rt-small">
+    <p class="rt-small" id="rtSmall">
       If the library still says you have no membership, give it a minute and
       reload - the confirmation from the payment processor can lag behind you.
       If it persists, write to us and we will sort it out the same day.
@@ -81,6 +81,10 @@
         var b = document.getElementById('rtBtn');
         b.textContent = 'Back to the conversation';
         b.href = '/chat';
+        document.getElementById('rtSmall').textContent =
+          'If your balance still looks the same, give it a minute and reload - ' +
+          'the confirmation from the payment processor can lag behind you. If it ' +
+          'persists, write to us and we will sort it out the same day.';
       })
       .catch(function () {});
   })();
