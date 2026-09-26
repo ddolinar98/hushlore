@@ -590,9 +590,8 @@ function md5(input) {
 /* The exact sentence shown above the buy button. Kept here so the record says
    what the buyer actually agreed to, not a paraphrase written later. */
 const CONSENT_WORDING =
-  'I want access straight away and I understand that my purchase is final: ' +
-  'once the content is made available to me I give up the 14-day right to ' +
-  'withdraw, and the payment is not refundable.';
+  'I agree to the Terms and Privacy Policy, and I want access straight away - ' +
+  'which means giving up the 14-day right to withdraw.';
 
 async function recordConsent(env, uid, kind, detail) {
   try {
