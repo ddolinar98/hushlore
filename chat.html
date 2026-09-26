@@ -129,6 +129,16 @@
     <h3>Get more messages</h3>
     <p>Messages you send use one credit each. Replies you receive are always free.</p>
     <div id="bundles"></div>
+    <!-- Same waiver as the membership checkout. Credits are delivered the
+         instant the payment clears, so the consent has to be given here too or
+         the terms do not hold for them. -->
+    <label class="sale-consent">
+      <input type="checkbox" id="creditConsent" />
+      <span>
+        I want the credits added straight away and I understand the purchase is
+        final: I give up the 14-day right to withdraw, and it is not refundable.
+      </span>
+    </label>
     <button class="ov-close" id="ovClose">Maybe later</button>
   </div>
 </div>
@@ -320,6 +330,12 @@
     }).join('');
     [].forEach.call($('bundles').querySelectorAll('.bundle'), function (el) {
       el.onclick = function () {
+        var c = $('creditConsent');
+        if (!c.checked) {
+          c.parentNode.classList.add('needed');
+          c.focus();
+          return;
+        }
         var b = BUNDLES[+el.getAttribute('data-i')];
         el.style.opacity = '.6';
         api('/api/chat/order', { method:'POST', headers:{'Content-Type':'application/json'},

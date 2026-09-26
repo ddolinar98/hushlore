@@ -2666,3 +2666,38 @@ p {
 .content-foot a { color: #a98ea3; text-decoration: none; margin: 0 4px; }
 .content-foot a:hover { color: var(--cream); }
 .content-foot span { color: #3a2530; }
+
+
+/* Consent row above the buy button on the result page. Deliberately plain and
+   readable: a waiver set in small grey type is a waiver a court ignores. */
+.sale-consent {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  text-align: left;
+  max-width: 560px;
+  margin: 0 auto 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+}
+.sale-consent input {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+.sale-consent span {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.continue-cta[disabled] { opacity: 0.45; cursor: not-allowed; }
+.sale-consent.needed {
+  border-color: var(--gold);
+  background: rgba(212, 175, 120, 0.06);
+}

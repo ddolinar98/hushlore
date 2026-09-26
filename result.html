@@ -243,18 +243,22 @@
         </p>
       </div>
 
-      <button type="button" id="continueBtn" class="continue-cta">Continue</button>
+      <!-- The waiver only holds if the buyer actually chose it, so the box is
+           unticked, the button stays dead until it is ticked, and the wording
+           says plainly what is being given up. Buried consent is worth nothing
+           in a dispute. -->
+      <label class="sale-consent">
+        <input type="checkbox" id="consentBox" />
+        <span>
+          I want access straight away and I understand that my purchase is
+          final: once the library opens to me I give up the 14-day right to
+          withdraw, and the payment is not refundable.
+        </span>
+      </label>
+
+      <button type="button" id="continueBtn" class="continue-cta" disabled>Continue</button>
 
       <p class="waitlist-err" id="checkoutErr"></p>
-
-      <!-- Guarantee badge -->
-      <div class="guarantee-badge">
-        <span class="guarantee-icon">🛡️</span>
-        <div class="guarantee-text">
-          <strong>14-Day Money-Back Guarantee</strong>
-          <span>If it isn't for you, email us within 14 days and we'll refund it.</span>
-        </div>
-      </div>
 
       <p class="auto-renew-text" style="margin-top: 0.75rem;">
         By continuing, you agree to our <a href="terms.html" style="color: var(--gold);">Terms</a> and <a href="privacy.html" style="color: var(--gold);">Privacy Policy</a>.
@@ -583,9 +587,14 @@
 
     /* Straight to CCBill. The worker signs the price and sends an account-less
        buyer through sign-up first, so all this has to carry is which tier. */
+    const consentBox = document.getElementById('consentBox');
+    const syncConsent = () => { continueBtn.disabled = !consentBox.checked; };
+    consentBox.addEventListener('change', syncConsent);
+    syncConsent();
+
     continueBtn.addEventListener('click', () => {
       const sel = document.querySelector('.pricing-tier.selected');
-      if (!sel) return;
+      if (!sel || !consentBox.checked) return;
       try { localStorage.setItem('hl_plan_price', sel.dataset.price); } catch (_) {}
       continueBtn.disabled = true;
       continueBtn.textContent = 'One moment…';

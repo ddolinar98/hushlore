@@ -586,6 +586,25 @@ function md5(input) {
   }).join('');
 }
 
+
+/* The exact sentence shown above the buy button. Kept here so the record says
+   what the buyer actually agreed to, not a paraphrase written later. */
+const CONSENT_WORDING =
+  'I want access straight away and I understand that my purchase is final: ' +
+  'once the content is made available to me I give up the 14-day right to ' +
+  'withdraw, and the payment is not refundable.';
+
+async function recordConsent(env, uid, kind, detail) {
+  try {
+    await env.DB.prepare(
+      `INSERT INTO purchase_consents (id, user_id, kind, detail, wording, at)
+       VALUES (?1,?2,?3,?4,?5,?6)`
+    ).bind(crypto.randomUUID(), uid, kind, detail || null, CONSENT_WORDING, nowISO()).run();
+  } catch (_) {
+    // Never let the bookkeeping stop a sale.
+  }
+}
+
 /** Send the buyer to CCBill's form. Requires an account, because the postback
     has to land on a user - a payment with nobody to give access to is a refund
     waiting to happen. */
@@ -605,6 +624,7 @@ async function ccbillCheckout(request, env) {
   if (!env.CCBILL_SALT) return json({ error: 'billing_not_configured' }, 503);
 
   const user = await env.DB.prepare('SELECT email FROM users WHERE id = ?1').bind(uid).first();
+  await recordConsent(env, uid, 'membership', plan);
 
   // CCBill signs the price so the link cannot be edited into a cheaper one.
   // The order of the fields in the digest is fixed by CCBill and is not ours.
@@ -1255,6 +1275,7 @@ async function chatCreateOrder(request, env) {
      VALUES (?1, ?2, ?3, ?4, ?5, 'pending', ?6)`
   ).bind(id, uid, bundle.credits, bundle.price_cents, CURRENCY, nowISO()).run();
 
+  await recordConsent(env, uid, 'credits', String(b.bundle));
   const checkout = env.CCBILL_SALT ? await ccbillCreditsLink(env, id, uid, bundle.price_cents) : null;
   return json({
     ok: true, order_id: id, credits: bundle.credits,
