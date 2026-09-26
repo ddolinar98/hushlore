@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — One Last Thing</title>
+  <meta name="description" content="A one-time bundle offer for new members." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20260926" />
+
+  <!-- Facebook Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1813144372979449');
+  fbq('track', 'PageView');
+  </script>
+
+  <style>
+    .of-wrap { max-width: 620px; margin: 0 auto; padding: 0 18px 100px; }
+
+    .of-progress { display: flex; align-items: center; padding: 26px 8px 30px; gap: 0; }
+    .of-step { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 0 0 auto; }
+    .of-dot { width: 13px; height: 13px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px rgba(192,51,88,0.18); }
+    .of-step.todo .of-dot { background: #3a2530; box-shadow: none; }
+    .of-step-label { font-family: var(--sans); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+    .of-step.active .of-step-label { color: var(--cream); font-weight: 600; }
+    .of-line { flex: 1 1 auto; height: 2px; background: #3a2530; margin: 0 6px; position: relative; top: -10px; }
+    .of-line.filled { background: var(--gold); }
+
+    .of-lastchance { text-align: center; font-family: var(--sans); font-weight: 700; font-size: 13px; letter-spacing: 0.18em;
+      text-transform: uppercase; color: #e0456e; margin-bottom: 6px; }
+    .of-toptitle { text-align: center; font-family: var(--serif); font-weight: 600; font-size: clamp(26px, 5.4vw, 38px); color: #fff; line-height: 1.06; }
+    .of-plus { text-align: center; font-family: var(--serif); color: var(--gold); font-size: 22px; margin: 2px 0; }
+    .of-rating { display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--sans); font-weight: 700; color: #fff; font-size: 17px; margin-top: 12px; }
+    .of-rating .of-stars { color: #ffb400; letter-spacing: 2px; font-size: 16px; }
+    .of-rating .of-count { color: #d8c2cf; font-weight: 500; font-size: 14px; }
+
+    /* split hero */
+    .of-split { display: flex; gap: 6px; margin-top: 16px; border-radius: 10px; overflow: hidden; }
+    .of-split-img { flex: 1 1 50%; min-height: 230px; background-size: cover; background-position: center; position: relative; }
+    .of-split-img::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,6,8,0.15), rgba(8,6,8,0.55)); }
+
+    .of-price { background: linear-gradient(180deg, rgba(107,16,48,0.32), rgba(23,11,21,0.65)); border: 1px solid var(--border-strong);
+      border-radius: 12px; padding: 30px 26px; margin-top: 18px; text-align: center; }
+    .of-price-off { font-family: var(--sans); font-weight: 700; font-size: 26px; color: var(--cream); }
+    .of-price-was { color: #e0456e; text-decoration: line-through; text-decoration-thickness: 2px; }
+    .of-price-now { display: flex; align-items: baseline; justify-content: center; gap: 12px; margin-top: 8px; }
+    .of-price-now .lbl { font-family: var(--sans); font-size: 18px; color: #cbb3c2; }
+    .of-price-now .amt { font-family: var(--sans); font-weight: 800; font-size: clamp(54px, 14vw, 82px); color: #fff; line-height: 1; }
+    .of-save { font-family: var(--sans); font-weight: 800; color: #35d07f; margin-top: 10px; font-size: 18px; }
+
+    .of-cta { display: block; width: 100%; box-sizing: border-box; text-align: center; margin: 22px 0 0;
+      background: #d21f3c; color: #fff; font-family: var(--sans); font-weight: 700; font-size: 18px;
+      padding: 20px 22px; border-radius: 10px; text-decoration: none; border: none; cursor: pointer;
+      box-shadow: 0 10px 30px rgba(210,31,60,0.35); transition: transform .15s ease, background .15s ease; }
+    .of-cta:hover { background: #e83350; transform: translateY(-1px); }
+
+    .of-incl-title { font-family: var(--serif); font-weight: 600; font-size: clamp(22px, 4.5vw, 28px); color: var(--cream); text-align: center; margin: 44px 0 0; }
+    .of-incl-sub { text-align: center; font-family: var(--sans); font-size: 13px; color: var(--muted); letter-spacing: 0.06em; margin-top: 4px; }
+
+    .of-prod { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 26px 24px; margin-top: 18px; }
+    .of-prod h3 { font-family: var(--serif); font-weight: 600; font-size: 25px; color: var(--cream); }
+    .of-prod p { font-family: var(--sans); font-size: 15px; line-height: 1.6; color: #b79dae; margin-top: 10px; }
+    .of-prod ul { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 8px; }
+    .of-prod li { font-family: var(--sans); font-size: 15px; color: #e7d4e0; display: flex; gap: 9px; align-items: center; }
+    .of-prod li::before { content: '✓'; color: #35d07f; font-weight: 800; }
+
+    .of-trust { list-style: none; padding: 0; margin: 26px auto 0; max-width: 340px; display: grid; gap: 12px; }
+    .of-trust li { font-family: var(--sans); font-size: 15px; color: #d8c2cf; display: flex; gap: 10px; align-items: center; justify-content: center; }
+    .of-trust li::before { content: '✓'; color: #35d07f; font-weight: 800; }
+
+    .of-skip { display: block; text-align: center; margin: 26px auto 0; font-family: var(--sans); font-size: 14px; color: var(--muted); text-decoration: underline; }
+    .of-skip:hover { color: #b79dae; }
+  </style>
+</head>
+<body>
+  <div class="of-wrap">
+
+    <div class="of-progress">
+      <div class="of-step done"><span class="of-dot"></span><span class="of-step-label">Payment complete</span></div>
+      <div class="of-line filled"></div>
+      <div class="of-step active"><span class="of-dot"></span><span class="of-step-label">Welcome offer</span></div>
+      <div class="of-line"></div>
+      <div class="of-step todo"><span class="of-dot"></span><span class="of-step-label">Receipt</span></div>
+    </div>
+
+    <div class="of-lastchance">Last chance · best value</div>
+    <div class="of-toptitle" id="ofTop1"></div>
+    <div class="of-plus">+</div>
+    <div class="of-toptitle" id="ofTop2"></div>
+    <div class="of-rating"><span>4.9</span><span class="of-stars">★★★★★</span><span class="of-count">(30k)</span></div>
+
+    <div class="of-split">
+      <div class="of-split-img" id="img1"></div>
+      <div class="of-split-img" id="img2"></div>
+    </div>
+
+    <div class="of-price">
+      <div class="of-price-off">86% OFF! <span class="of-price-was">$109.98</span></div>
+      <div class="of-price-now"><span class="lbl">only</span><span class="amt">$14.99</span></div>
+      <div class="of-save">You save $95 — both, together, one time only.</div>
+    </div>
+
+    <a href="#" id="ofCtaTop" class="of-cta">Get the Ultimate Bundle →</a>
+
+    <h2 class="of-incl-title">Everything You Get</h2>
+    <div class="of-incl-sub">two premium add-ons · one unbeatable price</div>
+
+    <div class="of-prod">
+      <h3 id="pAname"></h3>
+      <p id="pAdesc"></p>
+      <ul id="pApoints"></ul>
+    </div>
+    <div class="of-prod">
+      <h3 id="pBname"></h3>
+      <p id="pBdesc"></p>
+      <ul id="pBpoints"></ul>
+    </div>
+
+    <ul class="of-trust">
+      <li>Both add-ons, added to your library instantly</li>
+      <li>One-time payment — never billed again</li>
+      <li>Completely private &amp; anonymous</li>
+    </ul>
+
+    <a href="#" id="ofCtaBottom" class="of-cta">Get the Ultimate Bundle →</a>
+    <a href="thanks.html" class="of-skip" id="ofSkip">No thanks — take me to my library</a>
+
+  </div>
+
+  <script>
+    /* =========================================================
+       CONFIG — replace when the new Stripe account is ready
+       ========================================================= */
+    // TODO(Davor): paste the Stripe Payment Link for the BUNDLE here.
+    // Set that link's "After payment" redirect to:  https://hushlorewhisper.com/thanks.html
+    const OFFER_STRIPE_LINK = '#REPLACE_WITH_STRIPE_LINK';
+    const OFFER_PRICE = 14.99;
+
+    // Safety: if they already bought one of the individual offers, don't show the
+    // bundle (they'd pay twice) — send them straight to their library.
+    (function () {
+      try { if (localStorage.getItem('hl_bought_any') === '1') { window.location.replace('thanks.html'); } } catch (_) {}
+    })();
+
+    function getBranch() {
+      try { const b = localStorage.getItem('hl_quiz2_branch'); if (b === 'men' || b === 'women') return b; } catch (_) {}
+      return 'women';
+    }
+    const branch = getBranch();
+
+    const content = {
+      men: {
+        img1: 'images/webpagephoto6.jpg', img2: 'images/webpagephoto8.jpg',
+        top1: 'The Forbidden Collection', top2: 'Stamina Hypnosis Plan',
+        prodA: { name: 'The Forbidden Collection', desc: 'All-new, more intense audio — the scenarios too raw for the main library, in your ear and unfiltered.',
+          points: ['A woman completely in charge', 'Rough &amp; raw encounters', 'Forbidden “what-if” fantasies'] },
+        prodB: { name: 'Stamina Hypnosis Plan', desc: 'A 30-day guided plan that rewires your mind in 15 minutes a day to last longer, stay harder, and own the bedroom.',
+          points: ['Last 2–3× longer', 'Rock-solid confidence', 'No meds, no pressure'] }
+      },
+      women: {
+        img1: 'images/webpagephoto5.jpg', img2: 'images/webpagephoto2.jpg',
+        top1: 'The Forbidden Collection', top2: 'The Desire Reset',
+        prodA: { name: 'The Forbidden Collection', desc: 'All-new, more intense audio — darker men, sharper edges, the stories too raw for the main library.',
+          points: ['Ruthless dominance', 'Rough &amp; possessive', 'Forbidden fantasies'] },
+        prodB: { name: 'The Desire Reset', desc: 'A 30-day guided plan that gently reignites your desire, arousal, and pleasure — the spark back, effortlessly.',
+          points: ['Want it again — like before', 'Effortless arousal', 'No pills, no pressure'] }
+      }
+    };
+
+    const c = content[branch];
+    document.getElementById('img1').style.backgroundImage = 'url(' + c.img1 + ')';
+    document.getElementById('img2').style.backgroundImage = 'url(' + c.img2 + ')';
+    document.getElementById('ofTop1').textContent = c.top1;
+    document.getElementById('ofTop2').textContent = c.top2;
+    document.getElementById('pAname').textContent = c.prodA.name;
+    document.getElementById('pAdesc').textContent = c.prodA.desc;
+    document.getElementById('pApoints').innerHTML = c.prodA.points.map(function (p) { return '<li>' + p + '</li>'; }).join('');
+    document.getElementById('pBname').textContent = c.prodB.name;
+    document.getElementById('pBdesc').textContent = c.prodB.desc;
+    document.getElementById('pBpoints').innerHTML = c.prodB.points.map(function (p) { return '<li>' + p + '</li>'; }).join('');
+
+    document.getElementById('ofCtaTop').href = OFFER_STRIPE_LINK;
+    document.getElementById('ofCtaBottom').href = OFFER_STRIPE_LINK;
+
+    /* Analytics */
+    const HL_SB_URL = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
+    const HL_SB_KEY = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
+    function hlSid() {
+      try {
+        let s = sessionStorage.getItem('hl_sid');
+        if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hl_sid', s); }
+        return s;
+      } catch (e) { return 'anon-' + Date.now().toString(36); }
+    }
+    function hlTrack(event, extras) {
+      const payload = Object.assign({ session_id: hlSid(), event: event, branch: branch }, extras || {});
+      fetch(HL_SB_URL, {
+        method: 'POST', keepalive: true,
+        headers: { 'apikey': HL_SB_KEY, 'Authorization': 'Bearer ' + HL_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(payload)
+      }).catch(function () {});
+    }
+    hlTrack('offer3_view', { answer_text: 'ultimate-bundle' });
+    document.querySelectorAll('#ofCtaTop, #ofCtaBottom').forEach(function (el) {
+      el.addEventListener('click', function () { hlTrack('offer3_click', { answer_text: 'ultimate-bundle' }); });
+    });
+    document.getElementById('ofSkip').addEventListener('click', function () { hlTrack('offer3_skip', {}); });
+  </script>
+</body>
+</html>

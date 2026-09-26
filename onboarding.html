@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — Welcome</title>
+  <meta name="description" content="Getting you settled in." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20260926" />
+
+  <style>
+    .ob-wrap { max-width: 560px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column;
+      padding: 40px 24px 40px; box-sizing: border-box; }
+    .ob-brand { text-align: center; font-family: var(--serif); font-size: 26px; letter-spacing: 0.04em; color: var(--cream); font-weight: 500; }
+    .ob-brand span { color: var(--gold); }
+
+    .ob-stage { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; }
+    .ob-slide { display: none; text-align: center; width: 100%; animation: obFade .5s ease; }
+    .ob-slide.active { display: block; }
+    @keyframes obFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .ob-art { width: 120px; height: 120px; margin: 0 auto 28px; }
+    .ob-art svg { width: 100%; height: 100%; }
+    .ob-art svg path, .ob-art svg rect, .ob-art svg circle, .ob-art svg line { stroke: var(--gold); }
+
+    .ob-slide h2 { font-family: var(--serif); font-weight: 600; font-size: clamp(30px, 7vw, 46px); color: var(--cream); line-height: 1.05; }
+    .ob-slide .warn { color: #f0b429; }
+    .ob-slide p { font-family: var(--sans); font-size: 17px; line-height: 1.65; color: #c1a7b8; max-width: 420px; margin: 22px auto 0; }
+    .ob-slide p + p { margin-top: 16px; }
+    .ob-slide strong { color: #f3e7ee; }
+    .ob-list { list-style: none; padding: 0; margin: 24px auto 0; max-width: 430px; text-align: left; display: grid; gap: 16px; }
+    .ob-list li { font-family: var(--sans); font-size: 16px; line-height: 1.55; color: #c1a7b8; padding-left: 22px; position: relative; }
+    .ob-list li::before { content: '•'; color: var(--gold); position: absolute; left: 4px; top: -1px; font-size: 18px; }
+    .ob-list strong { color: #f3e7ee; }
+
+    .ob-foot { flex: 0 0 auto; }
+    .ob-dots { display: flex; gap: 9px; justify-content: center; margin: 0 0 22px; }
+    .ob-dot { width: 8px; height: 8px; border-radius: 50%; background: #3a2530; transition: all .3s ease; }
+    .ob-dot.active { background: var(--gold); width: 22px; border-radius: 5px; }
+
+    .ob-btn { display: block; width: 100%; box-sizing: border-box; text-align: center;
+      background: #d21f3c; color: #fff; font-family: var(--sans); font-weight: 700; font-size: 18px;
+      padding: 19px 22px; border-radius: 10px; border: none; cursor: pointer;
+      box-shadow: 0 10px 30px rgba(210,31,60,0.32); transition: transform .15s ease, background .15s ease; }
+    .ob-btn:hover { background: #e83350; transform: translateY(-1px); }
+  </style>
+</head>
+<body>
+  <div class="ob-wrap">
+    <div class="ob-brand">Hush<span>lore</span></div>
+
+    <div class="ob-stage">
+
+      <!-- Slide 1 -->
+      <div class="ob-slide active" data-i="0">
+        <div class="ob-art">
+          <svg viewBox="0 0 100 100" fill="none">
+            <path stroke-width="2.5" stroke-linecap="round" d="M22 55v-5a28 28 0 0 1 56 0v5"/>
+            <rect x="16" y="55" width="14" height="26" rx="7" stroke-width="2.5"/>
+            <rect x="70" y="55" width="14" height="26" rx="7" stroke-width="2.5"/>
+            <path stroke-width="2.5" stroke-linecap="round" d="M84 68c6 0 8 4 8 9s-4 9-10 9"/>
+          </svg>
+        </div>
+        <h2>Welcome</h2>
+        <p>We’re so glad you’re here. Let’s get you settled in for a smooth, sensual experience — put your headphones in and take a breath.</p>
+      </div>
+
+      <!-- Slide 2 -->
+      <div class="ob-slide" data-i="1">
+        <div class="ob-art">
+          <svg viewBox="0 0 100 100" fill="none">
+            <path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+              d="M50 82S18 62 18 40a17 17 0 0 1 32-8 17 17 0 0 1 32 8c0 22-32 42-32 42Z"/>
+            <path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M28 50h10l5-10 8 20 5-12 4 6h14"/>
+          </svg>
+        </div>
+        <h2>Real Voices,<br/>Real Intimacy</h2>
+        <p>Hushlore isn’t just an app — it’s a world made with care. Every story is written and voiced to pull you in and make you feel <strong>truly seen</strong>.</p>
+      </div>
+
+      <!-- Slide 3 -->
+      <div class="ob-slide" data-i="2">
+        <div class="ob-art">
+          <svg viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="30" stroke-width="2.5"/>
+            <circle cx="50" cy="50" r="16" stroke-width="2.5"/>
+            <circle cx="50" cy="50" r="4" fill="var(--gold)" stroke="none"/>
+            <path stroke-width="2.5" stroke-linecap="round" d="M82 18l-4 9-9 4 9 4 4 9 4-9 9-4-9-4-4-9Z"/>
+          </svg>
+        </div>
+        <h2>Made for You</h2>
+        <p><strong>Your match, decoded.</strong> We’ve used your quiz answers to put your perfect stories front and centre.</p>
+        <p><strong>You’re in control.</strong> Moods change — you’re never locked in. The whole library is open to you, anytime.</p>
+      </div>
+
+      <!-- Slide 4 -->
+      <div class="ob-slide" data-i="3">
+        <div class="ob-art">
+          <svg viewBox="0 0 100 100" fill="none">
+            <path stroke-width="2.5" stroke-linecap="round" d="M25 20v60M50 20v60M75 20v60"/>
+            <circle cx="25" cy="62" r="7" stroke-width="2.5" fill="var(--bg)"/>
+            <circle cx="50" cy="38" r="7" stroke-width="2.5" fill="var(--bg)"/>
+            <circle cx="75" cy="54" r="7" stroke-width="2.5" fill="var(--bg)"/>
+          </svg>
+        </div>
+        <h2>Getting the Most<br/>From Hushlore <span class="warn">⚠</span></h2>
+        <ul class="ob-list">
+          <li><strong>The first story might land perfectly — or not quite.</strong> That’s okay. Everyone’s ear is different.</li>
+          <li><strong>Try a few.</strong> Each one has its own voice, mood and scenario — the more you explore, the faster you’ll find the ones that undo you.</li>
+          <li><strong>Best enjoyed with headphones,</strong> somewhere private, lights low. Let it pull you all the way in.</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="ob-foot">
+      <div class="ob-dots" id="obDots"></div>
+      <button class="ob-btn" id="obBtn">Continue</button>
+    </div>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll('.ob-slide'));
+    const dotsWrap = document.getElementById('obDots');
+    const btn = document.getElementById('obBtn');
+    let i = 0;
+
+    slides.forEach(function (_, idx) {
+      const d = document.createElement('span');
+      d.className = 'ob-dot' + (idx === 0 ? ' active' : '');
+      dotsWrap.appendChild(d);
+    });
+    const dots = Array.from(dotsWrap.children);
+
+    function show(n) {
+      slides[i].classList.remove('active');
+      dots[i].classList.remove('active');
+      i = n;
+      slides[i].classList.add('active');
+      dots[i].classList.add('active');
+      btn.textContent = (i === slides.length - 1) ? 'Enter your library →' : 'Continue';
+      window.scrollTo(0, 0);
+    }
+
+    btn.addEventListener('click', function () {
+      if (i < slides.length - 1) {
+        show(i + 1);
+      } else {
+        try { localStorage.setItem('hl_onboarded', '1'); } catch (_) {}
+        window.location.href = 'library.html';
+      }
+    });
+
+    /* Analytics */
+    const HL_SB_URL = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
+    const HL_SB_KEY = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
+    function hlSid() {
+      try {
+        let s = sessionStorage.getItem('hl_sid');
+        if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hl_sid', s); }
+        return s;
+      } catch (e) { return 'anon-' + Date.now().toString(36); }
+    }
+    function hlTrack(event, extras) {
+      let branch = null;
+      try { branch = localStorage.getItem('hl_quiz2_branch'); } catch (e) {}
+      fetch(HL_SB_URL, {
+        method: 'POST', keepalive: true,
+        headers: { 'apikey': HL_SB_KEY, 'Authorization': 'Bearer ' + HL_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(Object.assign({ session_id: hlSid(), event: event, branch: branch }, extras || {}))
+      }).catch(function () {});
+    }
+    hlTrack('onboarding_start', {});
+  </script>
+</body>
+</html>

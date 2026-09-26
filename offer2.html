@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — One More Thing</title>
+  <meta name="description" content="A one-time welcome offer for new members." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20260926" />
+
+  <!-- Facebook Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1813144372979449');
+  fbq('track', 'PageView');
+  </script>
+
+  <style>
+    .of-wrap { max-width: 620px; margin: 0 auto; padding: 0 18px 100px; }
+
+    .of-progress { display: flex; align-items: center; padding: 26px 8px 30px; gap: 0; }
+    .of-step { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 0 0 auto; }
+    .of-dot { width: 13px; height: 13px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px rgba(192,51,88,0.18); }
+    .of-step.todo .of-dot { background: #3a2530; box-shadow: none; }
+    .of-step-label { font-family: var(--sans); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+    .of-step.active .of-step-label { color: var(--cream); font-weight: 600; }
+    .of-line { flex: 1 1 auto; height: 2px; background: #3a2530; margin: 0 6px; position: relative; top: -10px; }
+    .of-line.filled { background: var(--gold); }
+
+    .of-hero { position: relative; border-radius: 10px; overflow: hidden; min-height: 380px; display: flex; align-items: flex-start; }
+    .of-hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
+    .of-hero-bg::after { content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(8,6,8,0.6) 0%, rgba(8,6,8,0.45) 35%, rgba(8,6,8,0.94) 100%); }
+    .of-hero-inner { position: relative; z-index: 1; padding: 30px 24px 26px; width: 100%; text-align: center; }
+    .of-eyebrow { font-family: var(--sans); font-size: 13px; letter-spacing: 0.16em; color: #e7c9d4; font-weight: 500; }
+    .of-hero h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(30px, 6.5vw, 44px); line-height: 1.04; color: #fff; margin: 6px 0 10px; }
+    .of-rating { display: inline-flex; align-items: center; gap: 8px; font-family: var(--sans); font-weight: 700; color: #fff; font-size: 17px; }
+    .of-rating .of-stars { color: #ffb400; letter-spacing: 2px; font-size: 16px; }
+    .of-rating .of-count { color: #d8c2cf; font-weight: 500; font-size: 14px; }
+    .of-checks { list-style: none; padding: 0; margin: 20px auto 0; max-width: 360px; text-align: left; display: grid; gap: 9px; }
+    .of-checks li { font-family: var(--sans); font-size: 16px; color: #f3e7ee; display: flex; gap: 10px; align-items: center; }
+    .of-checks li::before { content: '✓'; color: #35d07f; font-weight: 800; }
+
+    .of-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 30px 26px; margin-top: 22px; text-align: center; }
+    .of-card h2 { font-family: var(--serif); font-weight: 600; font-size: clamp(24px, 5vw, 32px); color: var(--cream); line-height: 1.1; }
+    .of-card p { font-family: var(--sans); font-size: 16px; line-height: 1.65; color: #b79dae; margin-top: 14px; }
+
+    .of-price { background: linear-gradient(180deg, rgba(107,16,48,0.28), rgba(23,11,21,0.6)); border: 1px solid var(--border-strong);
+      border-radius: 12px; padding: 30px 26px; margin-top: 22px; text-align: center; }
+    .of-price-off { font-family: var(--sans); font-weight: 700; font-size: 26px; color: var(--cream); }
+    .of-price-was { color: #e0456e; text-decoration: line-through; text-decoration-thickness: 2px; }
+    .of-price-now { display: flex; align-items: baseline; justify-content: center; gap: 12px; margin-top: 8px; }
+    .of-price-now .lbl { font-family: var(--sans); font-size: 18px; color: #cbb3c2; }
+    .of-price-now .amt { font-family: var(--sans); font-weight: 800; font-size: clamp(52px, 13vw, 78px); color: #fff; line-height: 1; }
+    .of-save { font-family: var(--sans); font-weight: 700; color: #f3e7ee; margin-top: 10px; }
+
+    .of-trust { list-style: none; padding: 0; margin: 22px auto 0; max-width: 340px; display: grid; gap: 12px; }
+    .of-trust li { font-family: var(--sans); font-size: 15px; color: #d8c2cf; display: flex; gap: 10px; align-items: center; justify-content: center; }
+    .of-trust li::before { content: '✓'; color: #35d07f; font-weight: 800; }
+
+    .of-cta { display: block; width: 100%; box-sizing: border-box; text-align: center; margin: 26px 0 0;
+      background: #d21f3c; color: #fff; font-family: var(--sans); font-weight: 700; font-size: 18px;
+      padding: 20px 22px; border-radius: 10px; text-decoration: none; border: none; cursor: pointer;
+      box-shadow: 0 10px 30px rgba(210,31,60,0.35); transition: transform .15s ease, background .15s ease; }
+    .of-cta:hover { background: #e83350; transform: translateY(-1px); }
+
+    .of-section-title { font-family: var(--serif); font-weight: 600; font-size: clamp(26px, 5vw, 34px); color: var(--cream); text-align: center; margin: 48px 0 4px; }
+
+    .of-benefits { display: grid; gap: 20px; margin-top: 24px; }
+    .of-benefit { font-family: var(--sans); font-size: 16px; line-height: 1.6; color: #b79dae; }
+    .of-benefit strong { color: #f3e7ee; }
+
+    .of-reviews { display: grid; gap: 0; margin-top: 24px; }
+    .of-review { padding: 20px 0; border-bottom: 1px solid var(--border); }
+    .of-review-top { display: flex; align-items: center; justify-content: space-between; }
+    .of-review-name { font-family: var(--sans); font-weight: 700; color: var(--cream); font-size: 16px; }
+    .of-review-stars { color: #ffb400; letter-spacing: 1px; }
+    .of-review-text { font-family: var(--serif); font-style: italic; font-size: 17px; line-height: 1.5; color: #c9b1c0; margin-top: 10px; }
+
+    .of-skip { display: block; text-align: center; margin: 26px auto 0; font-family: var(--sans); font-size: 14px; color: var(--muted); text-decoration: underline; }
+    .of-skip:hover { color: #b79dae; }
+  </style>
+</head>
+<body>
+  <div class="of-wrap">
+
+    <!-- progress: this is the 2nd offer, still in "Welcome offer" stage -->
+    <div class="of-progress">
+      <div class="of-step done"><span class="of-dot"></span><span class="of-step-label">Payment complete</span></div>
+      <div class="of-line filled"></div>
+      <div class="of-step active"><span class="of-dot"></span><span class="of-step-label">Welcome offer</span></div>
+      <div class="of-line"></div>
+      <div class="of-step todo"><span class="of-dot"></span><span class="of-step-label">Receipt</span></div>
+    </div>
+
+    <section class="of-hero">
+      <div class="of-hero-bg" id="heroBg"></div>
+      <div class="of-hero-inner">
+        <div class="of-eyebrow" id="ofEyebrow">One more welcome offer · one time only</div>
+        <h1 id="ofTitle"></h1>
+        <div class="of-rating"><span id="ofRatingNum">4.8</span><span class="of-stars">★★★★★</span><span class="of-count" id="ofRatingCount">(30k)</span></div>
+        <ul class="of-checks" id="ofChecks"></ul>
+      </div>
+    </section>
+
+    <div class="of-card">
+      <h2 id="ofDescTitle"></h2>
+      <p id="ofDescBody"></p>
+    </div>
+
+    <div class="of-price">
+      <div class="of-price-off">80% OFF! <span class="of-price-was">$49.99</span></div>
+      <div class="of-price-now"><span class="lbl">only</span><span class="amt">$9.99</span></div>
+      <div class="of-save">One-time price — this offer is not shown again.</div>
+    </div>
+
+    <ul class="of-trust">
+      <li id="ofTrust1">Guided audio — just 15 minutes a day</li>
+      <li>One-time payment</li>
+      <li>Added to your library instantly</li>
+      <li>Discreet — headphones, anywhere, completely private</li>
+    </ul>
+
+    <a href="#" id="ofCtaTop" class="of-cta"></a>
+
+    <h2 class="of-section-title">Here's What Will Change</h2>
+    <div class="of-benefits" id="ofBenefits"></div>
+
+    <h2 class="of-section-title" id="ofProofTitle"></h2>
+    <div class="of-reviews" id="ofReviews"></div>
+
+    <a href="#" id="ofCtaBottom" class="of-cta"></a>
+    <a href="offer3.html" class="of-skip" id="ofSkip">No thanks — continue</a>
+
+  </div>
+
+  <script>
+    /* =========================================================
+       CONFIG — replace when the new Stripe account is ready
+       ========================================================= */
+    // TODO(Davor): paste the Stripe Payment Link for THIS offer here.
+    // Set that link's "After payment" redirect to:  https://hushlorewhisper.com/thanks.html
+    const OFFER_STRIPE_LINK = '#REPLACE_WITH_STRIPE_LINK';
+    const OFFER_PRICE = 9.99; // keep in sync with the price shown above
+
+    /* Did they buy the 1st offer? Stripe redirects offer1's success to
+       offer2.html?bought=1. If so, remember it — the bundle downsell (offer3)
+       must be skipped for anyone who already bought an individual offer, so
+       this page's "No thanks" goes straight to the library instead. */
+    (function () {
+      try {
+        if (new URLSearchParams(window.location.search).get('bought') === '1') {
+          localStorage.setItem('hl_bought_any', '1');
+        }
+        if (localStorage.getItem('hl_bought_any') === '1') {
+          document.getElementById('ofSkip').setAttribute('href', 'thanks.html');
+        }
+      } catch (_) {}
+    })();
+
+    /* Branch — men get a stamina plan, women get a desire plan. */
+    function getBranch() {
+      try { const b = localStorage.getItem('hl_quiz2_branch'); if (b === 'men' || b === 'women') return b; } catch (_) {}
+      return 'women';
+    }
+    const branch = getBranch();
+
+    const content = {
+      men: {
+        heroImg: 'images/webpagephoto8.jpg',
+        title: 'Stamina Hypnosis Plan',
+        cta: 'Get the Stamina Plan →',
+        proof: '50,000+ Men Took This Offer',
+        checks: ['Last 2–3× longer', 'Harder, more reliable', 'Rock-solid confidence', 'No meds, no hassle'],
+        descTitle: 'Become The Lover She Craves',
+        descBody: 'Every man knows the frustration of performance slipping — quick finishes, fading hardness, or that nagging anxiety stealing the moment. This 30-day hypnosis plan, guided by a soothing female voice, rewires your mind in just 15 minutes a day to deliver ironclad control, explosive orgasms, and the rock-solid confidence to own the bedroom like you did in your 20s.',
+        benefits: [
+          ['Rock-solid stamina', ' — last 2–3× longer, turning rushed encounters into the kind of nights she raves about.'],
+          ['Harder, more reliable', ' — erections that rise on cue and stay strong, banishing the “not tonight” excuses for good.'],
+          ['Heightened sensation', ' — every touch electric, rediscovering the intense, full-body climaxes you thought were history.'],
+          ['Total anxiety melt-away', ' — calm, focused, and fully in the zone, no more overthinking or performance pressure.'],
+          ['Surging daily desire', ' — stronger drive and spontaneous urges that fire up naturally.'],
+          ['Bedroom confidence', ' — that spills over into the rest of your life: you walk taller and feel sharper.']
+        ],
+        reviews: [
+          ['John R', 'Started the plan skeptical — by day 10 I was lasting noticeably longer and actually relaxed about it. My partner noticed first.'],
+          ['Michael S', 'The “not tonight” nights are gone. Harder, more reliable, and my head is finally quiet in the moment.'],
+          ['David L', 'Two weeks in and the difference is night and day. Best thing I’ve done for my confidence, in and out of bed.'],
+          ['Robert T', 'Didn’t believe audio could do this. It rewired how I show up. Worth ten times the price.']
+        ]
+      },
+      women: {
+        heroImg: 'images/webpagephoto2.jpg',
+        title: 'The Desire Reset',
+        cta: 'Reignite My Desire →',
+        proof: '40,000+ Women Took This Offer',
+        checks: ['Want it again — like before', 'Arousal without forcing it', 'A quiet, present mind', 'No pills, no pressure'],
+        descTitle: 'Fall Back in Love With Wanting It',
+        descBody: 'So many women know the quiet frustration of a desire that has faded — stress, exhaustion, years together, or hormones quietly stealing the spark, until “not tonight” becomes the default. This 30-day hypnosis plan, guided by a soothing voice, gently rewires your mind in just 15 minutes a day to bring back the craving, effortless arousal, and a body that finally says yes again.',
+        benefits: [
+          ['Desire that returns on its own', ' — that spark back, wanting it again the way you used to, without forcing anything.'],
+          ['Effortless arousal', ' — your body responding faster and fuller, warming up on its own instead of being coaxed.'],
+          ['A quiet mind', ' — the overthinking and endless to-do list finally switch off, so you can actually be present.'],
+          ['Heightened sensation', ' — every touch electric again, rediscovering pleasure you thought had dimmed.'],
+          ['Deeper, easier release', ' — reaching pleasure more easily and fully, letting go completely.'],
+          ['Confidence in your own skin', ' — feeling desirable, sensual, and alive again — magnetic in a way you’d forgotten.']
+        ],
+        reviews: [
+          ['Sarah M', 'I’d stopped initiating years ago — too tired, too in my head. Three weeks in, I actually want him again. It’s like a switch flipped.'],
+          ['Laura B', 'The overthinking finally goes quiet. I can be present, and everything feels more intense because of it.'],
+          ['Rachel T', 'My desire had just… faded. This brought the spark back without pills or pressure. My husband is thrilled — so am I.'],
+          ['Hannah K', 'I feel like myself again — sensual, wanted, alive. I look forward to these 15 minutes more than anything.']
+        ]
+      }
+    };
+
+    const c = content[branch];
+
+    document.getElementById('heroBg').style.backgroundImage = 'url(' + c.heroImg + ')';
+    document.getElementById('ofTitle').textContent = c.title;
+    document.getElementById('ofProofTitle').textContent = c.proof;
+    document.getElementById('ofCtaTop').textContent = c.cta;
+    document.getElementById('ofCtaBottom').textContent = c.cta;
+    document.getElementById('ofDescTitle').textContent = c.descTitle;
+    document.getElementById('ofDescBody').textContent = c.descBody;
+    document.getElementById('ofChecks').innerHTML = c.checks.map(function (t) { return '<li>' + t + '</li>'; }).join('');
+    document.getElementById('ofBenefits').innerHTML = c.benefits.map(function (b) {
+      return '<p class="of-benefit"><strong>' + b[0] + '</strong>' + b[1] + '</p>';
+    }).join('');
+    document.getElementById('ofReviews').innerHTML = c.reviews.map(function (r) {
+      return '<div class="of-review"><div class="of-review-top"><span class="of-review-name">' + r[0] +
+        '</span><span class="of-review-stars">★★★★★</span></div><p class="of-review-text">“' + r[1] + '”</p></div>';
+    }).join('');
+
+    document.getElementById('ofCtaTop').href = OFFER_STRIPE_LINK;
+    document.getElementById('ofCtaBottom').href = OFFER_STRIPE_LINK;
+
+    /* Analytics — same Supabase table */
+    const HL_SB_URL = 'https://cfowsdsmahmnveillybj.supabase.co/rest/v1/quiz_events';
+    const HL_SB_KEY = 'sb_publishable_2V0svPYVspASe4ip2z8tcg_htIBl2Jt';
+    function hlSid() {
+      try {
+        let s = sessionStorage.getItem('hl_sid');
+        if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hl_sid', s); }
+        return s;
+      } catch (e) { return 'anon-' + Date.now().toString(36); }
+    }
+    function hlTrack(event, extras) {
+      const payload = Object.assign({ session_id: hlSid(), event: event, branch: branch }, extras || {});
+      fetch(HL_SB_URL, {
+        method: 'POST', keepalive: true,
+        headers: { 'apikey': HL_SB_KEY, 'Authorization': 'Bearer ' + HL_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(payload)
+      }).catch(function () {});
+    }
+    hlTrack('offer2_view', { answer_text: branch === 'men' ? 'stamina-hypnosis' : 'desire-hypnosis' });
+
+    document.querySelectorAll('#ofCtaTop, #ofCtaBottom').forEach(function (el) {
+      el.addEventListener('click', function () { hlTrack('offer2_click', { answer_text: branch === 'men' ? 'stamina-hypnosis' : 'desire-hypnosis' }); });
+    });
+    document.getElementById('ofSkip').addEventListener('click', function () { hlTrack('offer2_skip', {}); });
+  </script>
+</body>
+</html>
