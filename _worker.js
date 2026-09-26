@@ -532,9 +532,12 @@ async function ccbillCheckout(request, env) {
   const p = CCBILL_PLANS[plan];
   if (!p) return json({ error: 'unknown_plan' }, 400);
 
+  // Not signed in: make the account first, then come straight back here. The
+  // postback has to land on a user, and asking for the email after the card
+  // has been charged is how payments end up unmatched.
   const uid = await readSession(env, request);
   if (!uid) {
-    return Response.redirect(new URL('/account?buy=' + plan, url).toString(), 302);
+    return Response.redirect(new URL('/login?buy=' + plan, url).toString(), 302);
   }
   if (!env.CCBILL_SALT) return json({ error: 'billing_not_configured' }, 503);
 

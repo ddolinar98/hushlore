@@ -94,6 +94,15 @@
       return /^[a-z0-9_-]+\.html(\?.*)?$/i.test(n) ? n : 'library.html';   // same-site only
     }
 
+    /* Someone who arrived from a pricing tier is mid-purchase. They go back to
+       the checkout the moment the account exists, not to the library they
+       cannot open yet. */
+    function buy() {
+      var b = new URLSearchParams(location.search).get('buy');
+      return /^(1m|3m|6m)$/.test(b) ? b : null;
+    }
+    var BUY = buy();
+
     function setMode(m) {
       mode = m;
       var up = m === 'register';
@@ -108,6 +117,10 @@
     tabIn.onclick = function () { setMode('login'); };
     tabUp.onclick = function () { setMode('register'); };
     if (new URLSearchParams(location.search).get('new') === '1') setMode('register');
+    if (BUY) {
+      setMode('register');
+      sub.textContent = 'One step before payment. Your membership is linked to this address.';
+    }
 
     var ERRORS = {
       invalid_email: 'That email address does not look right.',
@@ -137,6 +150,11 @@
           return;
         }
         msg.className = 'lg-msg ok';
+        if (BUY) {
+          msg.textContent = 'Taking you to the payment page…';
+          location.href = '/api/ccbill/checkout?plan=' + BUY;
+          return;
+        }
         if (res.d.sub && res.d.sub.active) {
           msg.textContent = 'Signed in — opening your library…';
           location.href = next();
@@ -154,7 +172,11 @@
     // already signed in with access? skip straight through
     fetch('/api/auth/me', { credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (d.authenticated && d.sub && d.sub.active) location.href = next(); })
+      .then(function (d) {
+        if (!d.authenticated) return;
+        if (BUY && !(d.sub && d.sub.active)) { location.href = '/api/ccbill/checkout?plan=' + BUY; return; }
+        if (d.sub && d.sub.active) location.href = next();
+      })
       .catch(function () {});
   </script>
 

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <!--
+    This page used to hold Stripe payment links from before the business had a
+    processor. Billing runs through CCBill now, and a stray link to a dead
+    checkout must never be able to take someone's money, so the page only
+    forwards to the live pricing.
+  -->
+  <meta http-equiv="refresh" content="0; url=/result#pricing" />
+  <link rel="canonical" href="/result" />
+</head>
+<body>
+  <p>Taking you to the memberships… <a href="/result#pricing">Continue</a></p>
+  <script>location.replace('/result#pricing');</script>
+</body>
+</html>

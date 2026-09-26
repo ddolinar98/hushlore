@@ -243,27 +243,9 @@
         </p>
       </div>
 
-      <!-- No processor is live yet, so nothing can be charged. Rather than send
-           people to a checkout that must not take their money, hold the plan
-           they chose against their address and write to them when it opens. -->
       <button type="button" id="continueBtn" class="continue-cta">Continue</button>
 
-      <form class="waitlist" id="waitlistForm">
-        <p class="waitlist-lead">
-          <b>Membership opens shortly.</b>
-          Leave your email and you get in first — at the price you just picked.
-        </p>
-        <div class="waitlist-row">
-          <input type="email" id="waitlistEmail" required placeholder="you@email.com"
-                 autocomplete="email" aria-label="Your email" />
-          <button type="submit" id="waitlistGo">Notify me</button>
-        </div>
-        <p class="waitlist-err" id="waitlistErr"></p>
-      </form>
-
-      <p class="waitlist-done" id="waitlistDone">
-        You are on the list. We will write to you the day it opens — nothing else.
-      </p>
+      <p class="waitlist-err" id="checkoutErr"></p>
 
       <!-- Guarantee badge -->
       <div class="guarantee-badge">
@@ -605,45 +587,15 @@
       if (selInit) { try { localStorage.setItem('hl_plan_price', selInit.dataset.price); } catch (_) {} }
     })();
 
-    const waitlistForm = document.getElementById('waitlistForm');
-    const waitlistErr = document.getElementById('waitlistErr');
-
+    /* Straight to CCBill. The worker signs the price and sends an account-less
+       buyer through sign-up first, so all this has to carry is which tier. */
     continueBtn.addEventListener('click', () => {
       const sel = document.querySelector('.pricing-tier.selected');
-      if (sel) { try { localStorage.setItem('hl_plan_price', sel.dataset.price); } catch (_) {} }
-      continueBtn.style.display = 'none';
-      waitlistForm.classList.add('open');
-      document.getElementById('waitlistEmail').focus();
-    });
-
-    waitlistForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const go = document.getElementById('waitlistGo');
-      const sel = document.querySelector('.pricing-tier.selected');
-      waitlistErr.textContent = '';
-      go.disabled = true;
-
-      fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: document.getElementById('waitlistEmail').value,
-          plan: sel ? sel.dataset.tier : null,
-          price: sel ? sel.dataset.price : null,
-          outcome: key,
-          aud: tasteAud()
-        })
-      })
-        .then((r) => r.json())
-        .then((d) => {
-          if (!d.ok) throw new Error(d.error || 'failed');
-          waitlistForm.classList.remove('open');
-          document.getElementById('waitlistDone').classList.add('on');
-        })
-        .catch(() => {
-          waitlistErr.textContent = 'That did not go through. Check the address and try again.';
-          go.disabled = false;
-        });
+      if (!sel) return;
+      try { localStorage.setItem('hl_plan_price', sel.dataset.price); } catch (_) {}
+      continueBtn.disabled = true;
+      continueBtn.textContent = 'One moment…';
+      location.href = '/api/ccbill/checkout?plan=' + sel.dataset.tier;
     });
 
     /* ====================================
