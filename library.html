@@ -547,12 +547,17 @@
       function show(d) {
         var price = '$' + (d.price_cents / 100).toFixed(2);
         var was = '$' + (d.usual_cents / 100).toFixed(2);
+        // Half this audience is listening to a man.
+        var female = (listenerAud === 'M' || listenerAud === 'L');
+        var her = female ? 'her' : 'him';
+        var she = female ? 'She reads' : 'He reads';
         var el = document.createElement('div');
         el.className = 'nudge';
         el.innerHTML =
           '<button class="nudge-x" type="button" aria-label="Close">&times;</button>' +
-          '<h4>Say something to her</h4>' +
-          '<p>She reads and answers herself. Your first ' + d.credits +
+          '<h4>Say something to ' + her + '</h4>' +
+          '<p>' + she + ' and answers ' + (female ? 'herself' : 'himself') +
+          '. Your first ' + d.credits +
           ' messages are <strong>half price</strong> &mdash; ' +
           '<s>' + was + '</s> ' + price + ', once.</p>' +
           '<a class="nudge-go" href="chat.html">Open messages</a>';
