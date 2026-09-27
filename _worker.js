@@ -615,7 +615,10 @@ async function authReset(request, env) {
     'UPDATE password_resets SET used_at = ?1 WHERE user_id = ?2 AND used_at IS NULL'
   ).bind(nowISO(), row.user_id).run();
 
-  return json({ ok: true }, 200,
+  // Tell the page whether this person has a membership, so it can send a member
+  // to the library and everyone else to their account rather than dropping them
+  // on the pricing page, which reads like the reset failed.
+  return json({ ok: true, sub: subShape(await activeSub(env, row.user_id)) }, 200,
     { 'Set-Cookie': sessionCookie(await makeSession(env, row.user_id), SESSION_DAYS * 86400) });
 }
 

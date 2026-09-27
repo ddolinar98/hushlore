@@ -112,9 +112,14 @@
               : 'That link has expired or has already been used. Ask for a new one.';
             return;
           }
+          var member = res.d.sub && res.d.sub.active;
           msg.className = 'lg-msg ok';
-          msg.textContent = 'Done — opening your library…';
-          setTimeout(function () { location.href = 'library.html'; }, 900);
+          msg.textContent = member
+            ? 'Password saved — opening your library…'
+            : 'Password saved. You are signed in.';
+          setTimeout(function () {
+            location.href = member ? 'library.html' : 'account.html';
+          }, 1100);
         })
         .catch(function () {
           btn.disabled = false;
