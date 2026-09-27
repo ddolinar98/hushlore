@@ -954,9 +954,38 @@ async function adminWishUpdate(request, env) {
   if (!['new', 'read', 'planned', 'recorded', 'declined'].includes(status)) {
     return json({ error: 'bad_status' }, 400);
   }
+
+  const before = await env.DB.prepare(
+    'SELECT w.status, w.body, u.email FROM wishes w JOIN users u ON u.id = w.user_id WHERE w.id = ?1'
+  ).bind(id).first();
+
   await env.DB.prepare('UPDATE wishes SET status = ?1, note = ?2 WHERE id = ?3')
     .bind(status, b.note == null ? null : String(b.note).slice(0, 500), id).run();
-  return json({ ok: true });
+
+  /* Someone asked for something and we recorded it. Telling them so is the
+     whole point of collecting wishes - a suggestion box nobody answers is
+     worse than no suggestion box. Sent once, on the change to 'recorded'. */
+  let mailed = false;
+  if (status === 'recorded' && before && before.status !== 'recorded') {
+    const url = new URL(request.url);
+    const asked = String(before.body || '').trim();
+    mailed = await sendOnce(env, url.origin, before.email, 'wish_recorded', id,
+      'You asked for this - we recorded it',
+      'Your wish is on your shelf',
+      ['A while ago you told us what you wanted to hear:',
+       '<em style="color:#6b5c66">&ldquo;' + escapeHtml(asked.slice(0, 400)) + '&rdquo;</em>',
+       'It has been recorded and it is waiting in your library now.',
+       'Keep them coming - this is how we decide what gets made next.'],
+      { href: url.origin + '/library', label: 'Listen to it' }, false);
+  }
+
+  return json({ ok: true, mailed });
+}
+
+function escapeHtml(t) {
+  return String(t).replace(/[&<>"]/g, function (c) {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c];
+  });
 }
 
 /* ═══════════════════════════ CCBill billing ═══════════════════════════

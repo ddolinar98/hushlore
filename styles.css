@@ -2846,3 +2846,50 @@ p {
 }
 .offer-banner strong { font-family: var(--sans); font-size: 15px; color: var(--cream); }
 .offer-banner span { font-family: var(--sans); font-size: 13px; color: var(--muted); }
+
+
+/* The one pick at the top of the library. */
+.tonight {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+  margin: 0 0 34px;
+}
+.tonight-art {
+  flex: 0 0 38%;
+  min-height: 240px;
+  background-size: cover;
+  background-position: center;
+}
+.tonight-body { flex: 1 1 auto; padding: 26px 26px 26px 0; display: flex; flex-direction: column; gap: 8px; }
+.tonight-eyebrow {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 700;
+}
+.tonight-title { font-family: var(--serif); font-size: clamp(26px, 4vw, 36px); font-weight: 400; color: var(--cream); margin: 2px 0 0; }
+.tonight-meta { font-family: var(--sans); font-size: 13.5px; color: var(--muted); margin: 0; }
+.tonight-tags { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 0; }
+.tonight-tags span {
+  font-family: var(--sans); font-size: 11.5px; color: #c1a7b8;
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px; padding: 3px 10px;
+}
+.tonight-play {
+  display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
+  margin-top: 14px; background: var(--gold); color: #16110d; border: none;
+  border-radius: 999px; font-family: var(--sans); font-weight: 600; font-size: 15px;
+  padding: 12px 26px; cursor: pointer;
+}
+.tonight-note { font-family: var(--sans); font-size: 12px; color: rgba(255,255,255,0.40); margin: 10px 0 0; }
+@media (max-width: 720px) {
+  .tonight { flex-direction: column; gap: 0; }
+  .tonight-art { flex: none; min-height: 200px; }
+  .tonight-body { padding: 22px; }
+}
