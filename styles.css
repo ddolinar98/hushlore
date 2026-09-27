@@ -2846,28 +2846,3 @@ p {
 }
 .offer-banner strong { font-family: var(--sans); font-size: 15px; color: var(--cream); }
 .offer-banner span { font-family: var(--sans); font-size: 13px; color: var(--muted); }
-
-
-/* Sits between the three ways and the price. */
-.why-section { max-width: 680px; margin: 0 auto 44px; padding: 0 clamp(16px, 4vw, 24px); }
-.why-section h2 {
-  font-family: var(--serif);
-  font-size: clamp(26px, 5vw, 34px);
-  font-weight: 400;
-  color: var(--cream);
-  text-align: center;
-  margin: 0 0 24px;
-}
-.why-list { display: flex; flex-direction: column; gap: 16px; }
-.why-list p {
-  font-family: var(--sans);
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--muted);
-  margin: 0;
-  padding: 16px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
-}
-.why-list strong { color: var(--cream); font-weight: 600; }
