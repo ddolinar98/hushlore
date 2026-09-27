@@ -49,6 +49,8 @@ export default {
       if (p === '/api/admin/grant')   return requirePost(request, () => adminGrant(request, env));
       if (p === '/api/subscribe')     return requirePost(request, () => subscribe(request, env));
       if (p === '/api/track')         return requirePost(request, () => trackEvent(request, env));
+      if (p === '/api/cron/emails')   return runEmailJobs(request, env);
+      if (p === '/api/email/unsubscribe') return emailUnsubscribe(request, env);
       if (p === '/api/admin/funnel')  return adminFunnel(request, env);
       if (p.startsWith('/audio/'))    return serveAudio(request, env, p.slice('/audio/'.length));
       if (p.startsWith('/preview/'))  return servePreview(request, env, p.slice('/preview/'.length));
@@ -420,6 +422,18 @@ async function subscribe(request, env) {
     const body = await request.json();
     const email = normEmail(body.email);
     if (!validEmail(email)) return json({ error: 'invalid email' }, 400);
+
+    // Also kept here. While these addresses lived only in MailerLite we could
+    // never write to them ourselves, which is why quiz visitors who did not buy
+    // heard nothing at all.
+    try {
+      await env.DB.prepare(
+        `INSERT INTO leads (email, branch, aud, created_at) VALUES (?1,?2,?3,?4)
+         ON CONFLICT(email) DO UPDATE SET branch = excluded.branch`
+      ).bind(email, String(body.branch || '').slice(0, 20) || null,
+             /^[MWLG]$/.test(String(body.aud || '')) ? body.aud : null, nowISO()).run();
+    } catch (_) {}
+
     if (!env.MAILERLITE_TOKEN) return json({ ok: false, skipped: true });
     const res = await fetch('https://connect.mailerlite.com/api/subscribers', {
       method: 'POST',
@@ -438,6 +452,157 @@ async function subscribe(request, env) {
 
 
 
+
+
+/* ═══════════════════════ automated email ═══════════════════════
+   Three messages, all of them earning their place:
+
+   abandoned_checkout - they registered, opened the payment form and did not
+     finish. The warmest person on the list, and today they hear nothing.
+   pre_renewal - three days before a card is charged again. It looks like
+     inviting a cancellation; it is cheaper than a chargeback from someone who
+     had forgotten they subscribed.
+   winback - a fortnight after access ran out.
+
+   A run inserts the log row first and only sends if that insert won. Two
+   overlapping runs therefore cannot send the same person the same thing twice.
+─────────────────────────────────────────────────────────────── */
+
+function mailShell(title, lines, cta, optoutUrl) {
+  return '<div style="font-family:Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;' +
+    'font-size:15px;line-height:1.65;color:#221820">' +
+    '<h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;margin:0 0 18px">' + title + '</h1>' +
+    lines.map(l => '<p style="margin:0 0 14px">' + l + '</p>').join('') +
+    (cta ? '<p style="margin:26px 0"><a href="' + cta.href + '" style="background:#c2496b;color:#fff;' +
+      'text-decoration:none;padding:13px 28px;border-radius:999px;display:inline-block;font-weight:600">' +
+      cta.label + '</a></p>' : '') +
+    '<p style="margin:28px 0 0;font-size:12px;color:#8a7a84">' +
+      'Hushlore &middot; Davor Dolinar s. p., Zasavska cesta 88, 1231 Ljubljana-Crnuce, Slovenia' +
+      (optoutUrl ? '<br /><a href="' + optoutUrl + '" style="color:#8a7a84">Stop these emails</a>' : '') +
+    '</p></div>';
+}
+
+/** Claims the right to send, then sends. Returns false if it was already sent. */
+async function sendOnce(env, origin, email, kind, ref, subject, title, lines, cta, marketing) {
+  try {
+    await env.DB.prepare(
+      'INSERT INTO email_log (id, email, kind, ref, created_at) VALUES (?1,?2,?3,?4,?5)'
+    ).bind(crypto.randomUUID(), email, kind, ref || '', nowISO()).run();
+  } catch (_) {
+    return false;                 // the unique index already has this one
+  }
+
+  const optout = marketing
+    ? origin + '/api/email/unsubscribe?e=' + encodeURIComponent(email)
+    : null;
+  const res = await sendMail(env, email, subject, mailShell(title, lines, cta, optout),
+    lines.join('\n\n').replace(/<[^>]+>/g, '') + (cta ? '\n\n' + cta.href : ''));
+
+  await env.DB.prepare(
+    'UPDATE email_log SET sent_at = ?1, error = ?2 WHERE email = ?3 AND kind = ?4 AND ref = ?5'
+  ).bind(res.ok ? nowISO() : null, res.ok ? null : String(res.status || 'skipped'),
+         email, kind, ref || '').run();
+  return res.ok;
+}
+
+/** One click, no login, works from any mailbox. */
+async function emailUnsubscribe(request, env) {
+  const email = normEmail(new URL(request.url).searchParams.get('e') || '');
+  if (validEmail(email)) {
+    await env.DB.prepare('UPDATE users SET email_optout = ?1 WHERE email = ?2').bind(nowISO(), email).run();
+    await env.DB.prepare('UPDATE leads SET optout = ?1 WHERE email = ?2').bind(nowISO(), email).run();
+  }
+  return new Response(
+    '<!doctype html><meta charset="utf-8"><title>Unsubscribed</title>' +
+    '<body style="font-family:Helvetica,Arial,sans-serif;background:#140d12;color:#f7f3f6;' +
+    'display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center">' +
+    '<div><h1 style="font-family:Georgia,serif;font-weight:400">You are unsubscribed</h1>' +
+    '<p style="color:#a98ea3">We will not send you any more of these. ' +
+    'Messages about a payment or your account still reach you.</p></div>',
+    { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+  );
+}
+
+async function runEmailJobs(request, env) {
+  const url = new URL(request.url);
+  if (!env.CRON_KEY || !safeEqual(url.searchParams.get('key') || '', env.CRON_KEY)) {
+    return new Response('forbidden', { status: 403 });
+  }
+  const origin = url.origin;
+  const now = Date.now();
+  const iso = (ms) => new Date(ms).toISOString();
+  const out = { abandoned_checkout: 0, pre_renewal: 0, winback: 0 };
+
+  /* ── they reached the payment form and did not finish ───────────── */
+  const abandoned = (await env.DB.prepare(
+    `SELECT u.email, c.id AS ref, c.detail AS plan
+       FROM purchase_consents c
+       JOIN users u ON u.id = c.user_id
+      WHERE c.kind = 'membership'
+        AND c.at < ?1 AND c.at > ?2
+        AND u.email_optout IS NULL
+        AND NOT EXISTS (SELECT 1 FROM subscriptions s
+                         WHERE s.user_id = c.user_id AND s.status = 'active' AND s.expires_at > ?3)
+      LIMIT 40`
+  ).bind(iso(now - 60 * 60 * 1000), iso(now - 3 * 86400 * 1000), nowISO()).all()).results || [];
+
+  for (const r of abandoned) {
+    const ok = await sendOnce(env, origin, r.email, 'abandoned_checkout', r.ref,
+      'Your Hushlore membership is one step away',
+      'You were nearly in',
+      ['You picked a membership and stopped at the payment page. Nothing was charged.',
+       'If something went wrong with the card, a different one usually goes through - some banks ' +
+       'decline a first attempt on anything they read as adult or foreign.',
+       'Your match is still waiting where you left it.'],
+      { href: origin + '/result#pricing', label: 'Finish signing up' }, true);
+    if (ok) out.abandoned_checkout++;
+  }
+
+  /* ── the card is charged again in three days ────────────────────── */
+  const renewing = (await env.DB.prepare(
+    `SELECT u.email, s.id AS ref, s.plan, s.expires_at
+       FROM subscriptions s JOIN users u ON u.id = s.user_id
+      WHERE s.status = 'active' AND s.cancelled_at IS NULL
+        AND s.expires_at > ?1 AND s.expires_at < ?2
+      LIMIT 40`
+  ).bind(nowISO(), iso(now + 3 * 86400 * 1000)).all()).results || [];
+
+  for (const r of renewing) {
+    const on = String(r.expires_at).slice(0, 10);
+    const ok = await sendOnce(env, origin, r.email, 'pre_renewal', r.ref,
+      'Your Hushlore membership renews on ' + on,
+      'A quick heads-up',
+      ['Your membership renews on <strong>' + on + '</strong> and the card on file will be charged again.',
+       'The line on your statement reads CCBill, not Hushlore.',
+       'If you would rather it did not renew, you can stop it from your account in one click. ' +
+       'What you have already paid for stays yours until the date above.'],
+      { href: origin + '/account', label: 'Manage my membership' }, false);
+    if (ok) out.pre_renewal++;
+  }
+
+  /* ── access ran out a fortnight ago ─────────────────────────────── */
+  const lapsed = (await env.DB.prepare(
+    `SELECT u.email, s.id AS ref
+       FROM subscriptions s JOIN users u ON u.id = s.user_id
+      WHERE s.expires_at < ?1 AND s.expires_at > ?2
+        AND u.email_optout IS NULL
+        AND NOT EXISTS (SELECT 1 FROM subscriptions s2
+                         WHERE s2.user_id = s.user_id AND s2.status = 'active' AND s2.expires_at > ?3)
+      LIMIT 40`
+  ).bind(iso(now - 14 * 86400 * 1000), iso(now - 21 * 86400 * 1000), nowISO()).all()).results || [];
+
+  for (const r of lapsed) {
+    const ok = await sendOnce(env, origin, r.email, 'winback', r.ref,
+      'There is new audio in Hushlore',
+      'It has been a couple of weeks',
+      ['Your membership ran out a fortnight ago. New recordings have been added since.',
+       'Everything you had is still on your shelf and comes straight back the moment you return.'],
+      { href: origin + '/result#pricing', label: 'Come back' }, true);
+    if (ok) out.winback++;
+  }
+
+  return json({ ok: true, sent: out });
+}
 
 /* ═══════════════════════════ funnel analytics ═══════════════════════════
    Replaces the third-party tracker that used to sit in these pages. Same
