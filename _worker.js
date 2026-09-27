@@ -44,6 +44,8 @@ export default {
       if (p === '/api/auth/login')    return requirePost(request, () => login(request, env));
       if (p === '/api/auth/logout')   return requirePost(request, () => logout());
       if (p === '/api/auth/me')       return me(request, env);
+      if (p === '/api/auth/forgot')   return requirePost(request, () => authForgot(request, env));
+      if (p === '/api/auth/reset')    return requirePost(request, () => authReset(request, env));
       if (p === '/api/admin/grant')   return requirePost(request, () => adminGrant(request, env));
       if (p === '/api/subscribe')     return requirePost(request, () => subscribe(request, env));
       if (p.startsWith('/audio/'))    return serveAudio(request, env, p.slice('/audio/'.length));
@@ -432,6 +434,104 @@ async function subscribe(request, env) {
   }
 }
 
+
+
+/* ═════════════════════════ password reset ═════════════════════════
+   The one flow a paying member cannot do without. Someone who cannot get back
+   into what they are being billed for goes to their bank, not to support.
+
+   The token is random, mailed once, and only its hash is stored, so a copy of
+   the table is useless to an attacker. It lasts an hour and works once.
+───────────────────────────────────────────────────────────────────── */
+
+const RESET_TTL_MIN   = 60;
+const RESET_PER_HOUR  = 3;
+const MAIL_FROM       = 'Hushlore <support@hushlorewhisper.com>';
+
+async function sha256Hex(text) {
+  const bits = await crypto.subtle.digest('SHA-256', enc.encode(text));
+  return [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function sendMail(env, to, subject, html, text) {
+  if (!env.RESEND_API_KEY) return { ok: false, skipped: true };
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + env.RESEND_API_KEY
+    },
+    body: JSON.stringify({ from: MAIL_FROM, to: [to], subject, html, text })
+  });
+  return { ok: res.ok, status: res.status, body: await res.text() };
+}
+
+/** Always answers the same way. Telling a stranger whether an address has an
+    account here is telling them something about that person. */
+async function authForgot(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const email = normEmail(b.email);
+  const same = json({ ok: true });
+  if (!validEmail(email)) return same;
+
+  const user = await env.DB.prepare('SELECT id FROM users WHERE email = ?1').bind(email).first();
+  if (!user) return same;
+
+  const since = new Date(Date.now() - 3600 * 1000).toISOString();
+  const recent = await env.DB.prepare(
+    'SELECT COUNT(*) AS n FROM password_resets WHERE user_id = ?1 AND created_at > ?2'
+  ).bind(user.id, since).first();
+  if (recent && recent.n >= RESET_PER_HOUR) return same;
+
+  const token = b64url(crypto.randomUUID() + ':' + crypto.randomUUID());
+  const expires = new Date(Date.now() + RESET_TTL_MIN * 60 * 1000).toISOString();
+  await env.DB.prepare(
+    'INSERT INTO password_resets (id, user_id, token_hash, expires_at, created_at) VALUES (?1,?2,?3,?4,?5)'
+  ).bind(crypto.randomUUID(), user.id, await sha256Hex(token), expires, nowISO()).run();
+
+  const link = new URL('/reset?token=' + encodeURIComponent(token), request.url).toString();
+  await sendMail(
+    env, email, 'Reset your Hushlore password',
+    '<div style="font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#221820">' +
+      '<p>Someone asked to reset the password for your Hushlore account.</p>' +
+      '<p><a href="' + link + '" style="background:#c2496b;color:#fff;text-decoration:none;' +
+      'padding:12px 24px;border-radius:999px;display:inline-block">Choose a new password</a></p>' +
+      '<p style="color:#6b5c66;font-size:13px">The link works once and expires in ' + RESET_TTL_MIN +
+      ' minutes. If this was not you, ignore this message and nothing changes.</p>' +
+    '</div>',
+    'Reset your Hushlore password: ' + link +
+    '\n\nThe link works once and expires in ' + RESET_TTL_MIN + ' minutes.'
+  );
+  return same;
+}
+
+async function authReset(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const token = String(b.token || '');
+  const password = String(b.password || '');
+  if (!token) return json({ error: 'bad_token' }, 400);
+  if (password.length < 8) return json({ error: 'weak_password' }, 400);
+
+  const row = await env.DB.prepare(
+    'SELECT id, user_id, expires_at, used_at FROM password_resets WHERE token_hash = ?1'
+  ).bind(await sha256Hex(token)).first();
+
+  if (!row || row.used_at || row.expires_at <= nowISO()) return json({ error: 'bad_token' }, 400);
+
+  const { hash, salt, iter } = await hashPassword(password);
+  await env.DB.prepare(
+    'UPDATE users SET pass_hash = ?1, pass_salt = ?2, pass_iter = ?3 WHERE id = ?4'
+  ).bind(hash, salt, iter, row.user_id).run();
+  await env.DB.prepare('UPDATE password_resets SET used_at = ?1 WHERE id = ?2')
+    .bind(nowISO(), row.id).run();
+  // Any other link that was still outstanding dies with it.
+  await env.DB.prepare(
+    'UPDATE password_resets SET used_at = ?1 WHERE user_id = ?2 AND used_at IS NULL'
+  ).bind(nowISO(), row.user_id).run();
+
+  return json({ ok: true }, 200,
+    { 'Set-Cookie': sessionCookie(await makeSession(env, row.user_id), SESSION_DAYS * 86400) });
+}
 
 /* ═══════════════════════════ listener wishes ═══════════════════════════
    A member writes what they would like to hear. It is stored and read by the

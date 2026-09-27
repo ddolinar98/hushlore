@@ -77,6 +77,8 @@
       <div class="lg-msg" id="msg"></div>
 
       <div class="lg-foot">
+        <a href="#" id="forgotLink">Forgot your password?</a>
+        <span aria-hidden="true"> &middot; </span>
         <a href="index.html">← Back to Hushlore</a>
       </div>
     </div>
@@ -164,6 +166,32 @@
         }
       }).catch(function () {
         btn.disabled = false;
+        msg.className = 'lg-msg err';
+        msg.textContent = 'Network problem. Please try again.';
+      });
+    });
+
+    /* Asking for a reset. The answer is the same whether or not the address has
+       an account here - anything else tells a stranger who is a member. */
+    document.getElementById('forgotLink').addEventListener('click', function (e) {
+      e.preventDefault();
+      var email = document.getElementById('email').value.trim();
+      msg.className = 'lg-msg';
+      if (!email) {
+        msg.className = 'lg-msg err';
+        msg.textContent = 'Put your email in the box above first.';
+        document.getElementById('email').focus();
+        return;
+      }
+      msg.textContent = 'Sending…';
+      fetch('/api/auth/forgot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      }).then(function () {
+        msg.className = 'lg-msg ok';
+        msg.textContent = 'If that address has an account, a reset link is on its way. It expires in an hour.';
+      }).catch(function () {
         msg.className = 'lg-msg err';
         msg.textContent = 'Network problem. Please try again.';
       });

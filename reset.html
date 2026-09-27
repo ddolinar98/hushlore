@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore — New password</title>
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20260927b" />
+
+  <style>
+    body { background: var(--bg); }
+    .lg-page { max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 80px; }
+    .lg-nav { display: flex; align-items: center; justify-content: center; padding: 22px 0 10px; }
+    .lg-logo { font-family: var(--serif); font-size: 26px; letter-spacing: 0.04em; color: var(--cream); font-weight: 500; text-decoration: none; }
+    .lg-logo span { color: var(--gold); }
+
+    .lg-card { max-width: 440px; margin: 56px auto 0; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 34px clamp(20px, 5vw, 36px) 30px; }
+
+    .lg-title { font-family: var(--serif); font-size: 30px; color: var(--cream); text-align: center; margin: 0 0 6px; font-weight: 500; }
+    .lg-sub { font-family: var(--sans); font-size: 14px; color: #a98ea3; text-align: center; margin: 0 0 26px; line-height: 1.5; }
+
+    .lg-tabs { display: flex; gap: 26px; justify-content: center; margin-bottom: 26px; }
+    .lg-tab { font-family: var(--sans); font-size: 16px; font-weight: 600; color: var(--muted); background: none; border: none; cursor: pointer; padding: 0 0 6px; }
+    .lg-tab.active { color: var(--cream); border-bottom: 2px solid var(--gold); }
+
+    .lg-field { margin-bottom: 16px; }
+    .lg-field label { display: block; font-family: var(--sans); font-size: 14px; color: #a98ea3; margin-bottom: 8px; }
+    .lg-field input { width: 100%; box-sizing: border-box; background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: 10px; padding: 15px 16px; color: var(--cream); font-family: var(--sans); font-size: 16px; }
+    .lg-field input:focus { outline: none; border-color: var(--gold); }
+    .lg-hint { font-family: var(--sans); font-size: 12px; color: #8d7684; margin-top: 6px; }
+
+    .lg-btn { width: 100%; background: var(--gold); color: #1a0d14; border: none; border-radius: 10px;
+      padding: 16px; font-family: var(--sans); font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 6px; }
+    .lg-btn:disabled { opacity: .6; cursor: default; }
+
+    .lg-msg { font-family: var(--sans); font-size: 14px; text-align: center; margin-top: 16px; line-height: 1.5; min-height: 20px; }
+    .lg-msg.err { color: #ff7a8a; }
+    .lg-msg.ok { color: #35d07f; }
+
+    .lg-foot { text-align: center; margin-top: 22px; border-top: 1px solid var(--border); padding-top: 20px; }
+    .lg-foot a { font-family: var(--sans); font-size: 14px; color: #c1a7b8; text-decoration: none; }
+    .lg-foot a:hover { color: var(--cream); }
+  </style>
+</head>
+<body>
+  <div class="lg-page">
+    <nav class="lg-nav"><a class="lg-logo" href="/">Hush<span>lore</span></a></nav>
+
+    <div class="lg-card">
+      <h1 class="lg-title" id="ttl">Choose a new password</h1>
+      <p class="lg-sub" id="sub">Pick something you have not used elsewhere.</p>
+
+      <form id="frm" autocomplete="on">
+        <div class="lg-field">
+          <label for="password">New password</label>
+          <input type="password" id="password" name="password" autocomplete="new-password"
+                 required placeholder="••••••••" />
+          <div class="lg-hint">At least 8 characters.</div>
+        </div>
+        <button class="lg-btn" id="btn" type="submit">Save and sign me in</button>
+      </form>
+
+      <div class="lg-msg" id="msg"></div>
+
+      <div class="lg-foot">
+        <a href="login.html">← Back to sign in</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    var token = new URLSearchParams(location.search).get('token') || '';
+    var btn = document.getElementById('btn');
+    var msg = document.getElementById('msg');
+
+    if (!token) {
+      document.getElementById('frm').style.display = 'none';
+      document.getElementById('ttl').textContent = 'That link is not complete';
+      document.getElementById('sub').textContent =
+        'Ask for a new one from the sign-in page and use the most recent email.';
+      return;
+    }
+
+    document.getElementById('frm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var pw = document.getElementById('password').value;
+      msg.className = 'lg-msg';
+      if (pw.length < 8) { msg.className = 'lg-msg err'; msg.textContent = 'At least 8 characters.'; return; }
+
+      btn.disabled = true; msg.textContent = 'One moment…';
+      fetch('/api/auth/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ token: token, password: pw })
+      }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) {
+            btn.disabled = false;
+            msg.className = 'lg-msg err';
+            /* An expired or already-used link is the common case, so say that
+               plainly instead of showing a generic failure. */
+            msg.textContent = res.d.error === 'weak_password'
+              ? 'Password must be at least 8 characters.'
+              : 'That link has expired or has already been used. Ask for a new one.';
+            return;
+          }
+          msg.className = 'lg-msg ok';
+          msg.textContent = 'Done — opening your library…';
+          setTimeout(function () { location.href = 'library.html'; }, 900);
+        })
+        .catch(function () {
+          btn.disabled = false;
+          msg.className = 'lg-msg err';
+          msg.textContent = 'Network problem. Please try again.';
+        });
+    });
+  })();
+  </script>
+</body>
+</html>
