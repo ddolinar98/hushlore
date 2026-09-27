@@ -463,7 +463,7 @@ async function subscribe(request, env) {
 ─────────────────────────────────────────────────────────────── */
 
 const OFFER_PERCENT = 20;
-const OFFER_HOURS   = 48;
+const OFFER_HOURS   = 120;   // five days: the sequence runs over three
 
 function discounted(cents, percent) {
   // Rounded to a price that looks like a price, not a division result.
@@ -471,7 +471,16 @@ function discounted(cents, percent) {
   return Math.max(295, Math.round((v - 1) / 100) * 100 + 99) / 100;
 }
 
+/** One live discount per person. Minting a fresh token for every message would
+    restart the clock each time and make the expiry we quote untrue. */
 async function makeOffer(env, email, percent) {
+  const existing = await env.DB.prepare(
+    `SELECT token FROM offers
+      WHERE email = ?1 AND used_at IS NULL AND expires_at > ?2
+      ORDER BY created_at DESC LIMIT 1`
+  ).bind(email, nowISO()).first();
+  if (existing) return existing.token;
+
   const token = b64url(crypto.randomUUID() + crypto.randomUUID()).slice(0, 32);
   await env.DB.prepare(
     'INSERT INTO offers (token, email, percent, expires_at, created_at) VALUES (?1,?2,?3,?4,?5)'
@@ -615,16 +624,21 @@ async function runEmailJobs(request, env) {
 
     for (const r of rows) {
       let ok = false;
+      // The same token in all three, so the deadline we quote is the real one.
+      const token = await makeOffer(env, r.email, OFFER_PERCENT);
+      const buy = origin + '/result?offer=' + token + '#pricing';
 
       if (stage.kind === 'abandoned_checkout') {
         ok = await sendOnce(env, origin, r.email, stage.kind, r.ref,
-          'You were one step away',
+          'You were one step away - here is ' + OFFER_PERCENT + '% off',
           'Your story is still waiting',
           ['You picked your membership and stopped at the payment page. Nothing was charged, ' +
            'and nothing is lost - your match is exactly where you left it.',
+           'So that the decision is not the hard part, I have put <strong>' + OFFER_PERCENT +
+           '% off your first term</strong> on the link below. It is yours alone and works once.',
            'If the card was the problem, it usually is not you. Some banks decline the first ' +
-           'attempt on anything they read as adult or foreign. A second card almost always goes through.'],
-          { href: origin + '/result#pricing', label: 'Pick up where you left off' }, true);
+           'attempt on anything they read as adult or foreign, and a second card goes straight through.'],
+          { href: buy, label: 'Finish with ' + OFFER_PERCENT + '% off' }, true);
       }
 
       if (stage.kind === 'abandoned_checkout_2') {
@@ -632,25 +646,24 @@ async function runEmailJobs(request, env) {
           'What it is actually like',
           'Headphones, lights low',
           ['Every story in Hushlore is read by a real person, never a machine. You hear the breath ' +
-           'between the words. That is the whole difference, and it is the part nobody can screenshot for you.',
-           'Yours are picked from what you answered, so you are not scrolling through someone ' +
-           'else\'s taste looking for something that fits.',
-           'And if you want to say something to the voice you have been listening to, you can. ' +
-           'She reads it herself and writes back - your first three messages come free with membership.'],
-          { href: origin + '/result#pricing', label: 'Listen tonight' }, true, MAIL_IMAGE);
+           'between the words, and that is the part nobody can show you in a screenshot.',
+           'Yours are chosen from what you answered, so you are not scrolling through someone ' +
+           'else\'s taste hoping something fits.',
+           'And you can write to the voice you have been listening to. She reads it herself and ' +
+           'answers - your first three messages come free with membership.',
+           'Your <strong>' + OFFER_PERCENT + '% off</strong> is still on the link below.'],
+          { href: buy, label: 'Listen tonight' }, true, MAIL_IMAGE);
       }
 
       if (stage.kind === 'abandoned_checkout_3') {
-        const token = await makeOffer(env, r.email, OFFER_PERCENT);
         ok = await sendOnce(env, origin, r.email, stage.kind, r.ref,
-          OFFER_PERCENT + '% off, for the next two days',
-          'Something to make the decision easy',
-          ['You looked, and you did not finish. Fair enough - so here is ' + OFFER_PERCENT +
-           '% off your first term, and then the decision is off your plate either way.',
-           'The link below is yours alone. It works once and expires in ' + OFFER_HOURS + ' hours.',
-           'After that it renews at the usual price, and you can stop it any time from your account.'],
-          { href: origin + '/result?offer=' + token + '#pricing',
-            label: 'Get ' + OFFER_PERCENT + '% off' }, true);
+          'Last day for your ' + OFFER_PERCENT + '% off',
+          'This one expires',
+          ['Your ' + OFFER_PERCENT + '% off runs out tomorrow, and then the price goes back to normal.',
+           'No hard feelings either way - but if you were going to, today is the day it costs least.',
+           'It applies to your first term. After that it renews at the usual price, and you can ' +
+           'stop that any time from your account in one click.'],
+          { href: buy, label: 'Use my ' + OFFER_PERCENT + '% off' }, true);
       }
 
       if (ok) out[stage.kind]++;
