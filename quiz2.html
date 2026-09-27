@@ -450,8 +450,11 @@ var SHARED = [
     opts: [
       { e: '👨', t: 'Men',            v: 'men'   },
       { e: '👩', t: 'Women',          v: 'women' },
-      { e: '👥', t: 'Both',           v: 'women' },
-      { e: '🌈', t: 'Something else', v: 'women' }
+      /* 'auto' is decided from the answer to q1. Sending everyone who says
+         Both to female voices put bisexual women in the smallest shelf we
+         have, where there are two recordings instead of ten. */
+      { e: '👥', t: 'Both',           v: 'auto'  },
+      { e: '🌈', t: 'Something else', v: 'auto'  }
     ]
   },
   {
@@ -880,6 +883,15 @@ function track(event, extras) {
 /* ════════════════════════════════════════
    STEP LOGIC
 ════════════════════════════════════════ */
+/* 'Both' and 'Something else' are settled by who the listener said they are:
+   a woman goes to male voices, anyone else to female voices. Guessing by their
+   own gender beats sending everyone the same way, and it keeps people out of
+   the shelf that has the least on it. */
+function resolveBranch(v) {
+  if (v !== 'auto') return v;
+  return answers['q1'] === 0 ? 'men' : 'women';
+}
+
 function branchArr() { return branch === 'men' ? MEN : WOMEN; }
 function loadingStep() { return 4 + branchArr().length; }
 function emailStep()   { return loadingStep() + 1; }
@@ -1006,7 +1018,7 @@ function pick(el, idx, multi) {
     if (btn) btn.disabled = (sel.length === 0);
   } else {
     answers[data.id] = idx;
-    if (data.branch) { branch = data.opts[idx].v; }
+    if (data.branch) { branch = resolveBranch(data.opts[idx].v); }
     document.querySelectorAll('.opt').forEach(function(o) { o.classList.remove('sel'); });
     el.classList.add('sel');
     track('answer', { step: step, question_id: data.id, answer_text: data.opts[idx].t });
