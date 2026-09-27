@@ -530,10 +530,10 @@ function mailShell(title, lines, cta, optoutUrl, image) {
       'text-decoration:none;padding:13px 28px;border-radius:999px;display:inline-block;font-weight:600">' +
       cta.label + '</a></p>' : '') +
     '<p style="margin:28px 0 0;font-size:12px;color:#8a7a84">' +
-      /* The postal address has to be here - it is what the law asks of marketing
-         mail - but the trading name is enough to carry it. */
-      'Hushlore &middot; Zasavska cesta 88, 1231 Ljubljana-Crnuce, Slovenia' +
-      (optoutUrl ? '<br /><a href="' + optoutUrl + '" style="color:#8a7a84">Stop these emails</a>' : '') +
+      /* Name only, at the owner's instruction. The postal address that marketing
+         mail is normally expected to carry sits on the contact page instead. */
+      'Hushlore &middot; <a href="https://hushlorewhisper.com/contact" style="color:#8a7a84">Contact</a>' +
+      (optoutUrl ? ' &middot; <a href="' + optoutUrl + '" style="color:#8a7a84">Stop these emails</a>' : '') +
     '</p></div>';
 }
 
