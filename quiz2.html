@@ -413,6 +413,7 @@
     }
     .shake { animation: shake 0.35s ease; }
   </style>
+  <script src="track.js?v=1"></script>
 </head>
 <body>
 
@@ -868,7 +869,13 @@ fetch('https://ipapi.co/json/')
 // The Supabase project this reported to was deleted, so every call 404'd on a
 // hostname that no longer resolves. Kept as a no-op because the quiz calls it
 // from a dozen places, and render() hangs off the same promise chain.
-function track(event, extras) {}
+/* Names are mapped to the ones the funnel report knows about. */
+function track(event, extras) {
+  var map = { quiz_start: 'quiz_start', step_view: 'quiz_step', email_submit: 'email_submit' };
+  var name = map[event];
+  if (!name || !window.hlTrack) return;   // 'answer' is detail we do not store
+  window.hlTrack(name, { step: (extras && extras.step) || 0 });
+}
 
 /* ════════════════════════════════════════
    STEP LOGIC

@@ -178,6 +178,8 @@ function advance() {
   const next = document.querySelector(`.quiz-question[data-question="${currentQuestion}"]`);
   if (next) {
     next.classList.add('active');
+    // Which question people reach is the one number that says where they leave.
+    if (window.hlTrack) window.hlTrack('quiz_step', { step: currentQuestion });
     updateProgress();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -295,6 +297,7 @@ function submitEmail(e) {
   } catch (_) {}
 
   if (typeof fbq !== 'undefined') fbq('track', 'Lead', { content_name: 'Quiz Email', content_category: outcome, currency: 'USD', value: 32.99 });
+  if (window.hlTrack) window.hlTrack('email_submit', { label: outcome });
 
   // Through our own worker: the MailerLite token lives as a Cloudflare secret,
   // not in a file the browser downloads.

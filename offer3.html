@@ -80,6 +80,7 @@
     .of-skip { display: block; text-align: center; margin: 26px auto 0; font-family: var(--sans); font-size: 14px; color: var(--muted); text-decoration: underline; }
     .of-skip:hover { color: #b79dae; }
   </style>
+  <script src="track.js?v=1"></script>
 </head>
 <body>
   <div class="of-wrap">
@@ -194,10 +195,9 @@
     /* Analytics */
     /* The analytics project this reported to was deleted, so the calls went
        nowhere. Kept as a no-op because the call sites below still run. */
-    function hlTrack() {}
-    hlTrack('offer3_view', { answer_text: 'ultimate-bundle' });
+        hlTrack('offer3_view', { label: 'ultimate-bundle' });
     document.querySelectorAll('#ofCtaTop, #ofCtaBottom').forEach(function (el) {
-      el.addEventListener('click', function () { hlTrack('offer3_click', { answer_text: 'ultimate-bundle' }); });
+      el.addEventListener('click', function () { hlTrack('offer3_click', { label: 'ultimate-bundle' }); });
     });
     document.getElementById('ofSkip').addEventListener('click', function () { hlTrack('offer3_skip', {}); });
   </script>

@@ -36,6 +36,7 @@
     .rt-small { font-size: 13px; color: rgba(255,255,255,0.42); margin-top: 30px; line-height: 1.7; }
     .rt-small a { color: rgba(255,255,255,0.62); }
   </style>
+  <script src="track.js?v=1"></script>
 </head>
 <body>
   <div class="rt">
@@ -77,6 +78,7 @@
   (function () {
     function report(value, name) {
       if (typeof fbq === 'undefined' || !value) return;
+      if (window.hlTrack) window.hlTrack('purchase', { label: name });
       fbq('track', 'Purchase', {
         content_name: name, content_type: 'product',
         currency: 'USD', value: Number(value)

@@ -24,6 +24,9 @@
   /* Opening the quiz is the first real step of the funnel, so it gets an event
      of its own. PageView alone cannot be optimised against, because every page
      on the site fires it. */
+  window.addEventListener('load', function () {
+    if (window.hlTrack) window.hlTrack('quiz_start', { step: 1 });
+  });
   fbq('track', 'ViewContent', {
     content_name: 'Hushlore Quiz',
     content_category: 'quiz',
@@ -32,6 +35,7 @@
   });
   </script>
   <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1813144372979449&ev=PageView&noscript=1"/></noscript>
+  <script src="track.js?v=1"></script>
 </head>
 <body>
 

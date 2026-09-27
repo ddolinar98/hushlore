@@ -93,6 +93,7 @@
     .of-skip { display: block; text-align: center; margin: 26px auto 0; font-family: var(--sans); font-size: 14px; color: var(--muted); text-decoration: underline; }
     .of-skip:hover { color: #b79dae; }
   </style>
+  <script src="track.js?v=1"></script>
 </head>
 <body>
   <div class="of-wrap">
@@ -234,13 +235,12 @@
        ========================================================= */
     /* The analytics project this reported to was deleted, so the calls went
        nowhere. Kept as a no-op because the call sites below still run. */
-    function hlTrack() {}
-    hlTrack('offer_view', { answer_text: 'forbidden-collection' });
+        window.hlTrack && window.hlTrack('offer_view', { label: 'forbidden-collection' });
 
     document.querySelectorAll('#ofCtaTop, #ofCtaBottom').forEach(function (el) {
-      el.addEventListener('click', function () { hlTrack('offer_click', { answer_text: 'forbidden-collection' }); });
+      el.addEventListener('click', function () { window.hlTrack && window.hlTrack('offer_click', { label: 'forbidden-collection' }); });
     });
-    document.getElementById('ofSkip').addEventListener('click', function () { hlTrack('offer_skip', { answer_text: 'forbidden-collection' }); });
+    document.getElementById('ofSkip').addEventListener('click', function () { window.hlTrack && window.hlTrack('offer_skip', { label: 'forbidden-collection' }); });
   </script>
 </body>
 </html>

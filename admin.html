@@ -148,6 +148,18 @@
     .cx-done { background:var(--gold); border:none; border-radius:8px; padding:9px 14px; color:#fff;
       font-family:var(--sans); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
     .cx-none { font-family:var(--sans); font-size:13px; color:var(--muted); padding:8px 0; }
+    .fn-row { display:flex; align-items:center; gap:12px; padding:9px 0; border-top:1px solid var(--border);
+      font-family:var(--sans); font-size:13.5px; color:#c1a7b8; }
+    .fn-row .n { min-width:170px; color:var(--cream); }
+    .fn-bar { flex:1 1 auto; height:8px; border-radius:6px; background:var(--bg-elevated); overflow:hidden; }
+    .fn-bar i { display:block; height:100%; background:var(--gold); }
+    .fn-row .v { min-width:96px; text-align:right; }
+    .fn-row .v small { color:var(--muted); }
+    .fn-split { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:22px; margin-top:18px; }
+    .fn-split h3 { font-family:var(--sans); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+      color:var(--muted); margin:0 0 6px; font-weight:700; }
+    #fnDays { background:var(--bg-elevated); border:1px solid var(--border); border-radius:8px;
+      color:var(--cream); font-family:var(--sans); font-size:13px; padding:6px 10px; cursor:pointer; }
     .cx-old { margin-top:14px; font-family:var(--sans); font-size:12px; color:var(--muted); }
     /* a wish is several lines, so its row lines up at the top, not the middle */
     #wishList .cx-item { align-items:flex-start; }
@@ -189,6 +201,27 @@
     </p>
     <div id="cxList"></div>
     <div class="cx-old" id="cxOld"></div>
+  </div>
+
+  <div class="cx" id="funnel">
+    <div class="cx-head">
+      <h2>Funnel</h2>
+      <select id="fnDays">
+        <option value="1">today</option>
+        <option value="7" selected>last 7 days</option>
+        <option value="30">last 30 days</option>
+      </select>
+    </div>
+    <p class="cx-note">
+      Counted as people, not clicks - one visitor who reloads the quiz is still
+      one. Sales are read from the payment records, not from the browser, so a
+      purchase the browser failed to report still shows here.
+    </p>
+    <div id="fnSteps"></div>
+    <div class="fn-split">
+      <div><h3>Where they drop out</h3><div id="fnQuiz"></div></div>
+      <div><h3>Where they came from</h3><div id="fnRefs"></div></div>
+    </div>
   </div>
 
   <div class="cx" id="wishes">
@@ -259,6 +292,55 @@
   var state = { threads: [], creators: [], active: null };
 
 
+
+  /* ── the funnel ─────────────────────────────────────────────────── */
+  var FUNNEL = [
+    ['quiz_start',     'Quiz opened'],
+    ['email_submit',   'Email given'],
+    ['result_view',    'Match seen'],
+    ['checkout_click', 'Checkout opened'],
+    ['purchase',       'Paid']
+  ];
+
+  function bar(label, people, top, extra) {
+    var pct = top ? Math.round((people / top) * 100) : 0;
+    return '<div class="fn-row">' +
+      '<span class="n">' + esc(label) + '</span>' +
+      '<span class="fn-bar"><i style="width:' + pct + '%"></i></span>' +
+      '<span class="v">' + people + (extra ? ' <small>' + extra + '</small>' : '') + '</span>' +
+    '</div>';
+  }
+
+  function loadFunnel() {
+    var days = $('fnDays').value;
+    api('/api/admin/funnel?days=' + days).then(function (r) {
+      if (!r.ok) return;
+      var d = r.d, m = {};
+      (d.by_name || []).forEach(function (x) { m[x.name] = x.people; });
+      // The browser can miss a purchase; the payment record cannot.
+      m.purchase = Math.max(m.purchase || 0, d.sales || 0);
+
+      var top = m[FUNNEL[0][0]] || 0;
+      $('fnSteps').innerHTML = FUNNEL.map(function (f, i) {
+        var people = m[f[0]] || 0;
+        var prev = i ? (m[FUNNEL[i - 1][0]] || 0) : 0;
+        var drop = (i && prev) ? ' &middot; ' + Math.round((people / prev) * 100) + '% of previous' : '';
+        return bar(f[1], people, top, drop);
+      }).join('') || '<p class="cx-note">Nothing yet.</p>';
+
+      var steps = d.steps || [];
+      var stepTop = steps.length ? steps[0].people : 0;
+      $('fnQuiz').innerHTML = steps.length
+        ? steps.map(function (x) { return bar('Question ' + x.step, x.people, stepTop, ''); }).join('')
+        : '<p class="cx-note">No quiz steps recorded yet.</p>';
+
+      $('fnRefs').innerHTML = (d.refs || []).length
+        ? d.refs.map(function (x) { return bar(x.ref, x.people, d.refs[0].people, ''); }).join('')
+        : '<p class="cx-note">Nothing yet.</p>';
+    });
+  }
+  $('fnDays').addEventListener('change', loadFunnel);
+  loadFunnel();
 
   /* ── what listeners asked to hear ───────────────────────────────── */
   var WISH_STATES = ['new', 'read', 'planned', 'recorded', 'declined'];

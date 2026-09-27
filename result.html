@@ -24,6 +24,7 @@
   fbq('track', 'InitiateCheckout', { currency: 'USD', value: 32.99 });
   </script>
   <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1813144372979449&ev=PageView&noscript=1"/></noscript>
+  <script src="track.js?v=1"></script>
 </head>
 <body>
 
@@ -471,6 +472,7 @@
       return 'slow-devotion';
     }
 
+    if (window.hlTrack) window.hlTrack('result_view', { label: getOutcome() });
     const key = getOutcome();
     try { localStorage.setItem('hushlore_outcome', key); } catch (_) {}
 
@@ -603,6 +605,7 @@
           plan: sel.dataset.tier, value: Number(sel.dataset.price)
         }));
       } catch (_) {}
+      if (window.hlTrack) window.hlTrack('checkout_click', { label: sel.dataset.tier });
       continueBtn.disabled = true;
       continueBtn.textContent = 'One moment…';
       location.href = '/api/ccbill/checkout?plan=' + sel.dataset.tier;

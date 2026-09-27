@@ -48,6 +48,8 @@ export default {
       if (p === '/api/auth/reset')    return requirePost(request, () => authReset(request, env));
       if (p === '/api/admin/grant')   return requirePost(request, () => adminGrant(request, env));
       if (p === '/api/subscribe')     return requirePost(request, () => subscribe(request, env));
+      if (p === '/api/track')         return requirePost(request, () => trackEvent(request, env));
+      if (p === '/api/admin/funnel')  return adminFunnel(request, env);
       if (p.startsWith('/audio/'))    return serveAudio(request, env, p.slice('/audio/'.length));
       if (p.startsWith('/preview/'))  return servePreview(request, env, p.slice('/preview/'.length));
       if (p === '/api/waitlist')      return requirePost(request, () => joinWaitlist(request, env));
@@ -435,6 +437,90 @@ async function subscribe(request, env) {
 }
 
 
+
+
+/* ═══════════════════════════ funnel analytics ═══════════════════════════
+   Replaces the third-party tracker that used to sit in these pages. Same
+   questions answered, but the request goes to our own domain, so a blocker
+   does not drop it, and there is no key in the page to leak.
+
+   Deliberately not stored: names, addresses, and anything about what a person
+   listened to. A funnel needs counts, not a profile.
+─────────────────────────────────────────────────────────────────────── */
+
+const EVENT_NAMES = [
+  'quiz_start', 'quiz_step', 'email_submit', 'result_view',
+  'checkout_click', 'offer_view', 'offer_click', 'offer_skip', 'purchase'
+];
+
+async function trackEvent(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const name = String(b.name || '');
+  if (!EVENT_NAMES.includes(name)) return json({ ok: true, ignored: true });
+
+  const sid = String(b.sid || '').slice(0, 40);
+  if (!sid) return json({ ok: true, ignored: true });
+
+  let refHost = null;
+  try { if (b.ref) refHost = new URL(String(b.ref)).hostname.slice(0, 80); } catch (_) {}
+
+  const step = Number.isFinite(Number(b.step)) ? Math.trunc(Number(b.step)) : null;
+  const clip = (v, n) => (v == null ? null : String(v).slice(0, n));
+
+  try {
+    await env.DB.prepare(
+      `INSERT INTO events (id, session_id, user_id, name, step, label, aud, path, ref, created_at)
+       VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)`
+    ).bind(
+      crypto.randomUUID(), sid, await readSession(env, request).catch(() => null),
+      name, step, clip(b.label, 60),
+      /^[MWLG]$/.test(String(b.aud || '')) ? b.aud : null,
+      clip(b.path, 120), refHost, nowISO()
+    ).run();
+  } catch (_) {
+    // Analytics must never be the reason a page misbehaves.
+  }
+  return json({ ok: true });
+}
+
+/** The funnel, for the admin console. `?days=` defaults to the last week. */
+async function adminFunnel(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+
+  const days = Math.min(90, Math.max(1, Number(new URL(request.url).searchParams.get('days')) || 7));
+  const since = new Date(Date.now() - days * 86400 * 1000).toISOString();
+
+  // People, not events: someone who reloads the quiz is still one person.
+  const byName = (await env.DB.prepare(
+    `SELECT name, COUNT(DISTINCT session_id) AS people, COUNT(*) AS hits
+       FROM events WHERE created_at > ?1 GROUP BY name`
+  ).bind(since).all()).results || [];
+
+  const steps = (await env.DB.prepare(
+    `SELECT step, COUNT(DISTINCT session_id) AS people
+       FROM events WHERE name = 'quiz_step' AND created_at > ?1 AND step IS NOT NULL
+      GROUP BY step ORDER BY step`
+  ).bind(since).all()).results || [];
+
+  const byAud = (await env.DB.prepare(
+    `SELECT aud, COUNT(DISTINCT session_id) AS people
+       FROM events WHERE created_at > ?1 AND aud IS NOT NULL GROUP BY aud`
+  ).bind(since).all()).results || [];
+
+  const refs = (await env.DB.prepare(
+    `SELECT COALESCE(ref, 'direct') AS ref, COUNT(DISTINCT session_id) AS people
+       FROM events WHERE created_at > ?1 GROUP BY ref ORDER BY people DESC LIMIT 10`
+  ).bind(since).all()).results || [];
+
+  // Sales come from the payments table, not from the browser: a purchase that
+  // the browser failed to report still happened.
+  const sales = (await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM payment_events
+      WHERE event = 'NewSaleSuccess' AND created_at > ?1`
+  ).bind(since).first()) || { n: 0 };
+
+  return json({ days, by_name: byName, steps, by_aud: byAud, refs, sales: sales.n });
+}
 
 /* ═════════════════════════ password reset ═════════════════════════
    The one flow a paying member cannot do without. Someone who cannot get back
