@@ -69,6 +69,7 @@ export default {
       if (p === '/api/chat/send')          return requirePost(request, () => chatSend(request, env));
       if (p === '/api/chat/order')         return requirePost(request, () => chatCreateOrder(request, env));
       if (p === '/api/chat/order-status')  return chatOrderStatus(request, env);
+      if (p === '/api/chat/promo')        return chatPromo(request, env);
       if (p === '/api/admin/orders')       return adminOrders(request, env);
       if (p === '/api/admin/order-paid')   return requirePost(request, () => adminOrderPaid(request, env));
 
@@ -1318,8 +1319,32 @@ const CURRENCY = 'USD';           // everything on the site is priced in dollars
 const BUNDLES = {
   b25:  { credits: 25,  price_cents:  999, link: '' },
   b60:  { credits: 60,  price_cents: 1999, link: '' },
-  b150: { credits: 150, price_cents: 3999, link: '' }
+  b150: { credits: 150, price_cents: 3999, link: '' },
+  /* Half price, once per account, and only before the first credits are ever
+     bought. Thirty messages at the b25 rate would be about $11.99. */
+  promo30: { credits: 30, price_cents: 599, link: '', firstTimeOnly: true }
 };
+
+/** True while this listener has never completed a credit purchase. */
+async function creditsVirgin(env, uid) {
+  const row = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM chat_orders WHERE user_id = ?1 AND status = 'paid'"
+  ).bind(uid).first();
+  return !row || !row.n;
+}
+
+/** Drives the nudge in the library and the offer inside the buy panel. */
+async function chatPromo(request, env) {
+  const uid = await readSession(env, request);
+  if (!uid) return json({ eligible: false });
+  if (!await activeSub(env, uid)) return json({ eligible: false });
+  const b = BUNDLES.promo30;
+  return json({
+    eligible: await creditsVirgin(env, uid),
+    bundle: 'promo30', credits: b.credits, price_cents: b.price_cents,
+    usual_cents: 1199
+  });
+}
 
 async function chatCreateOrder(request, env) {
   const uid = await readSession(env, request);
@@ -1329,6 +1354,11 @@ async function chatCreateOrder(request, env) {
   const b = await request.json().catch(() => ({}));
   const bundle = BUNDLES[String(b.bundle || '')];
   if (!bundle) return json({ error: 'unknown_bundle' }, 400);
+  // The half-price bundle is checked here, not in the page, because the page
+  // is the one thing a buyer can edit.
+  if (bundle.firstTimeOnly && !await creditsVirgin(env, uid)) {
+    return json({ error: 'promo_used' }, 403);
+  }
 
   const id = crypto.randomUUID();
   await env.DB.prepare(

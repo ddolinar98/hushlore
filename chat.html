@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20260927a" />
+  <link rel="stylesheet" href="styles.css?v=20260927b" />
   <style>
     body { background: var(--bg); }
     .ch-page { max-width: 1080px; margin: 0 auto; padding: 0 clamp(16px,4vw,40px) 60px; }
@@ -323,10 +323,31 @@
 
   /* buy credits */
   function openBuy() {
+    // The half-price first bundle is offered only while the server says this
+    // account still qualifies; it also refuses it there if the page is edited.
+    api('/api/chat/promo').then(function (r) {
+      var list = BUNDLES.slice();
+      if (r.ok && r.d && r.d.eligible) {
+        list.unshift({
+          id: 'promo30', credits: r.d.credits,
+          price: '$' + (r.d.price_cents / 100).toFixed(2),
+          was: '$' + (r.d.usual_cents / 100).toFixed(2),
+          each: 'half price, first purchase only', first: true
+        });
+      }
+      paintBundles(list);
+    }).catch(function () { paintBundles(BUNDLES.slice()); });
+    $('ov').classList.add('open');
+  }
+
+  function paintBundles(BUNDLES) {
     $('bundles').innerHTML = BUNDLES.map(function (b, i) {
-      return '<div class="bundle" data-i="' + i + '"><div><div class="l">' + b.credits + ' messages' +
-             (b.best ? ' <span class="best">best value</span>' : '') + '</div>' +
-             '<div class="each">' + b.each + '</div></div><div class="r">' + b.price + '</div></div>';
+      return '<div class="bundle' + (b.first ? ' promo' : '') + '" data-i="' + i + '">' +
+             '<div><div class="l">' + b.credits + ' messages' +
+             (b.best ? ' <span class="best">best value</span>' : '') +
+             (b.first ? ' <span class="best">50% off</span>' : '') + '</div>' +
+             '<div class="each">' + b.each + '</div></div>' +
+             '<div class="r">' + (b.was ? '<s>' + b.was + '</s> ' : '') + b.price + '</div></div>';
     }).join('');
     [].forEach.call($('bundles').querySelectorAll('.bundle'), function (el) {
       el.onclick = function () {
@@ -350,7 +371,6 @@
           });
       };
     });
-    $('ov').classList.add('open');
   }
   $('buyBtn').onclick = openBuy;
   $('ovClose').onclick = function(){ $('ov').classList.remove('open'); };

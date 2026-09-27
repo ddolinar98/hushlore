@@ -2769,3 +2769,63 @@ p {
   line-height: 1.6;
   margin: 16px 0 0;
 }
+
+
+/* The creator-chat nudge in the corner of the library. */
+.nudge {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 60;
+  width: min(320px, calc(100vw - 40px));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: #1a1016;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+  padding: 18px 18px 16px;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+.nudge.on { opacity: 1; transform: translateY(0); }
+.nudge h4 {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 500;
+  color: var(--cream);
+  margin: 0 0 6px;
+}
+.nudge p {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #a98ea3;
+  margin: 0 0 14px;
+}
+.nudge p s { opacity: 0.6; }
+.nudge-go {
+  display: inline-block;
+  background: var(--gold);
+  color: #16110d;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  padding: 9px 20px;
+  border-radius: 999px;
+}
+.nudge-x {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.nudge-x:hover { color: var(--cream); }
+.bundle.promo { border-color: var(--gold); }
+.bundle .r s { opacity: 0.55; font-weight: 400; margin-right: 4px; }
