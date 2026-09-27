@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20260926e" />
+  <link rel="stylesheet" href="styles.css?v=20260927a" />
   <style>
     body { background: var(--bg); }
     .ad-page { max-width:1240px; margin:0 auto; padding:0 clamp(16px,3vw,32px) 60px; }
@@ -149,6 +149,13 @@
       font-family:var(--sans); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
     .cx-none { font-family:var(--sans); font-size:13px; color:var(--muted); padding:8px 0; }
     .cx-old { margin-top:14px; font-family:var(--sans); font-size:12px; color:var(--muted); }
+    /* a wish is several lines, so its row lines up at the top, not the middle */
+    #wishList .cx-item { align-items:flex-start; }
+    .cx-left { flex:1 1 320px; display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .cx-left strong { color:var(--cream); font-weight:600; }
+    .cx-left span { font-size:12px; color:var(--muted); }
+    .wishStatus { background:var(--bg-elevated); border:1px solid var(--border); border-radius:8px;
+      color:var(--cream); font-family:var(--sans); font-size:13px; padding:8px 10px; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -182,6 +189,18 @@
     </p>
     <div id="cxList"></div>
     <div class="cx-old" id="cxOld"></div>
+  </div>
+
+  <div class="cx" id="wishes">
+    <div class="cx-head">
+      <h2>What listeners want to hear</h2>
+      <span class="cx-count" id="wishCount">0</span>
+    </div>
+    <p class="cx-note">
+      Written by people who have already paid, so this is the best guide you have
+      to what to record next. Mark one as planned once it is with a creator.
+    </p>
+    <div id="wishList"></div>
   </div>
 
   <div class="inc" id="incidents">
@@ -240,6 +259,46 @@
   var state = { threads: [], creators: [], active: null };
 
 
+
+  /* ── what listeners asked to hear ───────────────────────────────── */
+  var WISH_STATES = ['new', 'read', 'planned', 'recorded', 'declined'];
+  var AUD_LABEL = { M: 'man → woman', W: 'woman → man', L: 'woman → woman', G: 'man → man' };
+
+  function loadWishes() {
+    api('/api/admin/wishes').then(function (r) {
+      if (!r.ok) return;
+      var all = r.d.wishes || [];
+      var fresh = all.filter(function (w) { return w.status === 'new'; });
+      $('wishCount').textContent = fresh.length ? fresh.length + ' new' : 'nothing new';
+
+      $('wishList').innerHTML = all.length ? all.map(function (w) {
+        return '<div class="cx-item" data-id="' + esc(w.id) + '">' +
+          '<div class="cx-left">' +
+            '<strong>' + esc(w.email) + '</strong>' +
+            '<span>' + when(w.created_at) +
+              (w.aud && AUD_LABEL[w.aud] ? ' &middot; ' + AUD_LABEL[w.aud] : '') + '</span>' +
+            '<p style="margin:8px 0 0;white-space:pre-wrap;line-height:1.55">' + esc(w.body) + '</p>' +
+          '</div>' +
+          '<select class="wishStatus">' + WISH_STATES.map(function (st) {
+            return '<option value="' + st + '"' + (st === w.status ? ' selected' : '') + '>' + st + '</option>';
+          }).join('') + '</select>' +
+        '</div>';
+      }).join('') : '<p class="cx-note">Nothing yet.</p>';
+
+      [].forEach.call($('wishList').querySelectorAll('.wishStatus'), function (sel) {
+        sel.addEventListener('change', function () {
+          var id = sel.closest('.cx-item').getAttribute('data-id');
+          sel.disabled = true;
+          api('/api/admin/wish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id, status: sel.value })
+          }).then(function () { loadWishes(); });
+        });
+      });
+    });
+  }
+  loadWishes();
 
   /* ── cancellations awaiting action at the processor ─────────────── */
   function loadCancellations() {

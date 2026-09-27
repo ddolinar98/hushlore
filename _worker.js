@@ -51,6 +51,9 @@ export default {
       if (p === '/api/waitlist')      return requirePost(request, () => joinWaitlist(request, env));
       if (p === '/api/sub/cancel')    return requirePost(request, () => subCancel(request, env));
       if (p === '/api/sub/resume')    return requirePost(request, () => subResume(request, env));
+      if (p === '/api/wishes')        return requirePost(request, () => wishAdd(request, env));
+      if (p === '/api/admin/wishes')  return adminWishes(request, env);
+      if (p === '/api/admin/wish')    return requirePost(request, () => adminWishUpdate(request, env));
 
       // ── CCBill ────────────────────────────────────────────────────
       if (p === '/api/ccbill/checkout') return ccbillCheckout(request, env);
@@ -426,6 +429,67 @@ async function subscribe(request, env) {
   } catch (e) {
     return json({ error: 'bad_request' }, 400);
   }
+}
+
+
+/* ═══════════════════════════ listener wishes ═══════════════════════════
+   A member writes what they would like to hear. It is stored and read by the
+   admin, and nothing is promised back - the copy on the page says so, because
+   a wish that reads like an order is a refund waiting to happen.
+─────────────────────────────────────────────────────────────────────── */
+
+const WISH_MIN = 10;
+const WISH_MAX = 1200;
+const WISH_PER_DAY = 5;      // enough for anyone with something to say
+
+async function wishAdd(request, env) {
+  const uid = await readSession(env, request);
+  if (!uid) return json({ error: 'auth_required' }, 401);
+  if (!await activeSub(env, uid)) return json({ error: 'subscription_required' }, 402);
+
+  const b = await request.json().catch(() => ({}));
+  const body = String(b.body || '').trim();
+  if (body.length < WISH_MIN) return json({ error: 'too_short' }, 400);
+  if (body.length > WISH_MAX) return json({ error: 'too_long' }, 400);
+
+  const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  const recent = await env.DB.prepare(
+    'SELECT COUNT(*) AS n FROM wishes WHERE user_id = ?1 AND created_at > ?2'
+  ).bind(uid, since).first();
+  if (recent && recent.n >= WISH_PER_DAY) return json({ error: 'too_many' }, 429);
+
+  const aud = /^[MWLG]$/.test(String(b.aud || '')) ? b.aud : null;
+  await env.DB.prepare(
+    'INSERT INTO wishes (id, user_id, aud, body, status, created_at) VALUES (?1,?2,?3,?4,?5,?6)'
+  ).bind(crypto.randomUUID(), uid, aud, body, 'new', nowISO()).run();
+
+  return json({ ok: true });
+}
+
+/** The wish list for the admin console, newest first. */
+async function adminWishes(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const r = await env.DB.prepare(
+    `SELECT w.id, w.aud, w.body, w.status, w.note, w.created_at, u.email
+       FROM wishes w JOIN users u ON u.id = w.user_id
+      ORDER BY CASE w.status WHEN 'new' THEN 0 ELSE 1 END, w.created_at DESC
+      LIMIT 200`
+  ).all();
+  return json({ wishes: r.results || [] });
+}
+
+async function adminWishUpdate(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const b = await request.json().catch(() => ({}));
+  const id = String(b.id || '');
+  const status = String(b.status || '');
+  if (!id) return json({ error: 'missing_id' }, 400);
+  if (!['new', 'read', 'planned', 'recorded', 'declined'].includes(status)) {
+    return json({ error: 'bad_status' }, 400);
+  }
+  await env.DB.prepare('UPDATE wishes SET status = ?1, note = ?2 WHERE id = ?3')
+    .bind(status, b.note == null ? null : String(b.note).slice(0, 500), id).run();
+  return json({ ok: true });
 }
 
 /* ═══════════════════════════ CCBill billing ═══════════════════════════

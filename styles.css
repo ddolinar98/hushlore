@@ -2701,3 +2701,71 @@ p {
   border-color: var(--gold);
   background: rgba(212, 175, 120, 0.06);
 }
+
+
+/* Coming soon and the wish box at the foot of the library. */
+.wish-block .wish-lead {
+  font-family: var(--sans);
+  color: #a98ea3;
+  max-width: 620px;
+  line-height: 1.6;
+  margin: 0 0 22px;
+}
+.wish-card {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 24px;
+  max-width: 680px;
+}
+.wish-card h3 {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--cream);
+  margin: 0 0 8px;
+  font-weight: 500;
+}
+.wish-card p {
+  font-family: var(--sans);
+  font-size: 14.5px;
+  color: #a98ea3;
+  line-height: 1.65;
+  margin: 0 0 16px;
+}
+.wish-card textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  color: var(--cream);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  padding: 12px 14px;
+  resize: vertical;
+}
+.wish-card textarea:focus { outline: none; border-color: var(--gold); }
+.wish-row { display: flex; align-items: center; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
+.wish-card button {
+  background: var(--gold);
+  color: #16110d;
+  border: none;
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 11px 26px;
+  cursor: pointer;
+}
+.wish-card button[disabled] { opacity: 0.5; cursor: not-allowed; }
+.wish-msg { font-family: var(--sans); font-size: 13.5px; color: #a98ea3; }
+.wish-msg.ok { color: #7ddba3; }
+.wish-msg.err { color: #e0708f; }
+.wish-foot {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.40);
+  line-height: 1.6;
+  margin: 16px 0 0;
+}

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20260926e" />
+  <link rel="stylesheet" href="styles.css?v=20260927a" />
 
   <style>
     body { background: var(--bg); }
@@ -450,8 +450,84 @@
       if (pov.length)      html += rowHTML('POV Experiences', true, 'immersive', pov);
       if (trending.length) html += rowHTML('Trending', true, 'most played', trending);
       if (popular.length)  html += rowHTML('Popular This Week', true, 'loved right now', popular);
+      html += comingSoonHTML();
       document.getElementById('rows').innerHTML = html;
+      wireWishForm();
     }
+
+    /* What is on the way, and a place to say what you want to hear. The wish
+       box deliberately promises nothing back - a wish that reads like an order
+       is a refund argument later. */
+    function comingSoonHTML() {
+      return '' +
+        '<section class="lib-row wish-block">' +
+          '<div class="lib-row-head"><h2>Coming soon</h2>' +
+            '<span class="sub">new recordings every month</span></div>' +
+          '<p class="wish-lead">' +
+            'New stories are recorded and added to your shelf every month. ' +
+            'Nothing you already have ever goes away.' +
+          '</p>' +
+
+          '<div class="wish-card">' +
+            '<h3>Your wishes</h3>' +
+            '<p>' +
+              'Tell us what you would like to hear. A scene, a setting, a mood, ' +
+              'a way you want to be spoken to. We read every one and it shapes ' +
+              'what gets recorded next.' +
+            '</p>' +
+            '<textarea id="wishText" rows="4" maxlength="1200" ' +
+              'placeholder="I would love a story where..."></textarea>' +
+            '<div class="wish-row">' +
+              '<button type="button" id="wishSend">Send my wish</button>' +
+              '<span class="wish-msg" id="wishMsg"></span>' +
+            '</div>' +
+            '<p class="wish-foot">' +
+              'We cannot promise a particular story, and this is not a ' +
+              'commission &mdash; for a recording made only for you, use a ' +
+              'personal recording from your account.' +
+            '</p>' +
+          '</div>' +
+        '</section>';
+    }
+
+    function wireWishForm() {
+      const btn = document.getElementById('wishSend');
+      if (!btn) return;
+      const box = document.getElementById('wishText');
+      const msg = document.getElementById('wishMsg');
+      btn.addEventListener('click', function () {
+        const body = (box.value || '').trim();
+        msg.className = 'wish-msg';
+        if (body.length < 10) { msg.textContent = 'Tell us a little more.'; return; }
+        btn.disabled = true; msg.textContent = 'Sending…';
+        fetch('/api/wishes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ body: body, aud: listenerAud || null })
+        }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+          .then(function (res) {
+            if (!res.ok) {
+              btn.disabled = false;
+              msg.className = 'wish-msg err';
+              msg.textContent = res.d.error === 'too_many'
+                ? 'That is enough wishes for today - tell us more tomorrow.'
+                : 'That did not send. Please try again.';
+              return;
+            }
+            box.value = '';
+            btn.disabled = false;
+            msg.className = 'wish-msg ok';
+            msg.textContent = 'Thank you - we have it.';
+          })
+          .catch(function () {
+            btn.disabled = false;
+            msg.className = 'wish-msg err';
+            msg.textContent = 'Network problem. Please try again.';
+          });
+      });
+    }
+
     renderRows();
 
     /* filters */
