@@ -514,22 +514,31 @@ async function offerStatus(request, env) {
    overlapping runs therefore cannot send the same person the same thing twice.
 ─────────────────────────────────────────────────────────────── */
 
-function mailShell(title, lines, cta, optoutUrl) {
+/* One image, used in the second message only. A new sending domain has no
+   reputation yet, and skin in every email is a fast way to land in spam before
+   anyone has read a word. Change the number to swap the picture. */
+const MAIL_IMAGE = 'https://hushlorewhisper.com/images/webpagephoto2.jpg';
+
+function mailShell(title, lines, cta, optoutUrl, image) {
   return '<div style="font-family:Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;' +
     'font-size:15px;line-height:1.65;color:#221820">' +
     '<h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;margin:0 0 18px">' + title + '</h1>' +
+    (image ? '<img src="' + image + '" width="520" alt="" ' +
+      'style="width:100%;max-width:520px;border-radius:14px;display:block;margin:0 0 18px" />' : '') +
     lines.map(l => '<p style="margin:0 0 14px">' + l + '</p>').join('') +
     (cta ? '<p style="margin:26px 0"><a href="' + cta.href + '" style="background:#c2496b;color:#fff;' +
       'text-decoration:none;padding:13px 28px;border-radius:999px;display:inline-block;font-weight:600">' +
       cta.label + '</a></p>' : '') +
     '<p style="margin:28px 0 0;font-size:12px;color:#8a7a84">' +
-      'Hushlore &middot; Davor Dolinar s. p., Zasavska cesta 88, 1231 Ljubljana-Crnuce, Slovenia' +
+      /* The postal address has to be here - it is what the law asks of marketing
+         mail - but the trading name is enough to carry it. */
+      'Hushlore &middot; Zasavska cesta 88, 1231 Ljubljana-Crnuce, Slovenia' +
       (optoutUrl ? '<br /><a href="' + optoutUrl + '" style="color:#8a7a84">Stop these emails</a>' : '') +
     '</p></div>';
 }
 
 /** Claims the right to send, then sends. Returns false if it was already sent. */
-async function sendOnce(env, origin, email, kind, ref, subject, title, lines, cta, marketing) {
+async function sendOnce(env, origin, email, kind, ref, subject, title, lines, cta, marketing, image) {
   try {
     await env.DB.prepare(
       'INSERT INTO email_log (id, email, kind, ref, created_at) VALUES (?1,?2,?3,?4,?5)'
@@ -541,7 +550,7 @@ async function sendOnce(env, origin, email, kind, ref, subject, title, lines, ct
   const optout = marketing
     ? origin + '/api/email/unsubscribe?e=' + encodeURIComponent(email)
     : null;
-  const res = await sendMail(env, email, subject, mailShell(title, lines, cta, optout),
+  const res = await sendMail(env, email, subject, mailShell(title, lines, cta, optout, image),
     lines.join('\n\n').replace(/<[^>]+>/g, '') + (cta ? '\n\n' + cta.href : ''));
 
   await env.DB.prepare(
@@ -628,7 +637,7 @@ async function runEmailJobs(request, env) {
            'else\'s taste looking for something that fits.',
            'And if you want to say something to the voice you have been listening to, you can. ' +
            'She reads it herself and writes back - your first three messages come free with membership.'],
-          { href: origin + '/result#pricing', label: 'Listen tonight' }, true);
+          { href: origin + '/result#pricing', label: 'Listen tonight' }, true, MAIL_IMAGE);
       }
 
       if (stage.kind === 'abandoned_checkout_3') {
