@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20260927b" />
+  <link rel="stylesheet" href="styles.css?v=20260927c" />
 
   <style>
     body { background: var(--bg); }
@@ -104,6 +104,11 @@
       return /^(1m|3m|6m)$/.test(b) ? b : null;
     }
     var BUY = buy();
+    // A discount link that sent them here has to survive the sign-up step.
+    var OFFER = new URLSearchParams(location.search).get('offer') || '';
+    function buyUrl() {
+      return '/api/ccbill/checkout?plan=' + BUY + (OFFER ? '&offer=' + encodeURIComponent(OFFER) : '');
+    }
 
     function setMode(m) {
       mode = m;
@@ -154,7 +159,7 @@
         msg.className = 'lg-msg ok';
         if (BUY) {
           msg.textContent = 'Taking you to the payment page…';
-          location.href = '/api/ccbill/checkout?plan=' + BUY;
+          location.href = buyUrl();
           return;
         }
         if (res.d.sub && res.d.sub.active) {
@@ -202,7 +207,7 @@
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (!d.authenticated) return;
-        if (BUY && !(d.sub && d.sub.active)) { location.href = '/api/ccbill/checkout?plan=' + BUY; return; }
+        if (BUY && !(d.sub && d.sub.active)) { location.href = buyUrl(); return; }
         if (d.sub && d.sub.active) location.href = next();
       })
       .catch(function () {});

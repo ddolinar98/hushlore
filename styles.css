@@ -2829,3 +2829,20 @@ p {
 .nudge-x:hover { color: var(--cream); }
 .bundle.promo { border-color: var(--gold); }
 .bundle .r s { opacity: 0.55; font-weight: 400; margin-right: 4px; }
+
+
+/* Shown above the plans when someone arrives on a discount link. */
+.offer-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  border: 1px solid var(--gold);
+  background: rgba(212, 175, 120, 0.08);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin: 0 auto 20px;
+  max-width: 560px;
+}
+.offer-banner strong { font-family: var(--sans); font-size: 15px; color: var(--cream); }
+.offer-banner span { font-family: var(--sans); font-size: 13px; color: var(--muted); }

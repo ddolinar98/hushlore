@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="styles.css?v=20260927b" />
+  <link rel="stylesheet" href="styles.css?v=20260927c" />
 
   <!-- Facebook Pixel -->
   <script>
@@ -588,6 +588,42 @@
 
     /* Straight to CCBill. The worker signs the price and sends an account-less
        buyer through sign-up first, so all this has to carry is which tier. */
+    /* A discount link from an email. The token is checked by the server, which
+       also works out the price - the page only shows what it is told, so an
+       edited link cannot buy anything cheaper. */
+    const OFFER = new URLSearchParams(location.search).get('offer');
+    const DAYS = { '1m': 30, '3m': 90, '6m': 180 };
+
+    if (OFFER) {
+      fetch('/api/offer?token=' + encodeURIComponent(OFFER))
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.valid) return;
+          document.querySelectorAll('.pricing-tier').forEach(function (tier) {
+            const t = tier.dataset.tier;
+            const p = d.plans && d.plans[t];
+            if (!p) return;
+            tier.dataset.price = p.now.toFixed(2);
+            const was = tier.querySelector('.pricing-tier-was');
+            const now = tier.querySelector('.pricing-tier-now');
+            if (was) was.textContent = '$' + p.was.toFixed(2);
+            if (now) now.textContent = '$' + p.now.toFixed(2);
+            const pd = tier.querySelector('.pricing-tier-perday-now');
+            const pdWas = tier.querySelector('.pricing-tier-perday-was');
+            if (pd && DAYS[t]) pd.textContent = '$' + (p.now / DAYS[t]).toFixed(2);
+            if (pdWas && DAYS[t]) pdWas.textContent = '$' + (p.was / DAYS[t]).toFixed(2);
+          });
+
+          const banner = document.createElement('div');
+          banner.className = 'offer-banner';
+          banner.innerHTML = '<strong>' + d.percent + '% off your first term</strong>' +
+            '<span>Applied below. This link is yours alone and works once.</span>';
+          const sec = document.querySelector('.pricing-section h2');
+          if (sec) sec.insertAdjacentElement('afterend', banner);
+        })
+        .catch(function () {});
+    }
+
     const consentBox = document.getElementById('consentBox');
     const syncConsent = () => { continueBtn.disabled = !consentBox.checked; };
     consentBox.addEventListener('change', syncConsent);
@@ -608,7 +644,8 @@
       if (window.hlTrack) window.hlTrack('checkout_click', { label: sel.dataset.tier });
       continueBtn.disabled = true;
       continueBtn.textContent = 'One moment…';
-      location.href = '/api/ccbill/checkout?plan=' + sel.dataset.tier;
+      location.href = '/api/ccbill/checkout?plan=' + sel.dataset.tier +
+        (OFFER ? '&offer=' + encodeURIComponent(OFFER) : '');
     });
 
     /* ====================================

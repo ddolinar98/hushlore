@@ -55,6 +55,7 @@ export default {
       if (p.startsWith('/audio/'))    return serveAudio(request, env, p.slice('/audio/'.length));
       if (p.startsWith('/preview/'))  return servePreview(request, env, p.slice('/preview/'.length));
       if (p === '/api/waitlist')      return requirePost(request, () => joinWaitlist(request, env));
+      if (p === '/api/offer')         return offerStatus(request, env);
       if (p === '/api/sub/cancel')    return requirePost(request, () => subCancel(request, env));
       if (p === '/api/sub/resume')    return requirePost(request, () => subResume(request, env));
       if (p === '/api/wishes')        return requirePost(request, () => wishAdd(request, env));
@@ -454,6 +455,51 @@ async function subscribe(request, env) {
 
 
 
+
+/* ═══════════════════════════ discounts ═══════════════════════════
+   A discount is a token made for one address, good once, and it expires. The
+   price is always recomputed here from the stored percentage, so nothing the
+   buyer can edit decides what they pay.
+─────────────────────────────────────────────────────────────── */
+
+const OFFER_PERCENT = 20;
+const OFFER_HOURS   = 48;
+
+function discounted(cents, percent) {
+  // Rounded to a price that looks like a price, not a division result.
+  const v = Math.round(cents * (100 - percent) / 100);
+  return Math.max(295, Math.round((v - 1) / 100) * 100 + 99) / 100;
+}
+
+async function makeOffer(env, email, percent) {
+  const token = b64url(crypto.randomUUID() + crypto.randomUUID()).slice(0, 32);
+  await env.DB.prepare(
+    'INSERT INTO offers (token, email, percent, expires_at, created_at) VALUES (?1,?2,?3,?4,?5)'
+  ).bind(token, email, percent,
+         new Date(Date.now() + OFFER_HOURS * 3600 * 1000).toISOString(), nowISO()).run();
+  return token;
+}
+
+async function liveOffer(env, token) {
+  if (!token) return null;
+  const o = await env.DB.prepare(
+    'SELECT token, email, percent, expires_at, used_at FROM offers WHERE token = ?1'
+  ).bind(String(token)).first();
+  if (!o || o.used_at || o.expires_at <= nowISO()) return null;
+  return o;
+}
+
+/** The pricing page asks whether a link is still good and what it is worth. */
+async function offerStatus(request, env) {
+  const o = await liveOffer(env, new URL(request.url).searchParams.get('token'));
+  if (!o) return json({ valid: false });
+  const plans = {};
+  for (const [k, p] of Object.entries(CCBILL_PLANS)) {
+    plans[k] = { was: Number(p.price), now: discounted(Math.round(Number(p.price) * 100), o.percent) };
+  }
+  return json({ valid: true, percent: o.percent, expires_at: o.expires_at, plans });
+}
+
 /* ═══════════════════════ automated email ═══════════════════════
    Three messages, all of them earning their place:
 
@@ -534,28 +580,72 @@ async function runEmailJobs(request, env) {
   const out = { abandoned_checkout: 0, pre_renewal: 0, winback: 0 };
 
   /* ── they reached the payment form and did not finish ───────────── */
-  const abandoned = (await env.DB.prepare(
-    `SELECT u.email, c.id AS ref, c.detail AS plan
-       FROM purchase_consents c
-       JOIN users u ON u.id = c.user_id
-      WHERE c.kind = 'membership'
-        AND c.at < ?1 AND c.at > ?2
-        AND u.email_optout IS NULL
-        AND NOT EXISTS (SELECT 1 FROM subscriptions s
-                         WHERE s.user_id = c.user_id AND s.status = 'active' AND s.expires_at > ?3)
-      LIMIT 40`
-  ).bind(iso(now - 60 * 60 * 1000), iso(now - 3 * 86400 * 1000), nowISO()).all()).results || [];
+  /* Three messages over three days. The first assumes the card failed, the
+     second sells the thing itself, the third gives a reason to decide now.
+     Anyone who buys in between falls out of the query and hears no more. */
+  const chase = [
+    { kind: 'abandoned_checkout',    after: 1 * 3600 * 1000,  before: 3 * 86400 * 1000 },
+    { kind: 'abandoned_checkout_2',  after: 26 * 3600 * 1000, before: 4 * 86400 * 1000 },
+    { kind: 'abandoned_checkout_3',  after: 50 * 3600 * 1000, before: 5 * 86400 * 1000 }
+  ];
+  out.abandoned_checkout_2 = 0;
+  out.abandoned_checkout_3 = 0;
 
-  for (const r of abandoned) {
-    const ok = await sendOnce(env, origin, r.email, 'abandoned_checkout', r.ref,
-      'Your Hushlore membership is one step away',
-      'You were nearly in',
-      ['You picked a membership and stopped at the payment page. Nothing was charged.',
-       'If something went wrong with the card, a different one usually goes through - some banks ' +
-       'decline a first attempt on anything they read as adult or foreign.',
-       'Your match is still waiting where you left it.'],
-      { href: origin + '/result#pricing', label: 'Finish signing up' }, true);
-    if (ok) out.abandoned_checkout++;
+  for (const stage of chase) {
+    const rows = (await env.DB.prepare(
+      `SELECT u.email, c.id AS ref, c.detail AS plan
+         FROM purchase_consents c
+         JOIN users u ON u.id = c.user_id
+        WHERE c.kind = 'membership'
+          AND c.at < ?1 AND c.at > ?2
+          AND u.email_optout IS NULL
+          AND NOT EXISTS (SELECT 1 FROM subscriptions s
+                           WHERE s.user_id = c.user_id AND s.status = 'active' AND s.expires_at > ?3)
+        LIMIT 40`
+    ).bind(iso(now - stage.after), iso(now - stage.before), nowISO()).all()).results || [];
+
+    for (const r of rows) {
+      let ok = false;
+
+      if (stage.kind === 'abandoned_checkout') {
+        ok = await sendOnce(env, origin, r.email, stage.kind, r.ref,
+          'You were one step away',
+          'Your story is still waiting',
+          ['You picked your membership and stopped at the payment page. Nothing was charged, ' +
+           'and nothing is lost - your match is exactly where you left it.',
+           'If the card was the problem, it usually is not you. Some banks decline the first ' +
+           'attempt on anything they read as adult or foreign. A second card almost always goes through.'],
+          { href: origin + '/result#pricing', label: 'Pick up where you left off' }, true);
+      }
+
+      if (stage.kind === 'abandoned_checkout_2') {
+        ok = await sendOnce(env, origin, r.email, stage.kind, r.ref,
+          'What it is actually like',
+          'Headphones, lights low',
+          ['Every story in Hushlore is read by a real person, never a machine. You hear the breath ' +
+           'between the words. That is the whole difference, and it is the part nobody can screenshot for you.',
+           'Yours are picked from what you answered, so you are not scrolling through someone ' +
+           'else\'s taste looking for something that fits.',
+           'And if you want to say something to the voice you have been listening to, you can. ' +
+           'She reads it herself and writes back - your first three messages come free with membership.'],
+          { href: origin + '/result#pricing', label: 'Listen tonight' }, true);
+      }
+
+      if (stage.kind === 'abandoned_checkout_3') {
+        const token = await makeOffer(env, r.email, OFFER_PERCENT);
+        ok = await sendOnce(env, origin, r.email, stage.kind, r.ref,
+          OFFER_PERCENT + '% off, for the next two days',
+          'Something to make the decision easy',
+          ['You looked, and you did not finish. Fair enough - so here is ' + OFFER_PERCENT +
+           '% off your first term, and then the decision is off your plate either way.',
+           'The link below is yours alone. It works once and expires in ' + OFFER_HOURS + ' hours.',
+           'After that it renews at the usual price, and you can stop it any time from your account.'],
+          { href: origin + '/result?offer=' + token + '#pricing',
+            label: 'Get ' + OFFER_PERCENT + '% off' }, true);
+      }
+
+      if (ok) out[stage.kind]++;
+    }
   }
 
   /* ── the card is charged again in three days ────────────────────── */
@@ -1035,23 +1125,33 @@ async function ccbillCheckout(request, env) {
   // has been charged is how payments end up unmatched.
   const uid = await readSession(env, request);
   if (!uid) {
-    return Response.redirect(new URL('/login?buy=' + plan, url).toString(), 302);
+    const back = '/login?buy=' + plan + (url.searchParams.get('offer')
+      ? '&offer=' + encodeURIComponent(url.searchParams.get('offer')) : '');
+    return Response.redirect(new URL(back, url).toString(), 302);
   }
   if (!env.CCBILL_SALT) return json({ error: 'billing_not_configured' }, 503);
+
+  // Checked here, never taken from the page.
+  const offer = await liveOffer(env, url.searchParams.get('offer'));
+  const price = offer
+    ? discounted(Math.round(Number(p.price) * 100), offer.percent).toFixed(2)
+    : p.price;
 
   const user = await env.DB.prepare('SELECT email FROM users WHERE id = ?1').bind(uid).first();
   await recordConsent(env, uid, 'membership', plan);
 
   // CCBill signs the price so the link cannot be edited into a cheaper one.
   // The order of the fields in the digest is fixed by CCBill and is not ours.
+  // Only the first term is discounted; it renews at the normal price, which is
+  // what the buyer is told on the page and in the email.
   const digest = md5(
-    p.price + p.days + p.price + p.days + CCBILL_REBILLS + CCBILL.currency + env.CCBILL_SALT
+    price + p.days + p.price + p.days + CCBILL_REBILLS + CCBILL.currency + env.CCBILL_SALT
   );
 
   const q = new URLSearchParams({
     clientAccnum:     CCBILL.account,
     clientSubacc:     CCBILL.subacc,
-    initialPrice:     p.price,
+    initialPrice:     price,
     initialPeriod:    p.days,
     recurringPrice:   p.price,
     recurringPeriod:  p.days,
@@ -1064,6 +1164,7 @@ async function ccbillCheckout(request, env) {
     'x_uid':  uid,
     'x_plan': plan
   });
+  if (offer) q.set('x_offer', offer.token);
   if (user && user.email) q.set('email', user.email);
 
   return Response.redirect(
@@ -1114,6 +1215,7 @@ async function ccbillWebhook(request, env) {
   const uid   = passthrough('x_uid') || passthrough('uid');
   const plan  = passthrough('x_plan') || passthrough('plan');
   const kind  = passthrough('x_kind') || 'membership';
+  const offerTok = passthrough('x_offer');
   const order = passthrough('x_order');
   const at    = nowISO();
 
@@ -1135,6 +1237,10 @@ async function ccbillWebhook(request, env) {
     return json({ ok: true, duplicate: true });
   }
 
+  if (offerTok && event === 'NewSaleSuccess') {
+    await env.DB.prepare('UPDATE offers SET used_at = ?1 WHERE token = ?2 AND used_at IS NULL')
+      .bind(at, offerTok).run();
+  }
   const note = await ccbillApply(env, event, { subId, uid, plan, kind, order, email: normEmail(d.email), at });
   await env.DB.prepare(
     'UPDATE payment_events SET handled = ?1 WHERE processor_ref IS ?2 AND transaction_id IS ?3 AND event = ?4'

@@ -1,0 +1,8 @@
+# Cloudflare Pages has no scheduler, so this tiny Worker exists only to wake the
+# site up on a timer and let it send whatever email is due.
+name = "hushlore-cron"
+main = "index.js"
+compatibility_date = "2026-05-01"
+
+[triggers]
+crons = ["0 * * * *"]   # hourly, on the hour
