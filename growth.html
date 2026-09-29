@@ -105,7 +105,7 @@
       <option value="mtd">This month</option>
       <option value="all">All time</option>
     </select>
-    <label>1 USD = <input id="fx" type="number" step="0.01" min="0.5" max="1.5" /> EUR</label>
+    <label title="Only used for ad spend entered in EUR">1 EUR = <input id="fx" type="number" step="0.01" min="0.5" max="2" /> USD</label>
     <label>Processor fee <input id="fee" type="number" step="0.5" min="0" max="30" /> %</label>
   </div>
 
@@ -127,7 +127,7 @@
 
   <h2 class="g-h">Over time</h2>
   <div class="g-charts">
-    <div class="c" id="revChart"><h3>Net revenue per day</h3><p>EUR, after the processor fee, refunds subtracted</p><svg></svg><div class="tip"></div></div>
+    <div class="c" id="revChart"><h3>Net revenue per day</h3><p>USD, after the processor fee, refunds subtracted</p><svg></svg><div class="tip"></div></div>
     <div class="c" id="memChart"><h3>Active paying members</h3><p>members with access on each day</p><svg></svg><div class="tip"></div></div>
   </div>
 
@@ -145,7 +145,7 @@
   <div class="g-form">
     <input id="spDay" type="date" />
     <input id="spAmt" type="number" step="0.01" min="0" placeholder="Amount" />
-    <select id="spCur"><option>EUR</option><option>USD</option></select>
+    <select id="spCur"><option>USD</option><option>EUR</option></select>
     <input id="spCh" placeholder="Channel (Meta, TikTok...)" />
     <input id="spNote" placeholder="Note (optional)" style="flex:1 1 160px" />
     <button id="spAdd" type="button">Add spend</button>
@@ -168,16 +168,16 @@
   /* Settings the owner may tune; remembered in this browser only. */
   function pref(k, def) { try { var v = localStorage.getItem('hl_growth_' + k); return v == null ? def : v; } catch (_) { return def; } }
   function setPref(k, v) { try { localStorage.setItem('hl_growth_' + k, v); } catch (_) {} }
-  $('fx').value = pref('fx', '0.86');
+  $('fx').value = pref('fx_eurusd', '1.16');
   $('fee').value = pref('fee', '13');
   $('period').value = pref('period', '30');
 
-  function fx()  { return Number($('fx').value) || 0.86; }
+  function fx()  { return Number($('fx').value) || 1.16; }   // EUR -> USD, for EUR ad spend only
   function fee() { return Math.min(0.5, Math.max(0, (Number($('fee').value) || 0) / 100)); }
-  function eur(n, digits) {
-    return '€' + (Math.round(n * 100) / 100).toLocaleString('en-GB', { minimumFractionDigits: digits == null ? 2 : digits, maximumFractionDigits: digits == null ? 2 : digits });
+  function money(n, digits) {
+    return (n < 0 ? '-$' : '$') + (Math.round(Math.abs(n) * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: digits == null ? 2 : digits, maximumFractionDigits: digits == null ? 2 : digits });
   }
-  function usd(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function usd(n) { return money(n); }
   function pct(n) { return isFinite(n) ? (Math.round(n * 1000) / 10) + '%' : '-'; }
   function dstr(iso) { return iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '-'; }
   function dayKey(t) { return new Date(t).toISOString().slice(0, 10); }
@@ -240,7 +240,7 @@
     var now = +new Date(D.now);
     var R = periodRange(now), start = R.start;
     var FX = fx(), FEE = fee();
-    var net = function (usdAmt) { return usdAmt * (1 - FEE) * FX; };
+    var net = function (usdAmt) { return usdAmt * (1 - FEE); };
     var inP = function (t) { return t >= start && t <= now; };
     var M = buildMembers(now);
 
@@ -261,11 +261,11 @@
     $('now').innerHTML =
       tile('Active members', active.length,
         '<b>' + renewing.length + '</b> renewing &middot; <b>' + leaving.length + '</b> cancelled, access runs out' + (mixTxt ? '<br>' + mixTxt : ''), true) +
-      tile('MRR', eur(net(mrrUsd)),
-        usd(mrrUsd) + ' gross, from members still on auto-renew' + (riskUsd ? '<br><b>' + eur(net(riskUsd)) + '</b> more is ending (cancelled)' : ''), true) +
-      tile('ARR run-rate', eur(net(mrrUsd) * 12, 0), 'MRR &times; 12, net') +
-      tile('Revenue all time', eur(net(allGross)), usd(allGross) + ' gross, refunds subtracted') +
-      tile('Renewals next 30 days', next30.length, next30.length ? '<b>' + eur(net(next30Usd)) + '</b> expected, net' : 'none due yet');
+      tile('MRR', money(net(mrrUsd)),
+        usd(mrrUsd) + ' gross, from members still on auto-renew' + (riskUsd ? '<br><b>' + money(net(riskUsd)) + '</b> more is ending (cancelled)' : ''), true) +
+      tile('ARR run-rate', money(net(mrrUsd) * 12, 0), 'MRR &times; 12, net') +
+      tile('Revenue all time', money(net(allGross)), usd(allGross) + ' gross, refunds subtracted') +
+      tile('Renewals next 30 days', next30.length, next30.length ? '<b>' + money(net(next30Usd)) + '</b> expected, net' : 'none due yet');
 
     /* ── the period ────────────────────────────────────────────── */
     var pPays = D.payments.filter(function (p) { return inP(+new Date(p.created_at)); });
@@ -284,12 +284,12 @@
     var monthGross = D.payments.filter(function (p) { return +new Date(p.created_at) >= mStart; })
       .reduce(function (a, p) { return a + signed(p); }, 0);
 
-    $('periodNote').textContent = 'Everything below counts ' + R.label + '. Money is in EUR at the rate above, after the processor fee.';
+    $('periodNote').textContent = 'Everything below counts ' + R.label + '. Money is in USD, after the processor fee.';
     $('period-tiles').innerHTML =
-      tile('Net revenue', eur(net(pGross)), usd(pGross) + ' gross &middot; memberships ' + eur(net(pMem)) + ' &middot; credits/customs ' + eur(net(pExtra)), true) +
-      tile('Revenue this month', eur(net(monthGross)), usd(monthGross) + ' gross, calendar month') +
+      tile('Net revenue', money(net(pGross)), usd(pGross) + ' gross &middot; memberships ' + money(net(pMem)) + ' &middot; credits/customs ' + money(net(pExtra)), true) +
+      tile('Revenue this month', money(net(monthGross)), usd(monthGross) + ' gross, calendar month') +
       tile('New members', newM.length, '<b>' + renewals.length + '</b> renewals in the same period') +
-      tile('Avg first purchase', newM.length ? eur(net(newM.reduce(function (a, m) { return a + m.planInfo.price; }, 0) / newM.length)) : '-', 'net, per new member') +
+      tile('Avg first purchase', newM.length ? money(net(newM.reduce(function (a, m) { return a + m.planInfo.price; }, 0) / newM.length)) : '-', 'net, per new member') +
       tile('Bought extras', Object.keys(extrasBuyers).length, 'members who bought credits or a custom recording') +
       tile('Refunds &amp; chargebacks', refunds.length + cbs.length,
         '<b>' + cbs.length + '</b> chargebacks &middot; ratio ' + (sales.length ? pct(cbs.length / sales.length) : '-') +
@@ -323,23 +323,23 @@
       tile('Renewal rate', due.length ? pct(renewedDue.length / due.length) : 'not yet',
         due.length ? '<b>' + renewedDue.length + '</b> of ' + due.length + ' members whose first term ended paid again'
                    : (nextDue ? 'first renewal is due on <b>' + dstr(nextDue.firstTermEnd) + '</b>' : 'no members yet')) +
-      tile('ARPU', eur(arpuNet), 'net monthly value of one renewing member') +
-      tile('LTV (estimate)', isFinite(ltv) ? eur(ltv) : '-',
+      tile('ARPU', money(arpuNet), 'net monthly value of one renewing member') +
+      tile('LTV (estimate)', isFinite(ltv) ? money(ltv) : '-',
         isFinite(ltv) ? 'ARPU &divide; monthly churn. Only a rough guide until ~30 members and a round of renewals.' : 'needs at least one cancellation to estimate') +
-      tile('Paid per customer so far', eur(perCustomer), 'net, all time, ' + paidCustomers + ' customers');
+      tile('Paid per customer so far', money(perCustomer), 'net, all time, ' + paidCustomers + ' customers');
 
     /* ── acquisition ───────────────────────────────────────────── */
-    var spendEur = function (rows) { return rows.reduce(function (a, s) { return a + s.amount_cents / 100 * (s.currency === 'USD' ? FX : 1); }, 0); };
-    var pSpend = spendEur(D.spend.filter(function (s) { return inP(+new Date(s.day + 'T12:00:00Z')); }));
-    var allSpend = spendEur(D.spend);
+    var spendUsd = function (rows) { return rows.reduce(function (a, s) { return a + s.amount_cents / 100 * (s.currency === 'EUR' ? FX : 1); }, 0); };
+    var pSpend = spendUsd(D.spend.filter(function (s) { return inP(+new Date(s.day + 'T12:00:00Z')); }));
+    var allSpend = spendUsd(D.spend);
     var cac = newM.length && pSpend ? pSpend / newM.length : NaN;
     var roas = pSpend ? net(pGross) / pSpend : NaN;
     var payback = isFinite(cac) && arpuNet ? cac / arpuNet : NaN;
     var ltvCac = isFinite(ltv) && isFinite(cac) ? ltv / cac : NaN;
 
     $('acq').innerHTML =
-      tile('Ad spend', eur(pSpend), 'in the period &middot; ' + eur(allSpend) + ' all time') +
-      tile('CAC', isFinite(cac) ? eur(cac) : '-', 'ad spend &divide; new members', true) +
+      tile('Ad spend', money(pSpend), 'in the period &middot; ' + money(allSpend) + ' all time') +
+      tile('CAC', isFinite(cac) ? money(cac) : '-', 'ad spend &divide; new members', true) +
       tile('ROAS', isFinite(roas) ? (Math.round(roas * 100) / 100) + '&times;' : '-', 'net revenue &divide; ad spend, first purchases only - renewals come later') +
       tile('Payback', isFinite(payback) ? (Math.round(payback * 10) / 10) + ' months' : '-', 'months of a member’s net revenue to earn back their CAC') +
       tile('LTV : CAC', isFinite(ltvCac) ? (Math.round(ltvCac * 10) / 10) + ' : 1' : '-', '3 : 1 or better is the usual bar for scaling spend');
@@ -388,18 +388,18 @@
       if (p.event === 'RenewalSuccess') return '<span class="chip ok">Renewal</span>';
       return isMembership(p) ? '<span class="chip ok">New member</span>' : '<span class="chip">Extras</span>';
     };
-    $('payments').innerHTML = '<tr><th>When</th><th>Type</th><th>Who</th><th>What</th><th class="num">Gross</th><th class="num">Net EUR</th></tr>' +
+    $('payments').innerHTML = '<tr><th>When</th><th>Type</th><th>Who</th><th>What</th><th class="num">Gross</th><th class="num">Net</th></tr>' +
       (pays.length ? pays.map(function (p) {
         return '<tr><td>' + new Date(p.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) +
           '</td><td>' + kind(p) + '</td><td>' + esc(p.email || '-') + '</td><td>' + esc(p.plan ? p.plan + ' membership' : (p.handled || '').replace(/^added /, '')) +
-          '</td><td class="num">' + usd(signed(p)) + '</td><td class="num">' + eur(net(signed(p))) + '</td></tr>';
+          '</td><td class="num">' + usd(signed(p)) + '</td><td class="num">' + money(net(signed(p))) + '</td></tr>';
       }).join('') : '<tr><td colspan="6">No payments yet.</td></tr>');
 
     var sp = D.spend.slice().reverse();
     $('spend').innerHTML = '<tr><th>Day</th><th>Channel</th><th>Note</th><th class="num">Amount</th><th></th></tr>' +
       (sp.length ? sp.map(function (s) {
         return '<tr><td>' + esc(s.day) + '</td><td>' + esc(s.channel || '-') + '</td><td>' + esc(s.note || '') + '</td><td class="num">' +
-          (s.currency === 'USD' ? usd(s.amount_cents / 100) : eur(s.amount_cents / 100)) +
+          (s.currency === 'EUR' ? '€' + (s.amount_cents / 100).toFixed(2) + ' <small style="color:#8d7684">(' + money(s.amount_cents / 100 * FX) + ')</small>' : money(s.amount_cents / 100)) +
           '</td><td class="num"><button class="del" data-id="' + esc(s.id) + '" title="Remove">Remove</button></td></tr>';
       }).join('') : '<tr><td colspan="5">Nothing entered yet - CAC and ROAS stay empty until you add spend.</td></tr>');
     [].forEach.call(document.querySelectorAll('#spend .del'), function (b) {
@@ -442,7 +442,7 @@
     var minV = Math.min(0, Math.min.apply(null, pts.map(function (p) { return p.v; })));
     var y = function (v) { return PT + (H - PT - PB) * (1 - (v - minV) / (maxV - minV)); };
     var n = pts.length, slot = (W - PL) / n, bw = Math.max(2, Math.min(22, slot - 2));
-    var out = axes(maxV, minV, pts.map(function (p) { return p.k; }), function (v) { return '€' + Math.round(v); });
+    var out = axes(maxV, minV, pts.map(function (p) { return p.k; }), function (v) { return '$' + Math.round(v); });
     pts.forEach(function (p, i) {
       var x = PL + slot * i + (slot - bw) / 2, y0 = y(0), y1 = y(p.v), h = Math.abs(y0 - y1);
       out += '<rect class="hit" data-i="' + i + '" x="' + (PL + slot * i) + '" y="' + PT + '" width="' + slot + '" height="' + (H - PT - PB) + '"/>';
@@ -452,7 +452,7 @@
     svg.innerHTML = out;
     [].forEach.call(svg.querySelectorAll('.hit'), function (h) {
       var p = pts[+h.getAttribute('data-i')];
-      h.addEventListener('mousemove', function (e) { tipAt(box, e, '<b>' + eur(p.v) + '</b><small>' + dstr(p.k + 'T12:00:00Z') + '</small>'); });
+      h.addEventListener('mousemove', function (e) { tipAt(box, e, '<b>' + money(p.v) + '</b><small>' + dstr(p.k + 'T12:00:00Z') + '</small>'); });
       h.addEventListener('mouseleave', function () { hideTip(box); });
     });
   }
@@ -485,7 +485,7 @@
 
   /* ── wiring ─────────────────────────────────────────────────────── */
   ['period', 'fx', 'fee'].forEach(function (id) {
-    $(id).addEventListener('change', function () { setPref(id, $(id).value); if (D) render(); });
+    $(id).addEventListener('change', function () { setPref(id === 'fx' ? 'fx_eurusd' : id, $(id).value); if (D) render(); });
   });
   $('spDay').value = new Date().toISOString().slice(0, 10);
   $('spAdd').addEventListener('click', function () {

@@ -1541,7 +1541,7 @@ async function adminAdSpend(request, env) {
   const cents = Math.round(Number(b.amount) * 100);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return json({ error: 'bad_day' }, 400);
   if (!Number.isFinite(cents) || cents <= 0 || cents > 10000000) return json({ error: 'bad_amount' }, 400);
-  const currency = b.currency === 'USD' ? 'USD' : 'EUR';
+  const currency = b.currency === 'EUR' ? 'EUR' : 'USD';
   await env.DB.prepare(
     'INSERT INTO ad_spend (id, day, amount_cents, currency, channel, note, created_at) VALUES (?1,?2,?3,?4,?5,?6,?7)'
   ).bind(crypto.randomUUID(), day, cents, currency,
