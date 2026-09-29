@@ -40,6 +40,12 @@ export default {
     const p = url.pathname;
     if (BLOCKED.test(p)) return new Response('Not found', { status: 404 });
     try {
+      // The growth page is served to admins only - the page itself, not just its data.
+      if (/^\/growth(\.html)?\/?$/i.test(p) && !await requireAdmin(request, env)) {
+        const signedIn = await readSession(env, request);
+        return signedIn ? new Response('Not found', { status: 404 })
+                        : Response.redirect(url.origin + '/login?next=growth.html', 302);
+      }
       if (p === '/api/auth/register') return requirePost(request, () => register(request, env));
       if (p === '/api/auth/login')    return requirePost(request, () => login(request, env));
       if (p === '/api/auth/logout')   return requirePost(request, () => logout());

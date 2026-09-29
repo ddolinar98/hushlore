@@ -506,7 +506,7 @@
     api('/api/admin/growth').then(function (r) {
       if (!r.ok) {
         $('gate').style.display = ''; $('app').style.display = 'none';
-        $('gateMsg').innerHTML = 'Sign in with the admin account first. <a href="/login?next=/growth" style="color:var(--gold)">Sign in</a>';
+        $('gateMsg').innerHTML = 'Sign in with the admin account first. <a href="/login?next=growth.html" style="color:var(--gold)">Sign in</a>';
         return;
       }
       D = r.d; $('gate').style.display = 'none';
