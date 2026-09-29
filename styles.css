@@ -2893,3 +2893,17 @@ p {
   .tonight-art { flex: none; min-height: 200px; }
   .tonight-body { padding: 22px; }
 }
+
+/* the member's own wishes and our answers, under the wish box */
+.wish-mine { margin-top: 22px; border-top: 1px solid var(--border, rgba(255,255,255,.08)); padding-top: 16px; }
+.wish-mine h4 { font-family: var(--sans); font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+  color: #a98ea3; margin: 0 0 10px; font-weight: 700; }
+.wish-item { padding: 10px 0; }
+.wish-item + .wish-item { border-top: 1px solid rgba(255,255,255,.05); }
+.wish-card .wish-you { margin: 0; white-space: pre-wrap; color: #c1a7b8; font-style: italic; }
+.wish-reply { margin-top: 10px; padding: 10px 14px; border-left: 3px solid var(--gold); border-radius: 6px;
+  background: rgba(255,255,255,.04); white-space: pre-wrap; line-height: 1.55; font-family: var(--sans);
+  font-size: 14px; color: #f2e9ef; }
+.wish-reply span { display: block; margin-bottom: 4px; font-size: 11.5px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--gold); font-weight: 700; }
+.wish-card .wish-wait { margin: 6px 0 0; font-family: var(--sans); font-size: 12.5px; color: #8a7a84; }

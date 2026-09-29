@@ -168,6 +168,17 @@
     .cx-left span { font-size:12px; color:var(--muted); }
     .wishStatus { background:var(--bg-elevated); border:1px solid var(--border); border-radius:8px;
       color:var(--cream); font-family:var(--sans); font-size:13px; padding:8px 10px; cursor:pointer; }
+    .wishReply { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+    .wishReply textarea { width:100%; box-sizing:border-box; background:var(--bg-elevated); border:1px solid var(--border);
+      border-radius:8px; color:var(--cream); font-family:var(--sans); font-size:13.5px; line-height:1.5;
+      padding:10px 12px; resize:vertical; }
+    .wishReply button { align-self:flex-start; background:var(--gold); color:#1a1016; border:0; border-radius:8px;
+      font-family:var(--sans); font-size:13px; font-weight:700; padding:8px 14px; cursor:pointer; }
+    .wishReply button[disabled] { opacity:.5; cursor:default; }
+    .wishSent { margin-top:10px; padding:10px 12px; border-left:3px solid var(--gold); background:var(--bg-elevated);
+      border-radius:6px; white-space:pre-wrap; line-height:1.55; font-size:13.5px; color:#e7dce3; }
+    .wishSent small { display:block; margin-bottom:4px; color:var(--muted); font-size:11.5px;
+      letter-spacing:.06em; text-transform:uppercase; }
   </style>
 </head>
 <body>
@@ -360,6 +371,12 @@
             '<span>' + when(w.created_at) +
               (w.aud && AUD_LABEL[w.aud] ? ' &middot; ' + AUD_LABEL[w.aud] : '') + '</span>' +
             '<p style="margin:8px 0 0;white-space:pre-wrap;line-height:1.55">' + esc(w.body) + '</p>' +
+            (w.reply ? '<div class="wishSent"><small>You replied &middot; ' + when(w.replied_at) + '</small>' +
+              esc(w.reply) + '</div>' : '') +
+            '<div class="wishReply">' +
+              '<textarea rows="3" placeholder="' + (w.reply ? 'Send another reply…' : 'Reply as the Hushlore Team - it is emailed to them and shown under their wish…') + '"></textarea>' +
+              '<button type="button" class="wishReplyBtn">' + (w.reply ? 'Send another reply' : 'Send reply') + '</button>' +
+            '</div>' +
           '</div>' +
           '<select class="wishStatus">' + WISH_STATES.map(function (st) {
             return '<option value="' + st + '"' + (st === w.status ? ' selected' : '') + '>' + st + '</option>';
@@ -378,6 +395,27 @@
           }).then(function (r) {
             // Marking one 'recorded' writes to the listener, so say that it went.
             if (r.ok && r.d && r.d.mailed) alert('Listener told - the email has gone out.');
+            loadWishes();
+          });
+        });
+      });
+
+      [].forEach.call($('wishList').querySelectorAll('.wishReplyBtn'), function (btn) {
+        btn.addEventListener('click', function () {
+          var item = btn.closest('.cx-item');
+          var box = item.querySelector('.wishReply textarea');
+          var text = (box.value || '').trim();
+          if (text.length < 2) { box.focus(); return; }
+          if (!confirm('Send this reply to ' + item.querySelector('strong').textContent + '?')) return;
+          btn.disabled = true; btn.textContent = 'Sending…';
+          api('/api/admin/wish-reply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: item.getAttribute('data-id'), reply: text })
+          }).then(function (r) {
+            if (!r.ok) { btn.disabled = false; btn.textContent = 'Send reply'; alert('That did not send - try again.'); return; }
+            alert(r.d.mailed ? 'Sent - the email has gone out.'
+                             : 'Saved and shown in their library, but the email did not go out.');
             loadWishes();
           });
         });

@@ -58,9 +58,10 @@ export default {
       if (p === '/api/offer')         return offerStatus(request, env);
       if (p === '/api/sub/cancel')    return requirePost(request, () => subCancel(request, env));
       if (p === '/api/sub/resume')    return requirePost(request, () => subResume(request, env));
-      if (p === '/api/wishes')        return requirePost(request, () => wishAdd(request, env));
+      if (p === '/api/wishes')        return request.method === 'POST' ? wishAdd(request, env) : wishMine(request, env);
       if (p === '/api/admin/wishes')  return adminWishes(request, env);
       if (p === '/api/admin/wish')    return requirePost(request, () => adminWishUpdate(request, env));
+      if (p === '/api/admin/wish-reply') return requirePost(request, () => adminWishReply(request, env));
 
       // ── CCBill ────────────────────────────────────────────────────
       if (p === '/api/ccbill/checkout') return ccbillCheckout(request, env);
@@ -816,15 +817,17 @@ async function sha256Hex(text) {
   return [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-async function sendMail(env, to, subject, html, text) {
+async function sendMail(env, to, subject, html, text, replyTo) {
   if (!env.RESEND_API_KEY) return { ok: false, skipped: true };
+  const msg = { from: MAIL_FROM, to: [to], subject, html, text };
+  if (replyTo) msg.reply_to = replyTo;
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + env.RESEND_API_KEY
     },
-    body: JSON.stringify({ from: MAIL_FROM, to: [to], subject, html, text })
+    body: JSON.stringify(msg)
   });
   return { ok: res.ok, status: res.status, body: await res.text() };
 }
@@ -937,7 +940,7 @@ async function wishAdd(request, env) {
 async function adminWishes(request, env) {
   if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
   const r = await env.DB.prepare(
-    `SELECT w.id, w.aud, w.body, w.status, w.note, w.created_at, u.email
+    `SELECT w.id, w.aud, w.body, w.status, w.note, w.reply, w.replied_at, w.created_at, u.email
        FROM wishes w JOIN users u ON u.id = w.user_id
       ORDER BY CASE w.status WHEN 'new' THEN 0 ELSE 1 END, w.created_at DESC
       LIMIT 200`
@@ -980,6 +983,66 @@ async function adminWishUpdate(request, env) {
   }
 
   return json({ ok: true, mailed });
+}
+
+/** The member's own wishes, with whatever we answered. */
+async function wishMine(request, env) {
+  const uid = await readSession(env, request);
+  if (!uid) return json({ error: 'auth_required' }, 401);
+  const r = await env.DB.prepare(
+    `SELECT id, body, reply, replied_at, created_at FROM wishes
+      WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 20`
+  ).bind(uid).all();
+  return json({ wishes: r.results || [] });
+}
+
+const WISH_REPLY_TO  = 'hello@hushlorewhisper.com';
+const WISH_REPLY_MAX = 2000;
+
+/* An answer to a wish, from us as the Hushlore team. It is mailed, and it also
+   sits under the wish in the member's library, so someone who never opens the
+   email still sees they were heard. Replies to the email reach a person. */
+async function adminWishReply(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const b = await request.json().catch(() => ({}));
+  const id = String(b.id || '');
+  const reply = String(b.reply || '').trim();
+  if (!id) return json({ error: 'missing_id' }, 400);
+  if (reply.length < 2) return json({ error: 'too_short' }, 400);
+  if (reply.length > WISH_REPLY_MAX) return json({ error: 'too_long' }, 400);
+
+  const w = await env.DB.prepare(
+    'SELECT w.status, w.body, u.email FROM wishes w JOIN users u ON u.id = w.user_id WHERE w.id = ?1'
+  ).bind(id).first();
+  if (!w) return json({ error: 'not_found' }, 404);
+
+  const at = nowISO();
+  await env.DB.prepare(
+    `UPDATE wishes SET reply = ?1, replied_at = ?2,
+            status = CASE status WHEN 'new' THEN 'read' ELSE status END
+      WHERE id = ?3`
+  ).bind(reply, at, id).run();
+
+  const url = new URL(request.url);
+  const paras = reply.split(/\n{2,}/).map(t => escapeHtml(t.trim()).replace(/\n/g, '<br>')).filter(Boolean);
+  const lines = ['You wrote to us:',
+    '<em style="color:#6b5c66">&ldquo;' + escapeHtml(String(w.body || '').trim().slice(0, 400)) + '&rdquo;</em>']
+    .concat(paras, ['&mdash; The Hushlore Team']);
+
+  // Logged like every other mail; the timestamp in the ref lets a second answer go out too.
+  await env.DB.prepare(
+    'INSERT INTO email_log (id, email, kind, ref, created_at) VALUES (?1,?2,?3,?4,?5)'
+  ).bind(crypto.randomUUID(), w.email, 'wish_reply', id + ':' + at, at).run();
+  const res = await sendMail(env, w.email, 'About your wish', 
+    mailShell('We read your wish', lines, { href: url.origin + '/library', label: 'Open your library' }, null),
+    lines.join('\n\n').replace(/<[^>]+>/g, '').replace(/&ldquo;|&rdquo;/g, '"').replace(/&mdash;/g, '-'),
+    WISH_REPLY_TO);
+  await env.DB.prepare(
+    'UPDATE email_log SET sent_at = ?1, error = ?2 WHERE email = ?3 AND kind = ?4 AND ref = ?5'
+  ).bind(res.ok ? nowISO() : null, res.ok ? null : String(res.status || 'skipped'),
+         w.email, 'wish_reply', id + ':' + at).run();
+
+  return json({ ok: true, mailed: res.ok, replied_at: at });
 }
 
 function escapeHtml(t) {

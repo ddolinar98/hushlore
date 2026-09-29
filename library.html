@@ -522,13 +522,42 @@
               'commission &mdash; for a recording made only for you, use a ' +
               'personal recording from your account.' +
             '</p>' +
+            '<div id="wishMine"></div>' +
           '</div>' +
         '</section>';
+    }
+
+    /* What they have asked for so far, and anything we wrote back. */
+    function loadMyWishes() {
+      const box = document.getElementById('wishMine');
+      if (!box) return;
+      const esc = function (t) {
+        return String(t || '').replace(/[&<>"]/g, function (c) {
+          return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c];
+        });
+      };
+      fetch('/api/wishes', { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : { wishes: [] }; })
+        .then(function (d) {
+          const list = d.wishes || [];
+          if (!list.length) { box.innerHTML = ''; return; }
+          box.innerHTML = '<div class="wish-mine"><h4>What you have asked for</h4>' +
+            list.map(function (w) {
+              return '<div class="wish-item">' +
+                '<p class="wish-you">' + esc(w.body) + '</p>' +
+                (w.reply
+                  ? '<div class="wish-reply"><span>Hushlore Team</span>' + esc(w.reply) + '</div>'
+                  : '<p class="wish-wait">Read by us - we reply here when we have news.</p>') +
+              '</div>';
+            }).join('') + '</div>';
+        })
+        .catch(function () {});
     }
 
     function wireWishForm() {
       const btn = document.getElementById('wishSend');
       if (!btn) return;
+      loadMyWishes();
       const box = document.getElementById('wishText');
       const msg = document.getElementById('wishMsg');
       btn.addEventListener('click', function () {
@@ -555,6 +584,7 @@
             btn.disabled = false;
             msg.className = 'wish-msg ok';
             msg.textContent = 'Thank you - we have it.';
+            loadMyWishes();
           })
           .catch(function () {
             btn.disabled = false;
