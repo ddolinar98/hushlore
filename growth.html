@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore - Growth</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20260927f" />
+  <style>
+    body { background: var(--bg); }
+    .g-page { max-width:1240px; margin:0 auto; padding:0 clamp(16px,3vw,32px) 70px; font-family:var(--sans); color:var(--cream); }
+    .g-nav { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:20px 0 8px; flex-wrap:wrap; }
+    .g-logo { font-family:var(--serif); font-size:24px; font-weight:500; }
+    .g-logo span { color:var(--gold); }
+    .g-badge { font-size:11px; letter-spacing:.16em; text-transform:uppercase; background:var(--gold); color:#1a0d14;
+      border-radius:20px; padding:3px 10px; font-weight:700; margin-left:10px; }
+    .g-nav a { color:#a98ea3; font-size:14px; text-decoration:none; }
+    .g-nav a:hover { color:var(--cream); }
+
+    .g-tools { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:12px 0 4px; }
+    .g-tools select, .g-tools input, .g-form input, .g-form select {
+      background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:8px 10px;
+      color:var(--cream); font-family:var(--sans); font-size:13.5px; }
+    .g-tools label { font-size:12.5px; color:#a98ea3; display:flex; align-items:center; gap:6px; }
+    .g-tools input { width:70px; }
+
+    h2.g-h { font-family:var(--serif); font-weight:500; font-size:26px; margin:34px 0 4px; }
+    .g-sub { font-size:13px; color:#a98ea3; margin:0 0 12px; line-height:1.55; max-width:760px; }
+
+    .g-tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+    .t { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px; min-width:0; }
+    .t .k { font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#8d7684; }
+    .t .v { font-weight:600; font-size:28px; margin-top:4px; font-variant-numeric:tabular-nums; }
+    .t .v.big { color:var(--gold); }
+    .t .d { font-size:12.5px; color:#a98ea3; margin-top:4px; line-height:1.45; }
+    .t .d b { color:var(--cream); font-weight:600; }
+
+    .g-charts { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:12px; }
+    .c { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px 8px; position:relative; }
+    .c h3 { font-size:13px; font-weight:600; margin:0 0 2px; }
+    .c p { font-size:12px; color:#8d7684; margin:0 0 8px; }
+    .c svg { display:block; width:100%; height:190px; overflow:visible; }
+    .c svg text { font-family:var(--sans); font-size:10.5px; fill:#8d7684; }
+    .c svg .grid { stroke:rgba(255,255,255,.07); stroke-width:1; }
+    .c svg .bar { fill:var(--gold); }
+    .c svg .bar.neg { fill:#8d7684; }
+    .c svg .hit { fill:transparent; cursor:default; }
+    .c svg .hit:hover + .bar, .c svg .bar.on { opacity:.75; }
+    .c svg .line { fill:none; stroke:var(--gold); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
+    .c svg .area { fill:var(--gold); opacity:.12; }
+    .c svg .cross { stroke:rgba(255,255,255,.35); stroke-width:1; }
+    .c svg .dot { fill:var(--gold); stroke:var(--bg-card); stroke-width:2; }
+    .tip { position:absolute; pointer-events:none; background:#0f0a0d; border:1px solid var(--border); border-radius:8px;
+      padding:6px 9px; font-size:12px; color:var(--cream); white-space:nowrap; display:none; z-index:5; }
+    .tip small { color:#a98ea3; display:block; }
+
+    .g-fn { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:8px 16px; }
+    .fn { display:flex; align-items:center; gap:12px; padding:9px 0; font-size:13.5px; }
+    .fn + .fn { border-top:1px solid var(--border); }
+    .fn .n { min-width:150px; }
+    .fn .b { flex:1; height:8px; border-radius:6px; background:var(--bg-elevated); overflow:hidden; }
+    .fn .b i { display:block; height:100%; background:var(--gold); border-radius:6px; }
+    .fn .v { min-width:120px; text-align:right; font-variant-numeric:tabular-nums; }
+    .fn .v small { color:#8d7684; }
+
+    .g-tbl { width:100%; border-collapse:collapse; background:var(--bg-card); border:1px solid var(--border); border-radius:12px;
+      overflow:hidden; font-size:13px; }
+    .g-tbl th { text-align:left; font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:#8d7684;
+      font-weight:600; padding:10px 12px; border-bottom:1px solid var(--border); }
+    .g-tbl td { padding:9px 12px; border-top:1px solid rgba(255,255,255,.04); font-variant-numeric:tabular-nums; }
+    .g-tbl td.num, .g-tbl th.num { text-align:right; }
+    .g-scroll { overflow-x:auto; border-radius:12px; }
+    .chip { display:inline-block; font-size:11.5px; border-radius:20px; padding:2px 9px; border:1px solid var(--border); white-space:nowrap; }
+    .chip.ok { color:#7ddba3; border-color:rgba(125,219,163,.35); }
+    .chip.warn { color:#e8c170; border-color:rgba(232,193,112,.35); }
+    .chip.bad { color:#e0708f; border-color:rgba(224,112,143,.35); }
+    .chip.off { color:#8d7684; }
+
+    .g-form { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 10px; }
+    .g-form input[type=number] { width:110px; }
+    .g-form button, .del { background:var(--gold); color:#1a0d14; border:0; border-radius:8px; font-weight:700;
+      font-family:var(--sans); font-size:13px; padding:8px 14px; cursor:pointer; }
+    .del { background:none; color:#8d7684; padding:2px 6px; font-weight:500; }
+    .del:hover { color:#e0708f; }
+    .g-note { font-size:12px; color:#8d7684; margin-top:8px; line-height:1.5; }
+
+    .gate { max-width:420px; margin:18vh auto; text-align:center; font-family:var(--sans); color:var(--cream); }
+  </style>
+</head>
+<body>
+<div class="g-page" id="app" style="display:none">
+  <div class="g-nav">
+    <div><span class="g-logo">Hush<span>lore</span></span><span class="g-badge">Growth</span></div>
+    <a href="/admin">&larr; Back to admin</a>
+  </div>
+
+  <div class="g-tools">
+    <select id="period">
+      <option value="7">Last 7 days</option>
+      <option value="30" selected>Last 30 days</option>
+      <option value="90">Last 90 days</option>
+      <option value="mtd">This month</option>
+      <option value="all">All time</option>
+    </select>
+    <label>1 USD = <input id="fx" type="number" step="0.01" min="0.5" max="1.5" /> EUR</label>
+    <label>Processor fee <input id="fee" type="number" step="0.5" min="0" max="30" /> %</label>
+  </div>
+
+  <h2 class="g-h">Right now</h2>
+  <p class="g-sub">Paying members only. Your own test buys, the QA accounts and the CCBill/Segpay review logins are left out of every number on this page.</p>
+  <div class="g-tiles" id="now"></div>
+
+  <h2 class="g-h">In the selected period</h2>
+  <p class="g-sub" id="periodNote"></p>
+  <div class="g-tiles" id="period-tiles"></div>
+
+  <h2 class="g-h">Retention</h2>
+  <p class="g-sub">The numbers that decide whether this grows. Until the first renewals come due, churn is read from members turning off auto-renew.</p>
+  <div class="g-tiles" id="retention"></div>
+
+  <h2 class="g-h">Acquisition</h2>
+  <p class="g-sub">CAC and ROAS need the ad spend below - add a line per day or per campaign.</p>
+  <div class="g-tiles" id="acq"></div>
+
+  <h2 class="g-h">Over time</h2>
+  <div class="g-charts">
+    <div class="c" id="revChart"><h3>Net revenue per day</h3><p>EUR, after the processor fee, refunds subtracted</p><svg></svg><div class="tip"></div></div>
+    <div class="c" id="memChart"><h3>Active paying members</h3><p>members with access on each day</p><svg></svg><div class="tip"></div></div>
+  </div>
+
+  <h2 class="g-h">Funnel</h2>
+  <p class="g-sub">People, not clicks, in the selected period. Purchases are read from CCBill postbacks, not from the browser.</p>
+  <div class="g-fn" id="funnel"></div>
+
+  <h2 class="g-h">Members</h2>
+  <div class="g-scroll"><table class="g-tbl" id="members"></table></div>
+
+  <h2 class="g-h">Payments</h2>
+  <div class="g-scroll"><table class="g-tbl" id="payments"></table></div>
+
+  <h2 class="g-h">Ad spend</h2>
+  <div class="g-form">
+    <input id="spDay" type="date" />
+    <input id="spAmt" type="number" step="0.01" min="0" placeholder="Amount" />
+    <select id="spCur"><option>EUR</option><option>USD</option></select>
+    <input id="spCh" placeholder="Channel (Meta, TikTok...)" />
+    <input id="spNote" placeholder="Note (optional)" style="flex:1 1 160px" />
+    <button id="spAdd" type="button">Add spend</button>
+  </div>
+  <div class="g-scroll"><table class="g-tbl" id="spend"></table></div>
+  <p class="g-note">Enter what the ad platform actually charged. One line for a whole period is fine - put it on the day it started.</p>
+</div>
+
+<div class="gate" id="gate" style="display:none"><h1 style="font-family:var(--serif);font-weight:500">Admin only</h1><p id="gateMsg">Checking...</p></div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+  function api(p,o){ return fetch(p, Object.assign({credentials:'same-origin'}, o||{})).then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); }); }
+
+  var DAY = 86400000;
+  var D = null;
+
+  /* Settings the owner may tune; remembered in this browser only. */
+  function pref(k, def) { try { var v = localStorage.getItem('hl_growth_' + k); return v == null ? def : v; } catch (_) { return def; } }
+  function setPref(k, v) { try { localStorage.setItem('hl_growth_' + k, v); } catch (_) {} }
+  $('fx').value = pref('fx', '0.86');
+  $('fee').value = pref('fee', '13');
+  $('period').value = pref('period', '30');
+
+  function fx()  { return Number($('fx').value) || 0.86; }
+  function fee() { return Math.min(0.5, Math.max(0, (Number($('fee').value) || 0) / 100)); }
+  function eur(n, digits) {
+    return '€' + (Math.round(n * 100) / 100).toLocaleString('en-GB', { minimumFractionDigits: digits == null ? 2 : digits, maximumFractionDigits: digits == null ? 2 : digits });
+  }
+  function usd(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function pct(n) { return isFinite(n) ? (Math.round(n * 1000) / 10) + '%' : '-'; }
+  function dstr(iso) { return iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '-'; }
+  function dayKey(t) { return new Date(t).toISOString().slice(0, 10); }
+  function tile(k, v, d, hero) {
+    return '<div class="t"><div class="k">' + k + '</div><div class="v' + (hero ? ' big' : '') + '">' + v + '</div>' +
+      (d ? '<div class="d">' + d + '</div>' : '') + '</div>';
+  }
+
+  function periodRange(now) {
+    var p = $('period').value;
+    if (p === 'all') return { start: 0, label: 'all time' };
+    if (p === 'mtd') { var d = new Date(now); return { start: Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1), label: 'this month' }; }
+    return { start: now - Number(p) * DAY, label: 'the last ' + p + ' days' };
+  }
+
+  /* ── turn raw rows into one record per paying member ─────────────── */
+  function buildMembers(now) {
+    var by = {};
+    D.subs.forEach(function (s) {
+      var m = by[s.user_id] || (by[s.user_id] = { email: s.email, rows: [] });
+      m.rows.push(s);
+    });
+    var paidBy = {};
+    D.payments.forEach(function (p) {
+      if (!p.email) return;
+      paidBy[p.email] = (paidBy[p.email] || 0) + signed(p);
+    });
+    return Object.keys(by).map(function (uid) {
+      var m = by[uid];
+      m.rows.sort(function (a, b) { return new Date(a.expires_at) - new Date(b.expires_at); });
+      var last = m.rows[m.rows.length - 1];
+      var first = m.rows.reduce(function (a, r) { return Math.min(a, +new Date(r.started_at)); }, Infinity);
+      var plan = D.plans[last.plan] || { months: 1, price: 0 };
+      var exp = +new Date(last.expires_at);
+      var refunded = last.status === 'refunded';
+      var active = !refunded && last.status !== 'expired' && exp > now;
+      return {
+        uid: uid, email: m.email, plan: last.plan, planInfo: plan, start: first, expires: exp,
+        cancelledAt: last.cancelled_at ? +new Date(last.cancelled_at) : null,
+        refunded: refunded, active: active, renewing: active && !last.cancelled_at,
+        mrr: plan.price / plan.months, paid: paidBy[m.email] || 0,
+        firstTermEnd: first + plan.months * 30 * DAY
+      };
+    });
+  }
+
+  function signed(p) {
+    var a = Number(p.amount) || 0;
+    return (p.event === 'Refund' || p.event === 'Chargeback' || p.event === 'Void') ? -Math.abs(a) : a;
+  }
+  /* A refund arrives without a plan; it belongs to whatever the original sale was. */
+  var saleByRef = {};
+  function isMembership(p) {
+    if (p.plan || p.event === 'RenewalSuccess') return true;
+    var orig = p.processor_ref && saleByRef[p.processor_ref];
+    return !!(orig && orig !== p && (orig.plan || orig.event === 'RenewalSuccess'));
+  }
+
+  function render() {
+    var now = +new Date(D.now);
+    var R = periodRange(now), start = R.start;
+    var FX = fx(), FEE = fee();
+    var net = function (usdAmt) { return usdAmt * (1 - FEE) * FX; };
+    var inP = function (t) { return t >= start && t <= now; };
+    var M = buildMembers(now);
+
+    /* ── right now ─────────────────────────────────────────────── */
+    var active = M.filter(function (m) { return m.active; });
+    var renewing = active.filter(function (m) { return m.renewing; });
+    var leaving = active.filter(function (m) { return !m.renewing; });
+    var mrrUsd = renewing.reduce(function (a, m) { return a + m.mrr; }, 0);
+    var riskUsd = leaving.reduce(function (a, m) { return a + m.mrr; }, 0);
+    var allGross = D.payments.reduce(function (a, p) { return a + signed(p); }, 0);
+    var next30 = renewing.filter(function (m) { return m.expires - now <= 30 * DAY; });
+    var next30Usd = next30.reduce(function (a, m) { return a + m.planInfo.price; }, 0);
+
+    var planMix = {};
+    active.forEach(function (m) { planMix[m.plan] = (planMix[m.plan] || 0) + 1; });
+    var mixTxt = Object.keys(planMix).sort().map(function (k) { return '<b>' + planMix[k] + '</b>&times;' + k; }).join(' &middot; ');
+
+    $('now').innerHTML =
+      tile('Active members', active.length,
+        '<b>' + renewing.length + '</b> renewing &middot; <b>' + leaving.length + '</b> cancelled, access runs out' + (mixTxt ? '<br>' + mixTxt : ''), true) +
+      tile('MRR', eur(net(mrrUsd)),
+        usd(mrrUsd) + ' gross, from members still on auto-renew' + (riskUsd ? '<br><b>' + eur(net(riskUsd)) + '</b> more is ending (cancelled)' : ''), true) +
+      tile('ARR run-rate', eur(net(mrrUsd) * 12, 0), 'MRR &times; 12, net') +
+      tile('Revenue all time', eur(net(allGross)), usd(allGross) + ' gross, refunds subtracted') +
+      tile('Renewals next 30 days', next30.length, next30.length ? '<b>' + eur(net(next30Usd)) + '</b> expected, net' : 'none due yet');
+
+    /* ── the period ────────────────────────────────────────────── */
+    var pPays = D.payments.filter(function (p) { return inP(+new Date(p.created_at)); });
+    var pGross = pPays.reduce(function (a, p) { return a + signed(p); }, 0);
+    var pMem = pPays.filter(isMembership).reduce(function (a, p) { return a + signed(p); }, 0);
+    var pExtra = pGross - pMem;
+    var newM = M.filter(function (m) { return inP(m.start); });
+    var renewals = pPays.filter(function (p) { return p.event === 'RenewalSuccess'; });
+    var refunds = pPays.filter(function (p) { return p.event === 'Refund' || p.event === 'Void'; });
+    var cbs = pPays.filter(function (p) { return p.event === 'Chargeback'; });
+    var sales = pPays.filter(function (p) { return p.event === 'NewSaleSuccess' || p.event === 'RenewalSuccess'; });
+    var extrasBuyers = {}; pPays.forEach(function (p) { if (!isMembership(p) && signed(p) > 0 && p.email) extrasBuyers[p.email] = 1; });
+
+    // A calendar month for "monthly revenue", whatever period is picked.
+    var dn = new Date(now), mStart = Date.UTC(dn.getUTCFullYear(), dn.getUTCMonth(), 1);
+    var monthGross = D.payments.filter(function (p) { return +new Date(p.created_at) >= mStart; })
+      .reduce(function (a, p) { return a + signed(p); }, 0);
+
+    $('periodNote').textContent = 'Everything below counts ' + R.label + '. Money is in EUR at the rate above, after the processor fee.';
+    $('period-tiles').innerHTML =
+      tile('Net revenue', eur(net(pGross)), usd(pGross) + ' gross &middot; memberships ' + eur(net(pMem)) + ' &middot; credits/customs ' + eur(net(pExtra)), true) +
+      tile('Revenue this month', eur(net(monthGross)), usd(monthGross) + ' gross, calendar month') +
+      tile('New members', newM.length, '<b>' + renewals.length + '</b> renewals in the same period') +
+      tile('Avg first purchase', newM.length ? eur(net(newM.reduce(function (a, m) { return a + m.planInfo.price; }, 0) / newM.length)) : '-', 'net, per new member') +
+      tile('Bought extras', Object.keys(extrasBuyers).length, 'members who bought credits or a custom recording') +
+      tile('Refunds &amp; chargebacks', refunds.length + cbs.length,
+        '<b>' + cbs.length + '</b> chargebacks &middot; ratio ' + (sales.length ? pct(cbs.length / sales.length) : '-') +
+        '<br>keep chargebacks under 1% or CCBill steps in');
+
+    /* ── retention ─────────────────────────────────────────────── */
+    var cancelsP = M.filter(function (m) { return m.cancelledAt && inP(m.cancelledAt); });
+    var baseP = M.filter(function (m) { return m.start < start && m.expires > start && !(m.cancelledAt && m.cancelledAt < start); }).length + newM.length;
+    var fast = M.filter(function (m) { return m.cancelledAt && m.cancelledAt - m.start < 2 * DAY; });
+    var due = M.filter(function (m) { return m.firstTermEnd <= now; });
+    var renewedUsers = {}; D.payments.forEach(function (p) { if (p.event === 'RenewalSuccess' && p.email) renewedUsers[p.email] = 1; });
+    var renewedDue = due.filter(function (m) { return renewedUsers[m.email]; });
+    var nextDue = M.filter(function (m) { return m.firstTermEnd > now; }).sort(function (a, b) { return a.firstTermEnd - b.firstTermEnd; })[0];
+
+    // Monthly churn from the last 30 days, the basis for lifetime value.
+    var s30 = now - 30 * DAY;
+    var c30 = M.filter(function (m) { return m.cancelledAt && m.cancelledAt >= s30; }).length;
+    var b30 = M.filter(function (m) { return m.start < s30 && m.expires > s30; }).length + M.filter(function (m) { return m.start >= s30; }).length;
+    var churn30 = b30 ? c30 / b30 : NaN;
+    var arpuNet = renewing.length ? net(mrrUsd) / renewing.length : (active.length ? net(active.reduce(function (a, m) { return a + m.mrr; }, 0)) / active.length : 0);
+    var ltv = churn30 > 0 ? arpuNet / churn30 : NaN;
+    var paidCustomers = M.length;
+    var perCustomer = paidCustomers ? net(allGross) / paidCustomers : 0;
+
+    $('retention').innerHTML =
+      tile('Churn', baseP ? pct(cancelsP.length / baseP) : '-',
+        '<b>' + cancelsP.length + '</b> of ' + baseP + ' turned off auto-renew in the period' +
+        '<br>last 30 days: ' + (isFinite(churn30) ? pct(churn30) : '-'), true) +
+      tile('Cancelled within 48h', fast.length,
+        fast.length ? 'bought and cancelled almost at once - usually a sign they never started listening' : 'nobody has cancelled straight after buying') +
+      tile('Renewal rate', due.length ? pct(renewedDue.length / due.length) : 'not yet',
+        due.length ? '<b>' + renewedDue.length + '</b> of ' + due.length + ' members whose first term ended paid again'
+                   : (nextDue ? 'first renewal is due on <b>' + dstr(nextDue.firstTermEnd) + '</b>' : 'no members yet')) +
+      tile('ARPU', eur(arpuNet), 'net monthly value of one renewing member') +
+      tile('LTV (estimate)', isFinite(ltv) ? eur(ltv) : '-',
+        isFinite(ltv) ? 'ARPU &divide; monthly churn. Only a rough guide until ~30 members and a round of renewals.' : 'needs at least one cancellation to estimate') +
+      tile('Paid per customer so far', eur(perCustomer), 'net, all time, ' + paidCustomers + ' customers');
+
+    /* ── acquisition ───────────────────────────────────────────── */
+    var spendEur = function (rows) { return rows.reduce(function (a, s) { return a + s.amount_cents / 100 * (s.currency === 'USD' ? FX : 1); }, 0); };
+    var pSpend = spendEur(D.spend.filter(function (s) { return inP(+new Date(s.day + 'T12:00:00Z')); }));
+    var allSpend = spendEur(D.spend);
+    var cac = newM.length && pSpend ? pSpend / newM.length : NaN;
+    var roas = pSpend ? net(pGross) / pSpend : NaN;
+    var payback = isFinite(cac) && arpuNet ? cac / arpuNet : NaN;
+    var ltvCac = isFinite(ltv) && isFinite(cac) ? ltv / cac : NaN;
+
+    $('acq').innerHTML =
+      tile('Ad spend', eur(pSpend), 'in the period &middot; ' + eur(allSpend) + ' all time') +
+      tile('CAC', isFinite(cac) ? eur(cac) : '-', 'ad spend &divide; new members', true) +
+      tile('ROAS', isFinite(roas) ? (Math.round(roas * 100) / 100) + '&times;' : '-', 'net revenue &divide; ad spend, first purchases only - renewals come later') +
+      tile('Payback', isFinite(payback) ? (Math.round(payback * 10) / 10) + ' months' : '-', 'months of a member’s net revenue to earn back their CAC') +
+      tile('LTV : CAC', isFinite(ltvCac) ? (Math.round(ltvCac * 10) / 10) + ' : 1' : '-', '3 : 1 or better is the usual bar for scaling spend');
+
+    /* ── charts ────────────────────────────────────────────────── */
+    var cStart = start || (M.length ? Math.min.apply(null, M.map(function (m) { return m.start; })) - DAY : now - 30 * DAY);
+    cStart = Math.max(cStart, now - 180 * DAY);
+    var days = [];
+    for (var t = +new Date(dayKey(cStart)); t <= now; t += DAY) days.push(dayKey(t));
+    var revBy = {};
+    D.payments.forEach(function (p) { var k = p.created_at.slice(0, 10); revBy[k] = (revBy[k] || 0) + net(signed(p)); });
+    barChart($('revChart'), days.map(function (k) { return { k: k, v: revBy[k] || 0 }; }));
+    lineChart($('memChart'), days.map(function (k) {
+      var t = +new Date(k + 'T23:59:59Z');
+      return { k: k, v: M.filter(function (m) { return m.start <= t && (m.refunded ? (m.cancelledAt || m.expires) : m.expires) > t; }).length };
+    }));
+
+    /* ── funnel ────────────────────────────────────────────────── */
+    var fsum = function (name) { return D.funnel.filter(function (f) { return f.name === name && inP(+new Date(f.day + 'T12:00:00Z')); }).reduce(function (a, f) { return a + f.people; }, 0); };
+    var steps = [['Quiz opened', fsum('quiz_start')], ['Email given', fsum('email_submit')],
+                 ['Checkout opened', fsum('checkout_click')], ['Became a member', newM.length]];
+    var top = steps[0][1] || 1;
+    $('funnel').innerHTML = steps.map(function (s, i) {
+      var prev = i ? steps[i - 1][1] : 0;
+      return '<div class="fn"><span class="n">' + s[0] + '</span><span class="b"><i style="width:' + Math.min(100, s[1] / top * 100) + '%"></i></span>' +
+        '<span class="v">' + s[1] + ' <small>' + (i ? (prev ? pct(s[1] / prev) + ' of prev' : '') : '') + '</small></span></div>';
+    }).join('') +
+    '<div class="fn"><span class="n"><b>Quiz &rarr; member</b></span><span class="b"></span><span class="v"><b>' + (steps[0][1] ? pct(newM.length / steps[0][1]) : '-') + '</b></span></div>';
+
+    /* ── tables ────────────────────────────────────────────────── */
+    var sorted = M.slice().sort(function (a, b) { return b.start - a.start; });
+    $('members').innerHTML = '<tr><th>Member</th><th>Plan</th><th>Joined</th><th>Access until</th><th>Status</th><th class="num">Paid (gross)</th></tr>' +
+      (sorted.length ? sorted.map(function (m) {
+        var chip = m.refunded ? '<span class="chip bad">Refunded</span>'
+          : !m.active ? '<span class="chip off">Ended</span>'
+          : m.renewing ? '<span class="chip ok">Renewing</span>'
+          : '<span class="chip warn">Cancelled - ends ' + dstr(m.expires) + '</span>';
+        return '<tr><td>' + esc(m.email) + '</td><td>' + esc(m.plan) + '</td><td>' + dstr(m.start) + '</td><td>' + dstr(m.expires) +
+          '</td><td>' + chip + '</td><td class="num">' + usd(m.paid) + '</td></tr>';
+      }).join('') : '<tr><td colspan="6">No paying members yet.</td></tr>');
+
+    var pays = D.payments.slice().reverse().slice(0, 40);
+    var kind = function (p) {
+      if (p.event === 'Chargeback') return '<span class="chip bad">Chargeback</span>';
+      if (p.event === 'Refund' || p.event === 'Void') return '<span class="chip bad">' + p.event + '</span>';
+      if (p.event === 'RenewalSuccess') return '<span class="chip ok">Renewal</span>';
+      return isMembership(p) ? '<span class="chip ok">New member</span>' : '<span class="chip">Extras</span>';
+    };
+    $('payments').innerHTML = '<tr><th>When</th><th>Type</th><th>Who</th><th>What</th><th class="num">Gross</th><th class="num">Net EUR</th></tr>' +
+      (pays.length ? pays.map(function (p) {
+        return '<tr><td>' + new Date(p.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) +
+          '</td><td>' + kind(p) + '</td><td>' + esc(p.email || '-') + '</td><td>' + esc(p.plan ? p.plan + ' membership' : (p.handled || '').replace(/^added /, '')) +
+          '</td><td class="num">' + usd(signed(p)) + '</td><td class="num">' + eur(net(signed(p))) + '</td></tr>';
+      }).join('') : '<tr><td colspan="6">No payments yet.</td></tr>');
+
+    var sp = D.spend.slice().reverse();
+    $('spend').innerHTML = '<tr><th>Day</th><th>Channel</th><th>Note</th><th class="num">Amount</th><th></th></tr>' +
+      (sp.length ? sp.map(function (s) {
+        return '<tr><td>' + esc(s.day) + '</td><td>' + esc(s.channel || '-') + '</td><td>' + esc(s.note || '') + '</td><td class="num">' +
+          (s.currency === 'USD' ? usd(s.amount_cents / 100) : eur(s.amount_cents / 100)) +
+          '</td><td class="num"><button class="del" data-id="' + esc(s.id) + '" title="Remove">Remove</button></td></tr>';
+      }).join('') : '<tr><td colspan="5">Nothing entered yet - CAC and ROAS stay empty until you add spend.</td></tr>');
+    [].forEach.call(document.querySelectorAll('#spend .del'), function (b) {
+      b.addEventListener('click', function () {
+        if (!confirm('Remove this spend line?')) return;
+        api('/api/admin/ad-spend', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ delete: b.getAttribute('data-id') }) }).then(load);
+      });
+    });
+  }
+
+  /* ── charts: single series, gold, thin marks, hover for the value ── */
+  var W = 600, H = 190, PL = 36, PB = 20, PT = 8;
+  function niceMax(v) { if (v <= 0) return 1; var p = Math.pow(10, Math.floor(Math.log10(v))); return Math.ceil(v / p) * p; }
+  function axes(max, min, days, fmt) {
+    var out = '', ticks = 3;
+    for (var i = 0; i <= ticks; i++) {
+      var val = min + (max - min) * i / ticks, y = PT + (H - PT - PB) * (1 - i / ticks);
+      out += '<line class="grid" x1="' + PL + '" x2="' + W + '" y1="' + y + '" y2="' + y + '"/>' +
+             '<text x="' + (PL - 6) + '" y="' + (y + 3) + '" text-anchor="end">' + fmt(val) + '</text>';
+    }
+    var n = days.length, step = Math.max(1, Math.ceil(n / 6));
+    for (var j = 0; j < n; j += step) {
+      var x = PL + (W - PL) * (j + 0.5) / n;
+      out += '<text x="' + x + '" y="' + (H - 4) + '" text-anchor="middle">' + dstr(days[j] + 'T12:00:00Z') + '</text>';
+    }
+    return out;
+  }
+  function tipAt(box, evt, html) {
+    var tip = box.querySelector('.tip'), r = box.getBoundingClientRect();
+    tip.innerHTML = html; tip.style.display = 'block';
+    var x = evt.clientX - r.left + 12, y = evt.clientY - r.top - 36;
+    if (x + tip.offsetWidth > r.width) x = evt.clientX - r.left - tip.offsetWidth - 12;
+    tip.style.left = x + 'px'; tip.style.top = Math.max(0, y) + 'px';
+  }
+  function hideTip(box) { box.querySelector('.tip').style.display = 'none'; }
+
+  function barChart(box, pts) {
+    var svg = box.querySelector('svg'); svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    var maxV = niceMax(Math.max.apply(null, pts.map(function (p) { return p.v; }).concat([1])));
+    var minV = Math.min(0, Math.min.apply(null, pts.map(function (p) { return p.v; })));
+    var y = function (v) { return PT + (H - PT - PB) * (1 - (v - minV) / (maxV - minV)); };
+    var n = pts.length, slot = (W - PL) / n, bw = Math.max(2, Math.min(22, slot - 2));
+    var out = axes(maxV, minV, pts.map(function (p) { return p.k; }), function (v) { return '€' + Math.round(v); });
+    pts.forEach(function (p, i) {
+      var x = PL + slot * i + (slot - bw) / 2, y0 = y(0), y1 = y(p.v), h = Math.abs(y0 - y1);
+      out += '<rect class="hit" data-i="' + i + '" x="' + (PL + slot * i) + '" y="' + PT + '" width="' + slot + '" height="' + (H - PT - PB) + '"/>';
+      if (h > 0.5) out += '<rect class="bar' + (p.v < 0 ? ' neg' : '') + '" x="' + x + '" y="' + Math.min(y0, y1) + '" width="' + bw + '" height="' + h + '" rx="' + Math.min(3, bw / 2) + '"/>';
+      else out += '<rect class="bar" x="' + x + '" y="' + (y0 - 0.5) + '" width="0" height="0"/>';
+    });
+    svg.innerHTML = out;
+    [].forEach.call(svg.querySelectorAll('.hit'), function (h) {
+      var p = pts[+h.getAttribute('data-i')];
+      h.addEventListener('mousemove', function (e) { tipAt(box, e, '<b>' + eur(p.v) + '</b><small>' + dstr(p.k + 'T12:00:00Z') + '</small>'); });
+      h.addEventListener('mouseleave', function () { hideTip(box); });
+    });
+  }
+
+  function lineChart(box, pts) {
+    var svg = box.querySelector('svg'); svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    // Whole members only: the top is a multiple of the three gridline steps.
+    var maxV = Math.max(3, Math.ceil(Math.max.apply(null, pts.map(function (p) { return p.v; })) / 3) * 3);
+    var n = pts.length;
+    var x = function (i) { return PL + (W - PL) * (i + 0.5) / n; };
+    var y = function (v) { return PT + (H - PT - PB) * (1 - v / maxV); };
+    var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + x(i) + ' ' + y(p.v); }).join(' ');
+    var out = axes(maxV, 0, pts.map(function (p) { return p.k; }), function (v) { return Math.round(v); }) +
+      '<path class="area" d="' + d + ' L' + x(n - 1) + ' ' + y(0) + ' L' + x(0) + ' ' + y(0) + ' Z"/>' +
+      '<path class="line" d="' + d + '"/>' +
+      '<line class="cross" x1="0" x2="0" y1="' + PT + '" y2="' + (H - PB) + '" style="display:none"/>' +
+      '<circle class="dot" r="4" style="display:none"/>' +
+      '<rect class="hit" x="' + PL + '" y="' + PT + '" width="' + (W - PL) + '" height="' + (H - PT - PB) + '"/>';
+    svg.innerHTML = out;
+    var hit = svg.querySelector('.hit'), cross = svg.querySelector('.cross'), dot = svg.querySelector('.dot');
+    hit.addEventListener('mousemove', function (e) {
+      var r = svg.getBoundingClientRect(), vx = (e.clientX - r.left) / r.width * W;
+      var i = Math.max(0, Math.min(n - 1, Math.round((vx - PL) / ((W - PL) / n) - 0.5))), p = pts[i];
+      cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.style.display = '';
+      dot.setAttribute('cx', x(i)); dot.setAttribute('cy', y(p.v)); dot.style.display = '';
+      tipAt(box, e, '<b>' + p.v + ' members</b><small>' + dstr(p.k + 'T12:00:00Z') + '</small>');
+    });
+    hit.addEventListener('mouseleave', function () { cross.style.display = 'none'; dot.style.display = 'none'; hideTip(box); });
+  }
+
+  /* ── wiring ─────────────────────────────────────────────────────── */
+  ['period', 'fx', 'fee'].forEach(function (id) {
+    $(id).addEventListener('change', function () { setPref(id, $(id).value); if (D) render(); });
+  });
+  $('spDay').value = new Date().toISOString().slice(0, 10);
+  $('spAdd').addEventListener('click', function () {
+    var amt = Number($('spAmt').value);
+    if (!(amt > 0)) { $('spAmt').focus(); return; }
+    $('spAdd').disabled = true;
+    api('/api/admin/ad-spend', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ day: $('spDay').value, amount: amt, currency: $('spCur').value, channel: $('spCh').value, note: $('spNote').value }) })
+      .then(function (r) {
+        $('spAdd').disabled = false;
+        if (!r.ok) { alert('That did not save - check the day and amount.'); return; }
+        $('spAmt').value = ''; $('spNote').value = '';
+        load();
+      });
+  });
+
+  function load() {
+    api('/api/admin/growth').then(function (r) {
+      if (!r.ok) {
+        $('gate').style.display = ''; $('app').style.display = 'none';
+        $('gateMsg').innerHTML = 'Sign in with the admin account first. <a href="/login?next=/growth" style="color:var(--gold)">Sign in</a>';
+        return;
+      }
+      D = r.d; $('gate').style.display = 'none';
+      saleByRef = {};
+      D.payments.forEach(function (p) { if (p.processor_ref && p.event === 'NewSaleSuccess') saleByRef[p.processor_ref] = p; }); $('app').style.display = '';
+      render();
+    });
+  }
+  load();
+})();
+</script>
+</body>
+</html>

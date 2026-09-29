@@ -52,6 +52,8 @@ export default {
       if (p === '/api/cron/emails')   return runEmailJobs(request, env);
       if (p === '/api/email/unsubscribe') return emailUnsubscribe(request, env);
       if (p === '/api/admin/funnel')  return adminFunnel(request, env);
+      if (p === '/api/admin/growth')  return adminGrowth(request, env);
+      if (p === '/api/admin/ad-spend') return adminAdSpend(request, env);
       if (p.startsWith('/audio/'))    return serveAudio(request, env, p.slice('/audio/'.length));
       if (p.startsWith('/preview/'))  return servePreview(request, env, p.slice('/preview/'.length));
       if (p === '/api/waitlist')      return requirePost(request, () => joinWaitlist(request, env));
@@ -1468,6 +1470,77 @@ async function ccbillApply(env, event, ctx) {
     default:
       return 'logged only';
   }
+}
+
+/* ═══════════════════════════ growth dashboard ═══════════════════════════
+   Raw material for growth.html: every real membership, every payment, the
+   funnel by day and what was spent on ads. The page does the arithmetic, so
+   a new metric never needs a deploy of the worker.
+
+   Test and review accounts are left out here, once, so no number on the page
+   can be inflated by the owner's own purchases or the underwriters' logins.
+─────────────────────────────────────────────────────────────────────── */
+
+const INTERNAL_EMAIL_SQL =
+  "(email LIKE 'ddolinar98%' OR email LIKE '%@hushlorewhisper.com' OR email LIKE '%@example.com')";
+
+async function adminGrowth(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+
+  const subs = (await env.DB.prepare(
+    `SELECT s.user_id, u.email, s.plan, s.started_at, s.expires_at, s.status,
+            s.cancelled_at, s.processor_cancelled_at, s.source
+       FROM subscriptions s JOIN users u ON u.id = s.user_id
+      WHERE s.source LIKE 'ccbill%' AND NOT ${INTERNAL_EMAIL_SQL.replace(/email/g, 'u.email')}
+      ORDER BY s.started_at`
+  ).all()).results || [];
+
+  const payments = (await env.DB.prepare(
+    `SELECT event, processor_ref, email, plan, amount, currency, handled, created_at
+       FROM payment_events
+      WHERE event IN ('NewSaleSuccess','RenewalSuccess','Refund','Chargeback','Void')
+        AND (email IS NULL OR NOT ${INTERNAL_EMAIL_SQL})
+      ORDER BY created_at`
+  ).all()).results || [];
+
+  const funnel = (await env.DB.prepare(
+    `SELECT substr(created_at, 1, 10) AS day, name, COUNT(DISTINCT session_id) AS people
+       FROM events WHERE name IN ('quiz_start','email_submit','checkout_click')
+      GROUP BY day, name ORDER BY day`
+  ).all()).results || [];
+
+  const spend = (await env.DB.prepare(
+    'SELECT id, day, amount_cents, currency, channel, note FROM ad_spend ORDER BY day'
+  ).all()).results || [];
+
+  const plans = {};
+  for (const k in CCBILL_PLANS) plans[k] = { months: CCBILL_PLANS[k].months, price: Number(CCBILL_PLANS[k].price) };
+
+  return json({ now: nowISO(), plans, subs, payments, funnel, spend });
+}
+
+/** Ad spend is typed in by hand: GET lists it, POST adds a day, POST {delete} removes one. */
+async function adminAdSpend(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  if (request.method !== 'POST') {
+    const r = await env.DB.prepare('SELECT * FROM ad_spend ORDER BY day DESC').all();
+    return json({ spend: r.results || [] });
+  }
+  const b = await request.json().catch(() => ({}));
+  if (b.delete) {
+    await env.DB.prepare('DELETE FROM ad_spend WHERE id = ?1').bind(String(b.delete)).run();
+    return json({ ok: true });
+  }
+  const day = String(b.day || '');
+  const cents = Math.round(Number(b.amount) * 100);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return json({ error: 'bad_day' }, 400);
+  if (!Number.isFinite(cents) || cents <= 0 || cents > 10000000) return json({ error: 'bad_amount' }, 400);
+  const currency = b.currency === 'USD' ? 'USD' : 'EUR';
+  await env.DB.prepare(
+    'INSERT INTO ad_spend (id, day, amount_cents, currency, channel, note, created_at) VALUES (?1,?2,?3,?4,?5,?6,?7)'
+  ).bind(crypto.randomUUID(), day, cents, currency,
+         String(b.channel || '').slice(0, 40) || null, String(b.note || '').slice(0, 200) || null, nowISO()).run();
+  return json({ ok: true });
 }
 
 /** The last ten postbacks, for the admin console. */
