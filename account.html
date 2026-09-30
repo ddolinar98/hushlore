@@ -73,6 +73,20 @@
       color: #c1a7b8; background: var(--bg-elevated); border: 1px solid var(--border);
       border-radius: 10px; padding: 16px; margin-bottom: 12px; }
     .ac-cancel-confirm b, .ac-cancel-done b { color: var(--cream); }
+    /* The question on the way out. Optional, and never between them and the button. */
+    .ac-why { text-align: left; background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px; margin-bottom: 12px; font-family: var(--sans); }
+    .ac-why h4 { margin: 0 0 4px; font-size: 15px; color: var(--cream); font-weight: 600; }
+    .ac-why .hint { margin: 0 0 10px; font-size: 12.5px; color: #8d7684; }
+    .ac-why label { display: flex; gap: 10px; align-items: center; padding: 7px 0; font-size: 14px;
+      color: #c1a7b8; cursor: pointer; }
+    .ac-why input[type=radio] { accent-color: var(--gold); width: 16px; height: 16px; margin: 0; }
+    .ac-why textarea { width: 100%; box-sizing: border-box; margin-top: 8px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 8px; color: var(--cream); font-family: var(--sans);
+      font-size: 14px; padding: 10px 12px; resize: vertical; }
+    .ac-why-note { display: none; margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--gold);
+      border-radius: 6px; background: rgba(255,255,255,.03); font-size: 13.5px; line-height: 1.55; color: #e7dce3; }
+    .ac-why-note a { color: var(--gold); }
     .ac-cancel-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
     .ac-btn-ghost, .ac-btn-danger { font-family: var(--sans); font-size: 14px; font-weight: 600;
       border-radius: 10px; padding: 11px 18px; cursor: pointer; }
@@ -152,6 +166,19 @@
           <div class="ac-cancel-confirm" id="cancelConfirm">
             <p>Your membership will not renew. You keep everything until
                <b id="cancelUntil"></b> — nothing is taken away before then.</p>
+
+            <div class="ac-why" id="why">
+              <h4>Before you go - what made you cancel?</h4>
+              <p class="hint">Optional. It goes straight to us and decides what we fix first.</p>
+              <label><input type="radio" name="why" value="content" /> Not enough stories for me yet</label>
+              <label><input type="radio" name="why" value="expectations" /> The stories weren't what I expected</label>
+              <label><input type="radio" name="why" value="price" /> It's too expensive</label>
+              <label><input type="radio" name="why" value="trial" /> I only wanted to try it / I don't want it to renew</label>
+              <label><input type="radio" name="why" value="time" /> I don't have time to listen</label>
+              <label><input type="radio" name="why" value="other" /> Something else</label>
+              <textarea id="whyText" rows="2" maxlength="1000" placeholder="Anything you'd like to add? (optional)"></textarea>
+              <div class="ac-why-note" id="whyNote"></div>
+            </div>
             <div class="ac-cancel-actions">
               <button type="button" class="ac-btn-ghost" id="cancelBack">Keep it</button>
               <button type="button" class="ac-btn-danger" id="cancelGo">Cancel membership</button>
@@ -350,10 +377,56 @@
       cancelBox.classList.add('confirming');
     });
     document.getElementById('cancelBack').addEventListener('click', function () {
+      const w = whyChoice();
+      if (w.reason || w.detail) {
+        fetch('/api/sub/feedback', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(w)
+        }).catch(function () {});
+      }
       cancelBox.classList.remove('confirming');
     });
+    /* One short, honest line for whatever they picked. Nothing here stands
+       between them and the cancel button. */
+    const WHY_NOTE = {
+      content: 'Fair - the shelf is still growing. New recordings land every month, and you keep access until <b>{until}</b>, so you will see the next ones either way. Tell us what you want to hear in <a href="library.html#wishText">your wishes</a> and it goes to the top of the list.',
+      expectations: 'Thank you for saying so. If you tell us below what you were hoping for, we read it - and if it gets made, you will hear from us.',
+      price: 'Understood. Once your access ends we will send you a returning-member price, so if you want to come back it costs less.',
+      trial: 'No problem - nothing more will be charged. Everything stays open for you until <b>{until}</b>.',
+      time: 'Your access stays open until <b>{until}</b>, and anything you have not heard yet stays on your shelf until then.',
+      other: ''
+    };
+    function whyChoice() {
+      const r = document.querySelector('input[name="why"]:checked');
+      return { reason: r ? r.value : null, detail: (document.getElementById('whyText').value || '').trim() };
+    }
+    [].forEach.call(document.querySelectorAll('input[name="why"]'), function (r) {
+      r.addEventListener('change', function () {
+        const note = document.getElementById('whyNote');
+        const txt = (WHY_NOTE[r.value] || '').replace(/\{until\}/g, document.getElementById('cancelUntil').textContent);
+        note.innerHTML = txt;
+        note.style.display = txt ? 'block' : 'none';
+      });
+    });
+
     document.getElementById('cancelGo').addEventListener('click', function () {
-      subAction('/api/sub/cancel', this);
+      const btn = this, w = whyChoice();
+      btn.disabled = true;
+      fetch('/api/sub/cancel', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(w)
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.sub) showSub(d.sub);
+          else alert('Something went wrong. Email hello@hushlorewhisper.com and we will sort it out.');
+        })
+        .catch(function () {
+          alert('Something went wrong. Email hello@hushlorewhisper.com and we will sort it out.');
+        })
+        .then(function () { btn.disabled = false; });
     });
     document.getElementById('cancelUndo').addEventListener('click', function () {
       subAction('/api/sub/resume', this);

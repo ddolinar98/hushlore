@@ -65,6 +65,7 @@ export default {
       if (p === '/api/waitlist')      return requirePost(request, () => joinWaitlist(request, env));
       if (p === '/api/offer')         return offerStatus(request, env);
       if (p === '/api/sub/cancel')    return requirePost(request, () => subCancel(request, env));
+      if (p === '/api/sub/feedback')  return requirePost(request, () => subFeedback(request, env));
       if (p === '/api/sub/resume')    return requirePost(request, () => subResume(request, env));
       if (p === '/api/wishes')        return request.method === 'POST' ? wishAdd(request, env) : wishMine(request, env);
       if (p === '/api/admin/wishes')  return adminWishes(request, env);
@@ -255,6 +256,10 @@ async function subCancel(request, env) {
   if (!sub) return json({ error: 'no_active_membership' }, 404);
   if (sub.cancelled_at) return json({ ok: true, sub: subShape(sub) });
 
+  // The reason is optional - cancelling never waits on it.
+  const b = await request.json().catch(() => ({}));
+  await saveCancelFeedback(env, uid, sub.id, b, 'cancelled');
+
   const at = nowISO();
   // processor_cancelled_at is cleared too: a customer who cancels, resumes and
   // cancels again needs stopping at CCBill a second time, and if the old mark
@@ -263,6 +268,34 @@ async function subCancel(request, env) {
     'UPDATE subscriptions SET cancelled_at = ?1, processor_cancelled_at = NULL WHERE id = ?2'
   ).bind(at, sub.id).run();
   return json({ ok: true, sub: subShape(Object.assign({}, sub, { cancelled_at: at })) });
+}
+
+/* ═══════════════════════ why people cancel ═══════════════════════
+   One optional question on the way out. The answer is kept whether they go
+   through with it or change their mind, because both tell us something.
+─────────────────────────────────────────────────────────────────────── */
+
+const CANCEL_REASONS = ['content', 'expectations', 'price', 'trial', 'time', 'other'];
+
+async function saveCancelFeedback(env, uid, subId, b, outcome) {
+  const reason = CANCEL_REASONS.includes(b && b.reason) ? b.reason : null;
+  const detail = String((b && b.detail) || '').trim().slice(0, 1000) || null;
+  if (!reason && !detail) return false;
+  await env.DB.prepare(
+    `INSERT INTO cancel_feedback (id, user_id, sub_id, reason, detail, outcome, created_at)
+     VALUES (?1,?2,?3,?4,?5,?6,?7)`
+  ).bind(crypto.randomUUID(), uid, subId || null, reason || 'other', detail, outcome, nowISO()).run();
+  return true;
+}
+
+/** They answered the question and then kept the membership. */
+async function subFeedback(request, env) {
+  const uid = await readSession(env, request);
+  if (!uid) return json({ error: 'auth_required' }, 401);
+  const sub = await activeSub(env, uid);
+  const b = await request.json().catch(() => ({}));
+  await saveCancelFeedback(env, uid, sub && sub.id, b, 'kept');
+  return json({ ok: true });
 }
 
 /** Undo a cancellation, as long as the membership has not lapsed yet. */
@@ -556,7 +589,7 @@ function mailShell(title, lines, cta, optoutUrl, image) {
 }
 
 /** Claims the right to send, then sends. Returns false if it was already sent. */
-async function sendOnce(env, origin, email, kind, ref, subject, title, lines, cta, marketing, image) {
+async function sendOnce(env, origin, email, kind, ref, subject, title, lines, cta, marketing, image, replyTo) {
   try {
     await env.DB.prepare(
       'INSERT INTO email_log (id, email, kind, ref, created_at) VALUES (?1,?2,?3,?4,?5)'
@@ -569,7 +602,7 @@ async function sendOnce(env, origin, email, kind, ref, subject, title, lines, ct
     ? origin + '/api/email/unsubscribe?e=' + encodeURIComponent(email)
     : null;
   const res = await sendMail(env, email, subject, mailShell(title, lines, cta, optout, image),
-    lines.join('\n\n').replace(/<[^>]+>/g, '') + (cta ? '\n\n' + cta.href : ''));
+    lines.join('\n\n').replace(/<[^>]+>/g, '') + (cta ? '\n\n' + cta.href : ''), replyTo);
 
   await env.DB.prepare(
     'UPDATE email_log SET sent_at = ?1, error = ?2 WHERE email = ?3 AND kind = ?4 AND ref = ?5'
@@ -713,12 +746,30 @@ async function runEmailJobs(request, env) {
   ).bind(iso(now - 14 * 86400 * 1000), iso(now - 21 * 86400 * 1000), nowISO()).all()).results || [];
 
   for (const r of lapsed) {
-    const ok = await sendOnce(env, origin, r.email, 'winback', r.ref,
-      'There is new audio in Hushlore',
-      'It has been a couple of weeks',
-      ['Your membership ran out a fortnight ago. New recordings have been added since.',
-       'Everything you had is still on your shelf and comes straight back the moment you return.'],
-      { href: origin + '/result#pricing', label: 'Come back' }, true);
+    // Someone who told us the price was the reason gets a better one - that is
+    // what the cancel page promised them.
+    const why = await env.DB.prepare(
+      `SELECT f.reason FROM cancel_feedback f JOIN users u ON u.id = f.user_id
+        WHERE u.email = ?1 ORDER BY f.created_at DESC LIMIT 1`
+    ).bind(r.email).first();
+    let ok;
+    if (why && why.reason === 'price') {
+      const token = await makeOffer(env, r.email, OFFER_PERCENT);
+      ok = await sendOnce(env, origin, r.email, 'winback', r.ref,
+        OFFER_PERCENT + '% off if you want to come back',
+        'A better price, as promised',
+        ['When you cancelled you told us the price was the reason. So here is <strong>' +
+         OFFER_PERCENT + '% off</strong> your next membership - the link is yours alone and works for five days.',
+         'New recordings have been added since you left, and everything you had comes straight back.'],
+        { href: origin + '/result?offer=' + token + '#pricing', label: 'Come back for ' + OFFER_PERCENT + '% less' }, true);
+    } else {
+      ok = await sendOnce(env, origin, r.email, 'winback', r.ref,
+        'There is new audio in Hushlore',
+        'It has been a couple of weeks',
+        ['Your membership ran out a fortnight ago. New recordings have been added since.',
+         'Everything you had is still on your shelf and comes straight back the moment you return.'],
+        { href: origin + '/result#pricing', label: 'Come back' }, true);
+    }
     if (ok) out.winback++;
   }
 
@@ -1005,6 +1056,7 @@ async function wishMine(request, env) {
 }
 
 const WISH_REPLY_TO  = 'hello@hushlorewhisper.com';
+const SITE_ORIGIN    = 'https://hushlorewhisper.com';
 const WISH_REPLY_MAX = 2000;
 
 /* An answer to a wish, from us as the Hushlore team. It is mailed, and it also
@@ -1376,7 +1428,7 @@ async function ccbillWebhook(request, env) {
 async function ccbillApply(env, event, ctx) {
   const bySubId = ctx.subId
     ? await env.DB.prepare(
-        'SELECT id, user_id, plan, expires_at FROM subscriptions WHERE processor_sub_id = ?1 ORDER BY created_at DESC LIMIT 1'
+        'SELECT id, user_id, plan, expires_at, cancelled_at FROM subscriptions WHERE processor_sub_id = ?1 ORDER BY created_at DESC LIMIT 1'
       ).bind(ctx.subId).first()
     : null;
 
@@ -1452,6 +1504,21 @@ async function ccbillApply(env, event, ctx) {
       await env.DB.prepare(
         'UPDATE subscriptions SET cancelled_at = COALESCE(cancelled_at, ?1), processor_cancelled_at = ?1 WHERE id = ?2'
       ).bind(ctx.at, bySubId.id).run();
+      // Cancelled at CCBill rather than on the site, so they never saw the
+      // question. Ask once by email; a reply reaches a person.
+      if (!bySubId.cancelled_at) {
+        const u = await env.DB.prepare('SELECT email FROM users WHERE id = ?1').bind(bySubId.user_id).first();
+        if (u) {
+          await sendOnce(env, SITE_ORIGIN, u.email, 'cancel_why', bySubId.id,
+            'Can we ask why?',
+            'Your membership will not renew',
+            ['Your Hushlore membership has been cancelled and will not renew. You keep everything until <strong>' +
+             String(bySubId.expires_at).slice(0, 10) + '</strong>.',
+             'If you have a moment: what made you cancel? Too little to listen to, not what you expected, the price, ' +
+             'or something else entirely - just hit reply. It is read by a person, and it decides what we fix first.'],
+            { href: SITE_ORIGIN + '/library', label: 'Open your library' }, false, null, WISH_REPLY_TO);
+        }
+      }
       return 'cancelled, access runs to ' + bySubId.expires_at;
     }
 
@@ -1519,10 +1586,17 @@ async function adminGrowth(request, env) {
     'SELECT id, day, amount_cents, currency, channel, note FROM ad_spend ORDER BY day'
   ).all()).results || [];
 
+  const cancelReasons = (await env.DB.prepare(
+    `SELECT f.reason, f.detail, f.outcome, f.created_at, u.email
+       FROM cancel_feedback f JOIN users u ON u.id = f.user_id
+      WHERE NOT ${INTERNAL_EMAIL_SQL.replace(/email/g, 'u.email')}
+      ORDER BY f.created_at DESC LIMIT 200`
+  ).all()).results || [];
+
   const plans = {};
   for (const k in CCBILL_PLANS) plans[k] = { months: CCBILL_PLANS[k].months, price: Number(CCBILL_PLANS[k].price) };
 
-  return json({ now: nowISO(), plans, subs, payments, funnel, spend });
+  return json({ now: nowISO(), plans, subs, payments, funnel, spend, cancelReasons });
 }
 
 /** Ad spend is typed in by hand: GET lists it, POST adds a day, POST {delete} removes one. */

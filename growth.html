@@ -135,6 +135,11 @@
   <p class="g-sub">People, not clicks, in the selected period. Purchases are read from CCBill postbacks, not from the browser.</p>
   <div class="g-fn" id="funnel"></div>
 
+  <h2 class="g-h">Why people cancel</h2>
+  <p class="g-sub">From the one optional question on the cancel page, all time. "Kept" means they answered and then chose to stay.</p>
+  <div class="g-fn" id="why"></div>
+  <div class="g-scroll" style="margin-top:10px"><table class="g-tbl" id="whyList"></table></div>
+
   <h2 class="g-h">Members</h2>
   <div class="g-scroll"><table class="g-tbl" id="members"></table></div>
 
@@ -379,6 +384,24 @@
         '<span class="v">' + s[1] + ' <small>' + (i ? (prev ? pct(s[1] / prev) + ' of prev' : '') : '') + '</small></span></div>';
     }).join('') +
     '<div class="fn"><span class="n"><b>Quiz &rarr; member</b></span><span class="b"></span><span class="v"><b>' + (steps[0][1] ? pct(newM.length / steps[0][1]) : '-') + '</b></span></div>';
+
+    /* ── why people cancel ─────────────────────────────────────── */
+    var WHY = { content: 'Not enough stories', expectations: 'Not what they expected', price: 'Too expensive',
+                trial: 'Only trying / no auto-renew', time: 'No time to listen', other: 'Something else' };
+    var CR = D.cancelReasons || [];
+    var byWhy = {}; CR.forEach(function (f) { byWhy[f.reason] = (byWhy[f.reason] || 0) + 1; });
+    var whyRows = Object.keys(WHY).map(function (k) { return [k, byWhy[k] || 0]; }).sort(function (a, b) { return b[1] - a[1]; });
+    var whyTop = whyRows.length ? whyRows[0][1] : 0;
+    $('why').innerHTML = CR.length ? whyRows.map(function (r) {
+      return '<div class="fn"><span class="n">' + WHY[r[0]] + '</span><span class="b"><i style="width:' + (whyTop ? r[1] / whyTop * 100 : 0) + '%"></i></span>' +
+        '<span class="v">' + r[1] + ' <small>' + pct(r[1] / CR.length) + '</small></span></div>';
+    }).join('') : '<p class="g-note">No answers yet - they appear here as soon as someone cancels from their account page.</p>';
+    $('whyList').innerHTML = CR.length ? '<tr><th>When</th><th>Member</th><th>Reason</th><th>In their words</th><th>Outcome</th></tr>' +
+      CR.map(function (f) {
+        return '<tr><td>' + dtstr(+new Date(f.created_at)) + '</td><td>' + esc(f.email) + '</td><td>' + esc(WHY[f.reason] || f.reason) +
+          '</td><td style="white-space:pre-wrap;max-width:420px">' + (f.detail ? esc(f.detail) : '<span style="color:#8d7684">-</span>') +
+          '</td><td>' + (f.outcome === 'kept' ? '<span class="chip ok">Kept</span>' : '<span class="chip warn">Cancelled</span>') + '</td></tr>';
+      }).join('') : '';
 
     /* ── tables ────────────────────────────────────────────────── */
     var sorted = M.slice().sort(function (a, b) { return b.start - a.start; });
