@@ -182,6 +182,41 @@
       <div class="lib-empty hidden" id="resultsEmpty">No stories match that. Try another word or clear the search.</div>
     </div>
 
+    <!-- progress: first steps + membership rewards -->
+    <style>
+      .hp { background: linear-gradient(135deg, rgba(192,51,88,.14), rgba(23,11,21,.9) 60%); border: 1px solid var(--border);
+        border-radius: 18px; padding: 20px 22px; margin: 6px 0 26px; font-family: var(--sans); color: var(--cream); }
+      .hp-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+      .hp-eye { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+      .hp h2 { font-family: var(--serif); font-weight: 500; font-size: 28px; margin: 2px 0 0; line-height: 1.1; }
+      .hp h2 small { font-family: var(--sans); font-size: 13px; color: #a98ea3; font-weight: 400; margin-left: 8px; }
+      .hp-new { font-size: 13px; background: rgba(125,219,163,.12); color: #7ddba3; border: 1px solid rgba(125,219,163,.3);
+        border-radius: 20px; padding: 5px 12px; }
+      .hp-block + .hp-block { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.06); }
+      .hp-lbl { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: #c1a7b8; margin-bottom: 10px; flex-wrap: wrap; }
+      .hp-lbl b { color: var(--cream); font-weight: 600; }
+      .hp-steps { position: relative; display: grid; gap: 6px; }
+      .hp-rail { position: absolute; left: 11px; right: 11px; top: 11px; height: 3px; border-radius: 3px; background: rgba(255,255,255,.08); }
+      .hp-rail i { display: block; height: 100%; border-radius: 3px; background: var(--gold); transition: width .6s ease; }
+      .hp-step { position: relative; text-align: center; min-width: 0; }
+      .hp-step:first-of-type { text-align: left; } .hp-step:last-child { text-align: right; }
+      .hp-dot { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%;
+        background: #1c0f19; border: 2px solid rgba(255,255,255,.18); font-size: 12px; color: #8d7684; position: relative; z-index: 1; }
+      .hp-step.on .hp-dot { background: var(--gold); border-color: var(--gold); color: #fff; }
+      .hp-step.next .hp-dot { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 0 4px rgba(192,51,88,.18); }
+      .hp-step .t { display: block; font-size: 12.5px; font-weight: 600; margin-top: 6px; color: var(--cream); }
+      .hp-step .r { display: block; font-size: 11.5px; color: #8d7684; line-height: 1.35; margin-top: 2px; }
+      .hp-step.on .r { color: #c1a7b8; }
+      .hp-next { margin-top: 12px; font-size: 13.5px; color: #e7dce3; }
+      .hp-next b { color: var(--gold); }
+      .hp-bonus { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+      .hp-bonus button, .hp-bonus span { font-family: var(--sans); font-size: 13px; border-radius: 10px; padding: 9px 13px;
+        border: 1px solid var(--border); background: rgba(255,255,255,.03); color: #c1a7b8; }
+      .hp-bonus button { background: var(--gold); border-color: var(--gold); color: #fff; font-weight: 600; cursor: pointer; }
+      @media (max-width: 560px) { .hp { padding: 16px; } .hp-step .r { display: none; } .hp h2 { font-size: 24px; } }
+    </style>
+    <div id="hlProgress"></div>
+
     <!-- browse rows -->
     <div id="rows"></div>
   </div>
@@ -640,6 +675,87 @@
 
     renderRows();
 
+    /* ── progress panel ───────────────────────────────────────────────
+       First steps while a member is new, then the rewards for staying.
+       Only bonuses are ever locked; the library itself never is. */
+    function shortDate(iso) { return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); }
+    /* `at` is a position in steps (1.4 = 40% of the way from step 2 to step 3).
+       The dots sit at the edges and column centres, so the fill is mapped onto
+       exactly those points rather than onto an even split. */
+    function stepsHTML(items, at, isOn, title, sub) {
+      const n = items.length, nextIdx = items.findIndex(function (x) { return !isOn(x); });
+      const pos = function (i) { return i <= 0 ? 0 : i >= n - 1 ? 1 : (i + 0.5) / n; };
+      const lo = Math.max(0, Math.min(n - 1, Math.floor(at))), f = at - lo;
+      const fill = lo >= n - 1 ? 1 : pos(lo) + (pos(lo + 1) - pos(lo)) * f;
+      return '<div class="hp-steps" style="grid-template-columns:repeat(' + n + ',1fr)">' +
+        '<div class="hp-rail"><i style="width:' + Math.round(fill * 100) + '%"></i></div>' +
+        items.map(function (x, i) {
+          const on = isOn(x), cls = on ? ' on' : (i === nextIdx ? ' next' : '');
+          return '<div class="hp-step' + cls + '"><span class="hp-dot">' + (on ? '✓' : (i + 1)) + '</span>' +
+            '<span class="t">' + esc(title(x)) + '</span><span class="r">' + esc(sub(x)) + '</span></div>';
+        }).join('') + '</div>';
+    }
+    let progressShown = {};
+    function loadProgress() {
+      fetch('/api/progress?aud=' + encodeURIComponent(listenerAud || ''), { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { if (d) renderProgress(d); })
+        .catch(function () {});
+    }
+    function renderProgress(d) {
+      const box = document.getElementById('hlProgress');
+      const M = d.milestones, L = d.loyalty;
+      let html = '<section class="hp"><div class="hp-top"><div><div class="hp-eye">Your Hushlore</div>' +
+        '<h2>Month ' + d.month + '<small>member since ' + shortDate(d.since) + '</small></h2></div>';
+      const fresh = (d.newly || []).filter(function (x) { return !progressShown[x]; });
+      fresh.forEach(function (x) { progressShown[x] = 1; });
+      if (fresh.length) html += '<span class="hp-new">Unlocked: ' + esc(fresh.join(' · ')) + '</span>';
+      html += '</div>';
+
+      // First steps - until all of them are done.
+      if (!M.every(function (m) { return m.unlocked; })) {
+        const goal = M[M.length - 1].heard, next = M.find(function (m) { return !m.unlocked; });
+        const prevAt = M.filter(function (m) { return m.unlocked; }).map(function (m) { return m.heard; }).pop() || 0;
+        const idx = M.indexOf(next);
+        const fill = idx <= 0 ? 0 : (idx - 1) + (d.heard - prevAt) / (next.heard - prevAt);
+        const left = next.heard - d.heard;
+        html += '<div class="hp-block"><div class="hp-lbl"><span>First steps</span><span><b>' + d.heard + '</b> of ' + goal + ' stories heard</span></div>' +
+          stepsHTML(M, fill, function (m) { return m.unlocked; }, function (m) { return m.label; }, function (m) { return m.reward; }) +
+          '<div class="hp-next">Hear <b>' + left + ' more ' + (left === 1 ? 'story' : 'stories') + '</b> to unlock <b>' + esc(next.reward) + '</b>.</div></div>';
+      }
+
+      // Rewards for staying.
+      const nextL = L.find(function (l) { return !l.unlocked; });
+      let lfill = L.length - 1;
+      if (nextL) {
+        const i = L.indexOf(nextL), prev = L[i - 1];
+        const span = new Date(nextL.at) - new Date(prev.at), done = Date.now() - new Date(prev.at);
+        lfill = (i - 1) + Math.max(0, Math.min(1, done / span));
+      }
+      html += '<div class="hp-block"><div class="hp-lbl"><span>Membership rewards</span>' +
+        (nextL ? '<span>next on <b>' + shortDate(nextL.at) + '</b></span>' : '<span><b>All unlocked</b></span>') + '</div>' +
+        stepsHTML(L, lfill, function (l) { return l.unlocked; }, function (l) { return l.label; }, function (l) { return l.reward; }) +
+        (nextL ? '<div class="hp-next"><b>' + esc(nextL.label) + '</b> unlocks on <b>' + shortDate(nextL.at) + '</b>: ' + esc(nextL.reward) + '.</div>' : '') +
+        '</div>';
+
+      // What has been earned and can be played.
+      const got = (d.bonus || []).filter(function (b) { return b.unlocked; });
+      if (got.length) {
+        html += '<div class="hp-bonus">' + got.map(function (b) {
+          return b.id ? '<button type="button" data-bonus="' + esc(b.id) + '" data-title="' + esc(b.title) + '">▶ ' + esc(b.title) + '</button>'
+                      : '<span>' + esc(b.title) + ' - being recorded, it lands here soon</span>';
+        }).join('') + '</div>';
+      }
+      box.innerHTML = html + '</section>';
+      [].forEach.call(box.querySelectorAll('[data-bonus]'), function (btn) {
+        btn.addEventListener('click', function () {
+          openPlayer({ id: btn.getAttribute('data-bonus'), title: btn.getAttribute('data-title'), img: IMGS[0],
+                       voice: 'Members only', len: 'bonus', heat: 3, tags: ['Bonus'] });
+        });
+      });
+    }
+    loadProgress();
+
     /* filters */
     const catSel = document.getElementById('filterCategory');
     catSel.innerHTML = '<option value="">Any</option>' + orderedKeys.map(function (k) { return '<option value="' + k + '">' + esc(outcomes[k].title) + '</option>'; }).join('');
@@ -690,6 +806,36 @@
     /* player modal */
     const overlay = document.getElementById('playerOverlay');
     const audioEl = document.getElementById('playerAudio');
+
+    /* ── listening, reported in small slices ──────────────────────────
+       Only time actually played counts: a seek or a paused tab adds nothing.
+       It is what the progress panel and the milestones are measured in. */
+    let listenId = null, listenLast = null, listenPending = 0;
+    function listenFlush() {
+      const secs = Math.round(listenPending);
+      if (!listenId || secs < 1) return;
+      listenPending = 0;
+      fetch('/api/listen', {
+        method: 'POST', credentials: 'same-origin', keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ story: listenId, secs: secs })
+      }).then(function () { loadProgress(); }).catch(function () {});
+    }
+    function listenStart(id) { listenFlush(); listenId = id; listenLast = null; }
+    audioEl.addEventListener('timeupdate', function () {
+      const t = audioEl.currentTime;
+      if (!audioEl.paused && listenLast != null) {
+        const d = t - listenLast;
+        if (d > 0 && d < 3) listenPending += d;
+      }
+      listenLast = t;
+      if (listenPending >= 30) listenFlush();
+    });
+    audioEl.addEventListener('seeking', function () { listenLast = null; });
+    audioEl.addEventListener('pause', listenFlush);
+    audioEl.addEventListener('ended', listenFlush);
+    window.addEventListener('pagehide', listenFlush);
+
 
     /* Which voices can actually be messaged. Loaded once; the offer only appears
        for a voice that has a chat profile, so it can never point at nobody. */
@@ -771,7 +917,9 @@
       setNowPlaying(s);
       overlay.classList.add('open');
       audioEl.play().catch(function () {});
-      pushHistory(s.id); renderRows();
+      if (!/^bonus-/.test(s.id)) pushHistory(s.id);
+      listenStart(s.id);
+      renderRows();
     }
     function closePlayer() {
       rememberNow();

@@ -66,6 +66,8 @@ export default {
       if (p === '/api/offer')         return offerStatus(request, env);
       if (p === '/api/sub/cancel')    return requirePost(request, () => subCancel(request, env));
       if (p === '/api/sub/feedback')  return requirePost(request, () => subFeedback(request, env));
+      if (p === '/api/listen')        return requirePost(request, () => listenLog(request, env));
+      if (p === '/api/progress')      return progressState(request, env);
       if (p === '/api/sub/resume')    return requirePost(request, () => subResume(request, env));
       if (p === '/api/wishes')        return request.method === 'POST' ? wishAdd(request, env) : wishMine(request, env);
       if (p === '/api/admin/wishes')  return adminWishes(request, env);
@@ -437,6 +439,13 @@ async function serveAudio(request, env, filename) {
   const uid = await readSession(env, request);
   if (!uid) return json({ error: 'auth_required' }, 401);
   if (!await activeSub(env, uid)) return json({ error: 'subscription_required' }, 402);
+  // Bonus recordings are earned, not browsed: only for someone who has unlocked them.
+  if (/^bonus-/i.test(filename)) {
+    const st = await computeProgress(env, uid, null);
+    if (!st.bonus.some(b => b.unlocked && b.id && b.id + '.mp3' === filename)) {
+      return json({ error: 'locked' }, 403);
+    }
+  }
 
   const obj = await env.AUDIO.get(filename, { range: request.headers, onlyIf: request.headers });
   if (!obj) return new Response('Not found', { status: 404 });
@@ -456,6 +465,123 @@ async function serveAudio(request, env, filename) {
     return new Response(obj.body, { status: 206, headers });
   }
   return new Response(obj.body, { status: 200, headers });
+}
+
+/* ═══════════════════════════ progress & rewards ═══════════════════════════
+   Two tracks, shown together at the top of the library.
+
+   First steps - listening milestones in the first days, because a member who
+   never starts a story is the member who cancels. Loyalty - something unlocks
+   with each month a member stays, so leaving costs something real.
+
+   Only BONUSES are ever locked. Everything a member paid for stays open, so
+   no-one is ever told to earn back what they already bought.
+
+   A bonus recording is named per audience here. Until the file exists (id is
+   null) the page says it is being recorded - an unlock is never a dead link.
+─────────────────────────────────────────────────────────────────────────── */
+
+const HEARD_SECONDS = 120;          // this much of a story counts as heard
+
+const BONUS = {
+  secret: { title: 'The Secret Track',          ids: { M: null, W: null, L: null, G: null } },
+  month2: { title: 'Members-only: Month 2',     ids: { M: null, W: null, L: null, G: null } },
+  month3: { title: 'Members-only: Month 3',     ids: { M: null, W: null, L: null, G: null } }
+};
+
+const MILESTONES = [
+  { key: 'heard1', heard: 1, label: 'First story',  reward: 'You have started' },
+  { key: 'heard3', heard: 3, label: '3 stories',    reward: '3 free messages to a creator', credits: 3 },
+  { key: 'heard5', heard: 5, label: '5 stories',    reward: 'The Secret Track',             bonus: 'secret' }
+];
+
+const LOYALTY = [
+  { key: 'month1', month: 1, label: 'Month 1', reward: 'Your full library' },
+  { key: 'month2', month: 2, label: 'Month 2', reward: 'A members-only recording + 5 free messages', credits: 5, bonus: 'month2' },
+  { key: 'month3', month: 3, label: 'Month 3', reward: 'A second members-only recording + 10 free messages', credits: 10, bonus: 'month3' },
+  { key: 'month6', month: 6, label: 'Month 6', reward: 'A personal voice greeting, recorded for you by name', manual: true }
+];
+
+function addMonths(iso, n) { const d = new Date(iso); d.setMonth(d.getMonth() + n); return d.toISOString(); }
+
+/** Grants anything newly earned (once) and returns the whole picture. */
+async function computeProgress(env, uid, audHint) {
+  const u = await env.DB.prepare('SELECT aud FROM users WHERE id = ?1').bind(uid).first();
+  const aud = (u && /^[MWLG]$/.test(u.aud || '') ? u.aud : null) || (/^[MWLG]$/.test(audHint || '') ? audHint : 'M');
+
+  const heardRow = await env.DB.prepare(
+    'SELECT COUNT(*) AS n FROM listens WHERE user_id = ?1 AND seconds >= ?2'
+  ).bind(uid, HEARD_SECONDS).first();
+  const heard = heardRow ? heardRow.n : 0;
+
+  // Membership age runs from the first term of the current, unbroken membership.
+  const first = await env.DB.prepare(
+    `SELECT MIN(started_at) AS since FROM subscriptions
+      WHERE user_id = ?1 AND status = 'active'`
+  ).bind(uid).first();
+  const since = (first && first.since) || nowISO();
+  const now = nowISO();
+
+  const got = new Set(((await env.DB.prepare('SELECT key FROM rewards WHERE user_id = ?1').bind(uid).all()).results || []).map(r => r.key));
+  const earn = async (r) => {
+    if (got.has(r.key)) return false;
+    const res = await env.DB.prepare('INSERT OR IGNORE INTO rewards (user_id, key, granted_at) VALUES (?1,?2,?3)')
+      .bind(uid, r.key, now).run();
+    if (res.meta && res.meta.changes && r.credits) await addCredits(env, uid, r.credits, 'gift', 'reward:' + r.key);
+    got.add(r.key);
+    return true;
+  };
+
+  const newly = [];
+  const milestones = [];
+  for (const m of MILESTONES) {
+    const unlocked = heard >= m.heard;
+    if (unlocked && await earn(m)) newly.push(m.reward);
+    milestones.push({ key: m.key, heard: m.heard, label: m.label, reward: m.reward, unlocked });
+  }
+
+  const loyalty = [];
+  for (const l of LOYALTY) {
+    const at = addMonths(since, l.month - 1);
+    const unlocked = at <= now;
+    if (unlocked && l.month > 1 && await earn(l)) newly.push(l.reward);
+    loyalty.push({ key: l.key, month: l.month, label: l.label, reward: l.reward, at, unlocked });
+  }
+
+  const bonus = Object.keys(BONUS).map(k => {
+    const src = MILESTONES.find(m => m.bonus === k) || LOYALTY.find(l => l.bonus === k);
+    return { key: k, title: BONUS[k].title, id: BONUS[k].ids[aud] || null, unlocked: got.has(src.key) };
+  });
+
+  const monthNow = Math.max(1, loyalty.filter(l => l.unlocked).length ? loyalty.filter(l => l.unlocked).slice(-1)[0].month : 1);
+  return { aud, heard, heard_seconds: HEARD_SECONDS, since, month: monthNow, milestones, loyalty, bonus, newly };
+}
+
+async function progressState(request, env) {
+  const uid = await readSession(env, request);
+  if (!uid) return json({ error: 'auth_required' }, 401);
+  if (!await activeSub(env, uid)) return json({ error: 'subscription_required' }, 402);
+  const aud = new URL(request.url).searchParams.get('aud');
+  return json(await computeProgress(env, uid, aud));
+}
+
+/** The player reports listening in small slices; a story is heard once enough piles up. */
+async function listenLog(request, env) {
+  const uid = await readSession(env, request);
+  if (!uid) return json({ error: 'auth_required' }, 401);
+  if (!await activeSub(env, uid)) return json({ error: 'subscription_required' }, 402);
+  const b = await request.json().catch(() => ({}));
+  const story = String(b.story || '');
+  const secs = Math.round(Number(b.secs));
+  if (!/^[a-z0-9][a-z0-9-]{1,80}$/i.test(story)) return json({ error: 'bad_story' }, 400);
+  if (!Number.isFinite(secs) || secs <= 0) return json({ ok: true });
+  const add = Math.min(secs, 90);          // one report never claims more than a slice
+  const now = nowISO();
+  await env.DB.prepare(
+    `INSERT INTO listens (user_id, story_id, seconds, first_at, last_at) VALUES (?1,?2,?3,?4,?4)
+     ON CONFLICT(user_id, story_id) DO UPDATE SET seconds = seconds + ?3, last_at = ?4`
+  ).bind(uid, story, add, now).run();
+  return json({ ok: true });
 }
 
 /* ───────────────────────── marketing list ───────────────────────── */
@@ -1596,7 +1722,18 @@ async function adminGrowth(request, env) {
   const plans = {};
   for (const k in CCBILL_PLANS) plans[k] = { months: CCBILL_PLANS[k].months, price: Number(CCBILL_PLANS[k].price) };
 
-  return json({ now: nowISO(), plans, subs, payments, funnel, spend, cancelReasons });
+  const listens = (await env.DB.prepare(
+    `SELECT u.email, l.story_id, l.seconds, l.first_at, l.last_at
+       FROM listens l JOIN users u ON u.id = l.user_id
+      WHERE NOT ${INTERNAL_EMAIL_SQL.replace(/email/g, 'u.email')}`
+  ).all()).results || [];
+  const greetings = (await env.DB.prepare(
+    `SELECT u.email, u.aud, r.granted_at FROM rewards r JOIN users u ON u.id = r.user_id
+      WHERE r.key = 'month6' ORDER BY r.granted_at DESC`
+  ).all()).results || [];
+
+  return json({ now: nowISO(), plans, subs, payments, funnel, spend, cancelReasons,
+                listens, heardSeconds: HEARD_SECONDS, greetings });
 }
 
 /** Ad spend is typed in by hand: GET lists it, POST adds a day, POST {delete} removes one. */

@@ -121,6 +121,14 @@
   <p class="g-sub">The numbers that decide whether this grows. Until the first renewals come due, churn is read from members turning off auto-renew.</p>
   <div class="g-tiles" id="retention"></div>
 
+  <h2 class="g-h">Listening</h2>
+  <p class="g-sub">Counted from 30 Sep 2026, when listening started being recorded. A story counts as heard after 2 minutes of actual play.</p>
+  <div class="g-tiles" id="listening"></div>
+  <div class="g-charts" style="margin-top:12px">
+    <div><div class="g-scroll"><table class="g-tbl" id="topStories"></table></div></div>
+    <div><div class="g-scroll"><table class="g-tbl" id="greetings"></table></div></div>
+  </div>
+
   <h2 class="g-h">Acquisition</h2>
   <p class="g-sub">CAC and ROAS need the ad spend below - add a line per day or per campaign.</p>
   <div class="g-tiles" id="acq"></div>
@@ -343,6 +351,35 @@
       tile('LTV (estimate)', isFinite(ltv) ? money(ltv) : '-',
         isFinite(ltv) ? 'ARPU &divide; monthly churn. Only a rough guide until ~30 members and a round of renewals.' : 'needs at least one cancellation to estimate') +
       tile('Paid per customer so far', money(perCustomer), 'net, all time, ' + paidCustomers + ' customers');
+
+    /* ── listening ─────────────────────────────────────────────── */
+    var LS = D.listens || [], HS = D.heardSeconds || 120;
+    var perMember = {}, perStory = {};
+    LS.forEach(function (l) {
+      var pm = perMember[l.email] || (perMember[l.email] = { heard: 0, secs: 0 });
+      pm.secs += l.seconds; if (l.seconds >= HS) pm.heard++;
+      var ps = perStory[l.story_id] || (perStory[l.story_id] = { people: 0, secs: 0 });
+      ps.people++; ps.secs += l.seconds;
+    });
+    var activeEmails = active.map(function (m) { return m.email; });
+    var listened = activeEmails.filter(function (e) { return perMember[e] && perMember[e].heard > 0; });
+    var silent = activeEmails.filter(function (e) { return !perMember[e] || perMember[e].heard === 0; });
+    var totalSecs = LS.reduce(function (a, l) { return a + l.seconds; }, 0);
+    var heardTotal = Object.keys(perMember).reduce(function (a, e) { return a + perMember[e].heard; }, 0);
+    $('listening').innerHTML =
+      tile('Active members listening', activeEmails.length ? pct(listened.length / activeEmails.length) : '-',
+        '<b>' + listened.length + '</b> of ' + activeEmails.length + ' have heard at least one story', true) +
+      tile('Not listened yet', silent.length, silent.length ? 'the members most likely to cancel - worth a nudge' : 'everyone has started') +
+      tile('Stories heard per listener', Object.keys(perMember).length ? (Math.round(heardTotal / Object.keys(perMember).length * 10) / 10) : '-', 'average, among members who played anything') +
+      tile('Hours listened', (Math.round(totalSecs / 360) / 10), 'all members, all time');
+    var top = Object.keys(perStory).map(function (k) { return [k, perStory[k]]; }).sort(function (a, b) { return b[1].secs - a[1].secs; }).slice(0, 10);
+    $('topStories').innerHTML = '<tr><th>Most listened</th><th class="num">People</th><th class="num">Minutes</th></tr>' +
+      (top.length ? top.map(function (t) { return '<tr><td>' + esc(t[0]) + '</td><td class="num">' + t[1].people + '</td><td class="num">' + Math.round(t[1].secs / 60) + '</td></tr>'; }).join('')
+                  : '<tr><td colspan="3">No listening recorded yet.</td></tr>');
+    var G = D.greetings || [];
+    $('greetings').innerHTML = '<tr><th>Month 6 greetings to record</th><th>Audience</th><th>Earned</th></tr>' +
+      (G.length ? G.map(function (g) { return '<tr><td>' + esc(g.email) + '</td><td>' + esc(g.aud || '-') + '</td><td>' + dstr(g.granted_at) + '</td></tr>'; }).join('')
+                : '<tr><td colspan="3">Nobody has reached month 6 yet.</td></tr>');
 
     /* ── acquisition ───────────────────────────────────────────── */
     var spendUsd = function (rows) { return rows.reduce(function (a, s) { return a + s.amount_cents / 100 * (s.currency === 'EUR' ? FX : 1); }, 0); };

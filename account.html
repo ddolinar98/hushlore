@@ -166,6 +166,7 @@
           <div class="ac-cancel-confirm" id="cancelConfirm">
             <p>Your membership will not renew. You keep everything until
                <b id="cancelUntil"></b> — nothing is taken away before then.</p>
+            <p id="cancelLose" style="display:none"></p>
 
             <div class="ac-why" id="why">
               <h4>Before you go - what made you cancel?</h4>
@@ -346,7 +347,9 @@
       return isNaN(d) ? String(iso).slice(0, 10)
         : d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
     }
+    let lastSub = null;
     function showSub(sub) {
+      lastSub = sub;
       const until = niceDate(sub.expires_at);
       if (statusEl) {
         statusEl.textContent = sub.renews === false
@@ -375,6 +378,20 @@
     }
     document.getElementById('cancelStart').addEventListener('click', function () {
       cancelBox.classList.add('confirming');
+      // Say plainly what staying would have unlocked next - it is real, so it is fair to mention.
+      fetch('/api/progress', { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          // Only a reward that needs a renewal is actually lost by cancelling.
+          const ends = lastSub ? new Date(lastSub.expires_at) : null;
+          const next = d && (d.loyalty || []).find(function (l) { return !l.unlocked && ends && new Date(l.at) >= ends; });
+          const el = document.getElementById('cancelLose');
+          if (!next) return;
+          el.innerHTML = 'If you stay, <b>' + next.label + '</b> unlocks on <b>' + niceDate(next.at) + '</b>: ' +
+            String(next.reward).replace(/[&<>]/g, '') + '. Cancelling means it will not.';
+          el.style.display = 'block';
+        })
+        .catch(function () {});
     });
     document.getElementById('cancelBack').addEventListener('click', function () {
       const w = whyChoice();
