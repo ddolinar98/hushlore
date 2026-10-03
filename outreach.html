@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hushlore - Outreach</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20260927f" />
+  <style>
+    body { background: var(--bg); }
+    .o-page { max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px,3vw,32px) 70px; font-family: var(--sans); color: var(--cream); }
+    .o-nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 0 8px; gap: 12px; flex-wrap: wrap; }
+    .o-logo { font-family: var(--serif); font-size: 24px; } .o-logo span { color: var(--gold); }
+    .o-nav a { color: #a98ea3; font-size: 14px; text-decoration: none; }
+    h2 { font-family: var(--serif); font-weight: 500; font-size: 26px; margin: 30px 0 4px; }
+    .sub { font-size: 13.5px; color: #a98ea3; margin: 0 0 14px; line-height: 1.55; max-width: 780px; }
+    .grp { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 16px; align-items: start; }
+    @media (max-width: 860px) { .grp { grid-template-columns: 1fr; } }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+    .card h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: #8d7684; font-weight: 600; }
+    .who { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-top: 1px solid rgba(255,255,255,.05); font-size: 13.5px; }
+    .who small { color: #8d7684; }
+    .chip { font-size: 11.5px; border-radius: 20px; padding: 2px 9px; border: 1px solid var(--border); white-space: nowrap; }
+    .chip.ok { color: #7ddba3; border-color: rgba(125,219,163,.35); }
+    .subj { font-size: 14px; margin: 0 0 10px; } .subj b { color: var(--gold); }
+    iframe { width: 100%; height: 640px; border: 0; border-radius: 10px; background: #fff; }
+    .send { margin-top: 12px; background: var(--gold); color: #fff; border: 0; border-radius: 10px; font-family: var(--sans);
+      font-weight: 700; font-size: 14px; padding: 11px 18px; cursor: pointer; width: 100%; }
+    .send[disabled] { opacity: .45; cursor: default; }
+    .res { margin-top: 8px; font-size: 13px; color: #7ddba3; }
+    select { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; color: var(--cream);
+      font-family: var(--sans); font-size: 13px; padding: 6px 8px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+<div class="o-page" id="app">
+  <div class="o-nav">
+    <span class="o-logo">Hush<span>lore</span> &middot; Outreach</span>
+    <a href="/growth">Growth</a>
+  </div>
+  <p class="sub">One personal email to people who reached the payment form and did not pay. Nothing goes out until you press Send.
+    Each person gets each email once; anyone who has paid or unsubscribed in the meantime is skipped automatically.
+    Replies go to hello@hushlorewhisper.com.</p>
+
+  <h2>Card declined</h2>
+  <p class="sub">CCBill refused the card. Each one gets the fix for their own decline reason - pick a name to see their version.</p>
+  <div class="grp" id="declined"></div>
+
+  <h2>Left the payment form</h2>
+  <p class="sub">Opened the CCBill form and left without trying a card. They get the answers to what usually stops people there.</p>
+  <div class="grp" id="abandoned"></div>
+  <p class="sub" id="skipped" style="margin-top:14px"></p>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+  var REASON = { address: 'billing address did not match', funds: 'insufficient funds', blocked: 'blocked by the bank' };
+
+  function render(kind, g) {
+    var box = $(kind), todo = g.people.filter(function (p) { return !p.sent; }).length;
+    var list = g.people.length ? g.people.map(function (p) {
+      return '<div class="who"><span>' + esc(p.email) + (p.reason ? '<br><small>' + esc(REASON[p.reason] || p.reason) + '</small>' : '') +
+        '</span>' + (p.sent ? '<span class="chip ok">Sent</span>' : '') + '</div>';
+    }).join('') : '<p class="sub">Nobody in this group.</p>';
+    var pick = kind === 'declined' && g.people.length
+      ? '<select id="pick-' + kind + '">' + g.people.map(function (p, i) { return '<option value="' + i + '">' + esc(p.name + ' - ' + p.email) + '</option>'; }).join('') + '</select>'
+      : '';
+    box.innerHTML =
+      '<div class="card"><h3>' + g.people.length + ' people</h3>' + list +
+        '<button class="send" id="send-' + kind + '"' + (todo ? '' : ' disabled') + '>' +
+          (todo ? 'Send to ' + todo + (todo === 1 ? ' person' : ' people') : 'All sent') + '</button>' +
+        '<div class="res" id="res-' + kind + '"></div></div>' +
+      '<div class="card"><h3>Preview</h3>' + pick + '<p class="subj">Subject: <b>' + esc(g.subject) + '</b></p><iframe id="pv-' + kind + '"></iframe></div>';
+    var frame = $('pv-' + kind);
+    function show(i) { frame.srcdoc = (kind === 'declined' && g.people[i] && g.people[i].preview) || g.preview; }
+    show(0);
+    if (pick) $('pick-' + kind).addEventListener('change', function () { show(+this.value); });
+    $('send-' + kind).addEventListener('click', function () {
+      var btn = this;
+      if (!confirm('Send this email to ' + todo + ' people now? This cannot be undone.')) return;
+      btn.disabled = true; btn.textContent = 'Sending...';
+      fetch('/api/admin/outreach', { method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: kind }) })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          $('res-' + kind).textContent = d.ok ? 'Sent: ' + d.sent + (d.failed ? ' - failed: ' + d.failed : '') + (d.already ? ' - already had it: ' + d.already : '')
+                                              : 'Something went wrong - nothing was marked as sent.';
+          setTimeout(load, 1500);
+        });
+    });
+  }
+
+  function load() {
+    fetch('/api/admin/outreach', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.groups) return;
+        render('declined', d.groups.declined);
+        render('abandoned', d.groups.abandoned);
+        $('skipped').textContent = d.skipped && d.skipped.length
+          ? 'Left out because the address cannot receive mail: ' + d.skipped.join(', ') : '';
+      });
+  }
+  load();
+})();
+</script>
+</body>
+</html>

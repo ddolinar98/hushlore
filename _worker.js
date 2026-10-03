@@ -41,10 +41,11 @@ export default {
     if (BLOCKED.test(p)) return new Response('Not found', { status: 404 });
     try {
       // The growth page is served to admins only - the page itself, not just its data.
-      if (/^\/growth(\.html)?\/?$/i.test(p) && !await requireAdmin(request, env)) {
+      const adminPage = /^\/(growth|outreach)(\.html)?\/?$/i.exec(p);
+      if (adminPage && !await requireAdmin(request, env)) {
         const signedIn = await readSession(env, request);
         return signedIn ? new Response('Not found', { status: 404 })
-                        : Response.redirect(url.origin + '/login?next=growth.html', 302);
+                        : Response.redirect(url.origin + '/login?next=' + adminPage[1].toLowerCase() + '.html', 302);
       }
       if (p === '/api/auth/register') return requirePost(request, () => register(request, env));
       if (p === '/api/auth/login')    return requirePost(request, () => login(request, env));
@@ -60,6 +61,7 @@ export default {
       if (p === '/api/admin/funnel')  return adminFunnel(request, env);
       if (p === '/api/admin/growth')  return adminGrowth(request, env);
       if (p === '/api/admin/ad-spend') return adminAdSpend(request, env);
+      if (p === '/api/admin/outreach') return adminOutreach(request, env);
       if (p.startsWith('/audio/'))    return serveAudio(request, env, p.slice('/audio/'.length));
       if (p.startsWith('/preview/'))  return servePreview(request, env, p.slice('/preview/'.length));
       if (p === '/api/waitlist')      return requirePost(request, () => joinWaitlist(request, env));
@@ -1760,6 +1762,131 @@ async function adminAdSpend(request, env) {
   ).bind(crypto.randomUUID(), day, cents, currency,
          String(b.channel || '').slice(0, 40) || null, String(b.note || '').slice(0, 200) || null, nowISO()).run();
   return json({ ok: true });
+}
+
+/* ═══════════════════════════ checkout outreach ═══════════════════════════
+   One personal email to people who reached the CCBill form and did not pay.
+   Two groups, because the cause differs:
+
+   declined  - CCBill refused the card and told us why (denial emails to
+               hello@). They get the fix for their own reason.
+   abandoned - opened the payment form and left without trying a card. They
+               get the answers to what usually stops people at that point.
+
+   Nothing is sent until the owner presses Send on /outreach. Each person gets
+   each email once (email_log), and anyone who has since paid or opted out is
+   skipped at send time, not just when the list was made.
+─────────────────────────────────────────────────────────────────────── */
+
+// From CCBill's decline report (Reports > Declines), 27 Sep - 3 Oct 2026.
+const OUTREACH_DECLINED = [
+  { email: 'marshjeff.123@gmail.com',      name: 'Jeffrey', reason: 'funds' },
+  { email: 'frizzyd1@att.net',             name: 'Dee',     reason: 'funds' },
+  { email: 'disturbedone7765@hotmail.com', name: 'William', reason: 'blocked' },
+  { email: 'blacklabeled66@gmail.com',     name: 'Anthony', reason: 'funds' },
+  { email: 'dbourgart@gmail.com',          name: 'Dylan',   reason: 'address' },
+  { email: 'kyle80312@gmail.com',          name: 'Kyle',    reason: 'address' }
+];
+
+const DECLINE_TIP = {
+  address: 'Your bank turned it down because the billing address did not match the one they have on file. ' +
+           'It is the most common reason a card is declined, and the easiest to fix: enter the address exactly as it ' +
+           'appears on your card statement - same street spelling, apartment number and ZIP code.',
+  funds:   'Your bank said there was not enough available on the card at that moment. If you would like to try again, ' +
+           'another card - or the same one on another day - usually goes straight through.',
+  blocked: 'Your bank stopped the payment before it reached us. Some banks block the first payment to an online billing ' +
+           'company they do not recognise. Two things usually fix it: approve the payment in your bank’s app if it asks, ' +
+           'or use a different card - debit cards go through most often.'
+};
+
+function outreachMail(kind, person, origin) {
+  if (kind === 'declined') {
+    return {
+      subject: 'Your Hushlore payment did not go through - here is the fix',
+      title: 'Your payment did not go through',
+      lines: ['Hi ' + escapeHtml(person.name || 'there') + ',',
+        'You tried to join Hushlore, but the payment did not go through - so nothing was charged.',
+        DECLINE_TIP[person.reason] || DECLINE_TIP.blocked,
+        'Everything is still set up for you. Your account is ready, and the button below takes you straight back to your plan.',
+        'If it still will not go through, just reply to this email and I will sort it out personally.',
+        '- Davor, Hushlore'],
+      cta: { href: origin + '/result#pricing', label: 'Try again' },
+      marketing: false
+    };
+  }
+  return {
+    subject: 'A few things people ask before joining Hushlore',
+    title: 'Before you join',
+    lines: ['Hi,',
+      'You got as far as the payment page and stopped there. That is completely fine - here is what people most often want to know at that point:',
+      '<strong>Discreet billing.</strong> Payment is handled by CCBill, a long-established billing company. Your bank statement shows CCBill - the word Hushlore never appears.',
+      '<strong>Cancel any time.</strong> One click from your account, and you keep access to the end of what you paid for.',
+      '<strong>Instant access.</strong> The full library opens the moment the payment goes through.',
+      'One tip: enter your billing address exactly as your bank has it. A different address is the most common reason a card is declined.',
+      'Any questions at all? Just reply - a person reads every one.',
+      '- Davor, Hushlore'],
+    cta: { href: origin + '/result#pricing', label: 'Pick up where you left off' },
+    marketing: true
+  };
+}
+
+async function outreachPeople(env) {
+  // Everyone who reached the payment form in the last fortnight and has no membership.
+  const rows = (await env.DB.prepare(
+    `SELECT DISTINCT u.email
+       FROM purchase_consents c JOIN users u ON u.id = c.user_id
+      WHERE c.kind = 'membership' AND c.at > ?1
+        AND u.email_optout IS NULL
+        AND NOT ${INTERNAL_EMAIL_SQL.replace(/email/g, 'u.email')}
+        AND NOT EXISTS (SELECT 1 FROM subscriptions s WHERE s.user_id = u.id AND s.status = 'active')`
+  ).bind(new Date(Date.now() - 14 * 86400 * 1000).toISOString()).all()).results || [];
+  const waiting = new Set(rows.map(r => r.email));
+  // A domain that cannot receive mail is left out rather than bounced.
+  const deliverable = e => !/@(gmali|gmial|gmai|gnail|hotmial|yaho)\./i.test(e);
+
+  const declined = OUTREACH_DECLINED.filter(d => waiting.has(d.email));
+  const declinedSet = new Set(OUTREACH_DECLINED.map(d => d.email));
+  const abandoned = [...waiting].filter(e => !declinedSet.has(e) && deliverable(e)).sort().map(e => ({ email: e }));
+  const skipped = [...waiting].filter(e => !deliverable(e));
+  return { declined, abandoned, skipped };
+}
+
+async function adminOutreach(request, env) {
+  if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
+  const origin = new URL(request.url).origin;
+  const groups = await outreachPeople(env);
+  const sentRows = (await env.DB.prepare(
+    "SELECT email, kind FROM email_log WHERE kind IN ('outreach_declined','outreach_abandoned') AND sent_at IS NOT NULL"
+  ).all()).results || [];
+  const sent = new Set(sentRows.map(r => r.kind + ':' + r.email));
+
+  if (request.method !== 'POST') {
+    const view = {};
+    for (const kind of ['declined', 'abandoned']) {
+      const sample = groups[kind][0] || { email: '', name: 'Kyle', reason: 'address' };
+      const m = outreachMail(kind, sample, origin);
+      view[kind] = {
+        subject: m.subject,
+        preview: mailShell(m.title, m.lines, m.cta, m.marketing ? origin + '/api/email/unsubscribe?e=' : null),
+        people: groups[kind].map(p => Object.assign({}, p, { sent: sent.has('outreach_' + kind + ':' + p.email),
+          preview: kind === 'declined' ? mailShell(outreachMail(kind, p, origin).title, outreachMail(kind, p, origin).lines, outreachMail(kind, p, origin).cta, null) : undefined }))
+      };
+    }
+    return json({ groups: view, skipped: groups.skipped });
+  }
+
+  const b = await request.json().catch(() => ({}));
+  const kind = b.kind === 'declined' ? 'declined' : b.kind === 'abandoned' ? 'abandoned' : null;
+  if (!kind) return json({ error: 'bad_kind' }, 400);
+  let ok = 0, already = 0, failed = 0;
+  for (const person of groups[kind]) {
+    if (sent.has('outreach_' + kind + ':' + person.email)) { already++; continue; }
+    const m = outreachMail(kind, person, origin);
+    const done = await sendOnce(env, origin, person.email, 'outreach_' + kind, person.email,
+      m.subject, m.title, m.lines, m.cta, m.marketing, null, WISH_REPLY_TO);
+    if (done) ok++; else failed++;
+  }
+  return json({ ok: true, sent: ok, already, failed });
 }
 
 /** The last ten postbacks, for the admin console. */

@@ -258,6 +258,26 @@
         </span>
       </label>
 
+      <!-- What happens on the next page, said before they see it. Most people who
+           reach the CCBill form and leave never try a card at all, and the
+           commonest decline is an address that does not match the bank's. -->
+      <div class="next-step">
+        <p class="next-step-head">Next: secure checkout with <b>CCBill</b>, our billing partner</p>
+        <ul>
+          <li><b>Discreet.</b> Your statement shows CCBill - never Hushlore.</li>
+          <li><b>Use your card's billing address</b>, exactly as your bank has it. A different address is the most common reason a card is declined.</li>
+          <li><b>Cancel any time</b> in one click from your account.</li>
+        </ul>
+      </div>
+      <style>
+        .next-step { margin: 14px 0 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px;
+          background: rgba(255,255,255,.03); font-family: var(--sans); text-align: left; }
+        .next-step-head { margin: 0 0 6px; font-size: 13.5px; color: var(--cream); }
+        .next-step ul { margin: 0; padding-left: 18px; }
+        .next-step li { font-size: 13px; line-height: 1.5; color: #c1a7b8; margin: 3px 0; }
+        .next-step b { color: var(--cream); font-weight: 600; }
+      </style>
+
       <button type="button" id="continueBtn" class="continue-cta" disabled>Continue</button>
 
       <p class="waitlist-err" id="checkoutErr"></p>
