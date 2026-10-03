@@ -839,7 +839,9 @@ async function runEmailJobs(request, env) {
   }
 
   /* ── the card is charged again in three days ────────────────────── */
-  const renewing = (await env.DB.prepare(
+  // Switched off on 3 Oct 2026 at the owner's instruction. Flip to true to send again.
+  const SEND_PRE_RENEWAL = false;
+  const renewing = !SEND_PRE_RENEWAL ? [] : (await env.DB.prepare(
     `SELECT u.email, s.id AS ref, s.plan, s.expires_at
        FROM subscriptions s JOIN users u ON u.id = s.user_id
       WHERE s.status = 'active' AND s.cancelled_at IS NULL
