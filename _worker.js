@@ -1986,7 +1986,7 @@ async function adminOutreach(request, env) {
   const origin = new URL(request.url).origin;
   const groups = await outreachPeople(env);
   const sentRows = (await env.DB.prepare(
-    "SELECT email, kind FROM email_log WHERE kind IN ('outreach_declined','outreach_abandoned') AND sent_at IS NOT NULL"
+    "SELECT email, kind FROM email_log WHERE kind LIKE 'outreach_%' AND sent_at IS NOT NULL"
   ).all()).results || [];
   const sent = new Set(sentRows.map(r => r.kind + ':' + r.email));
 
