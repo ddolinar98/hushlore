@@ -722,7 +722,9 @@ function mailShell(title, lines, cta, optoutUrl, image) {
     '<h1 style="font-family:Georgia,serif;font-size:26px;font-weight:400;margin:0 0 18px">' + title + '</h1>' +
     (image ? '<img src="' + image + '" width="520" alt="" ' +
       'style="width:100%;max-width:520px;border-radius:14px;display:block;margin:0 0 18px" />' : '') +
-    lines.map(l => '<p style="margin:0 0 14px">' + l + '</p>').join('') +
+    // A table or a block cannot sit inside a <p> - mail clients split it apart.
+    lines.map(l => /^<(table|div)/.test(l) ? '<div style="margin:0 0 18px">' + l + '</div>'
+                                           : '<p style="margin:0 0 14px">' + l + '</p>').join('') +
     (cta ? '<p style="margin:26px 0"><a href="' + cta.href + '" style="background:#c2496b;color:#fff;' +
       'text-decoration:none;padding:13px 28px;border-radius:999px;display:inline-block;font-weight:600">' +
       cta.label + '</a></p>' : '') +
@@ -1833,18 +1835,37 @@ function outreachMail(kind, person, origin) {
     const pr = salePrices();
     const ends = new Date(Date.now() + SALE_HOURS * 3600 * 1000).toLocaleString('en-US',
       { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-    const row = (label, k) => label + ': <s style="color:#8a7a84">$' + pr[k].was.toFixed(2) + '</s> <strong>$' + pr[k].now.toFixed(2) + '</strong>';
+    const cell = 'padding:12px 14px;border-bottom:1px solid #f1e4ea;font-size:15px;';
+    const row = (label, k, tag) =>
+      '<tr><td style="' + cell + 'color:#221820">' + label +
+        (tag ? ' <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#c2496b;font-weight:700">' + tag + '</span>' : '') +
+      '</td><td style="' + cell + 'text-align:right;white-space:nowrap"><s style="color:#a8969f">$' + pr[k].was.toFixed(2) + '</s>' +
+      '&nbsp;&nbsp;<strong style="color:#c2496b;font-size:17px">$' + pr[k].now.toFixed(2) + '</strong></td></tr>';
+    const prices = '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" ' +
+      'style="border-collapse:collapse;background:#fbf6f8;border-radius:14px;overflow:hidden">' +
+      row('1 month', '1m') + row('3 months', '3m') + row('6 months', '6m', 'best value') + '</table>';
+    // Everything here is true and checkable: real performers, what members
+    // actually do on their first night, and the story played most this week.
+    const proof = '<div style="border-left:3px solid #c2496b;padding:4px 0 4px 16px;color:#4a3a44;font-size:14.5px">' +
+      '&#10022;&nbsp; Recorded by <strong>real voice performers</strong> - never AI, never text-to-speech.<br>' +
+      '&#10022;&nbsp; Members who press play tend to keep going: <strong>three, four, five stories</strong> on their first night.<br>' +
+      '&#10022;&nbsp; Most played right now: <em>Midnight Surrender</em>.</div>';
     return {
-      subject: SALE_PERCENT + '% off Hushlore - 48 hours only',
-      title: SALE_PERCENT + '% off, for 48 hours',
-      lines: ['Hi,',
-        'For the next 48 hours, every Hushlore membership is <strong>' + SALE_PERCENT + '% off your first term</strong> - the whole library of real voices, recorded for how you like it.',
-        row('1 month', '1m') + '<br>' + row('3 months', '3m') + '<br>' + row('6 months', '6m'),
-        'The price is only on the button below - it is your personal link, and it ends on <strong>' + ends + ' (ET)</strong>. ' +
-        'After the first term the membership renews at the regular price, and you can cancel any time in one click.',
-        'Your bank statement shows CCBill - the word Hushlore never appears.',
+      subject: 'Lights low, headphones on - 25% off for 48 hours',
+      title: 'Close your eyes. We’ll do the rest.',
+      image: MAIL_IMAGE,
+      lines: [
+        'You started something with us - a few questions, a match, a voice chosen for exactly what you like. Then you stopped just before it got good.',
+        'So for the next 48 hours, saying yes is easier: <strong>' + SALE_PERCENT + '% off your first term</strong> of any membership.',
+        prices,
+        'Slow, close, and only for you - whispered stories that start soft and do not stay that way. ' +
+        'Put your headphones in, turn the lights down, and let them take their time with you.',
+        proof,
+        '<span style="font-size:13.5px;color:#6b5c66">Your personal link ends <strong>' + ends + ' (ET)</strong>. ' +
+        'After the first term it renews at the regular price; cancel any time in one click. ' +
+        'Your bank statement shows CCBill - never Hushlore.</span>',
         '- The Hushlore Team'],
-      cta: { href: person.link || (origin + '/result#pricing'), label: 'Claim ' + SALE_PERCENT + '% off' },
+      cta: { href: person.link || (origin + '/result#pricing'), label: 'Claim ' + SALE_PERCENT + '% off tonight' },
       marketing: true
     };
   }
@@ -1937,7 +1958,7 @@ async function adminOutreach(request, env) {
       const m = outreachMail(kind, sample, origin);
       view[kind] = {
         subject: m.subject,
-        preview: mailShell(m.title, m.lines, m.cta, m.marketing ? origin + '/api/email/unsubscribe?e=' : null),
+        preview: mailShell(m.title, m.lines, m.cta, m.marketing ? origin + '/api/email/unsubscribe?e=' : null, m.image),
         people: groups[kind].map(p => Object.assign({}, p, { sent: sent.has('outreach_' + kind + ':' + p.email),
           preview: kind === 'declined' ? mailShell(outreachMail(kind, p, origin).title, outreachMail(kind, p, origin).lines, outreachMail(kind, p, origin).cta, null) : undefined }))
       };
@@ -1962,7 +1983,7 @@ async function adminOutreach(request, env) {
     }
     const m = outreachMail(kind, person, origin);
     const good = await sendOnce(env, origin, person.email, 'outreach_' + kind, person.email,
-      m.subject, m.title, m.lines, m.cta, m.marketing, null, WISH_REPLY_TO);
+      m.subject, m.title, m.lines, m.cta, m.marketing, m.image || null, WISH_REPLY_TO);
     if (good) ok++;
     else {
       failed++;
