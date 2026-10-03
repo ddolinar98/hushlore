@@ -1154,6 +1154,7 @@ async function adminWishes(request, env) {
   const r = await env.DB.prepare(
     `SELECT w.id, w.aud, w.body, w.status, w.note, w.reply, w.replied_at, w.created_at, u.email
        FROM wishes w JOIN users u ON u.id = w.user_id
+      WHERE NOT ${INTERNAL_EMAIL_SQL.replace(/email/g, 'u.email')}
       ORDER BY CASE w.status WHEN 'new' THEN 0 ELSE 1 END, w.created_at DESC
       LIMIT 200`
   ).all();
