@@ -47,6 +47,11 @@
   <p class="sub">CCBill refused the card. Each one gets the fix for their own decline reason - pick a name to see their version.</p>
   <div class="grp" id="declined"></div>
 
+  <h2>25% off - 48 hours</h2>
+  <p class="sub" id="saleSub">Everyone with an address who has never been a member, except the declined-card group above.
+    Each person gets their own link; the discount only exists behind it, works once, and stops working 48 hours after it is sent.</p>
+  <div class="grp" id="sale"></div>
+
   <h2>Left the payment form</h2>
   <p class="sub">Opened the CCBill form and left without trying a card. They get the answers to what usually stops people there.</p>
   <div class="grp" id="abandoned"></div>
@@ -79,17 +84,25 @@
     show(0);
     if (pick) $('pick-' + kind).addEventListener('change', function () { show(+this.value); });
     $('send-' + kind).addEventListener('click', function () {
-      var btn = this;
+      var btn = this, total = { sent: 0, failed: 0 };
       if (!confirm('Send this email to ' + todo + ' people now? This cannot be undone.')) return;
-      btn.disabled = true; btn.textContent = 'Sending...';
-      fetch('/api/admin/outreach', { method: 'POST', credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: kind }) })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          $('res-' + kind).textContent = d.ok ? 'Sent: ' + d.sent + (d.failed ? ' - failed: ' + d.failed : '') + (d.already ? ' - already had it: ' + d.already : '')
-                                              : 'Something went wrong - nothing was marked as sent.';
-          setTimeout(load, 1500);
-        });
+      btn.disabled = true;
+      // The server sends a batch per call; keep calling until none are left.
+      (function next(round) {
+        btn.textContent = 'Sending... ' + total.sent + ' / ' + todo;
+        fetch('/api/admin/outreach', { method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: kind }) })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (!d.ok) { $('res-' + kind).textContent = 'Something went wrong after ' + total.sent + ' sent. Press Send again to continue.'; btn.disabled = false; return; }
+            total.sent += d.sent; total.failed += d.failed;
+            // Stop if a round made no progress, so a provider outage cannot loop forever.
+            if (d.remaining > 0 && d.sent > 0 && round < 50) return next(round + 1);
+            $('res-' + kind).textContent = 'Sent: ' + total.sent + (total.failed ? ' - failed: ' + total.failed + ' (press Send again to retry them)' : '');
+            setTimeout(load, 1500);
+          })
+          .catch(function () { $('res-' + kind).textContent = 'Connection lost after ' + total.sent + ' sent. Press Send again to continue.'; btn.disabled = false; });
+      })(1);
     });
   }
 
@@ -100,6 +113,13 @@
         if (!d.groups) return;
         render('declined', d.groups.declined);
         render('abandoned', d.groups.abandoned);
+        render('sale', d.groups.sale);
+        if (d.sale) {
+          var pr = d.sale.prices;
+          $('saleSub').innerHTML += ' Prices: 1 month $' + pr['1m'].was.toFixed(2) + ' &rarr; <b>$' + pr['1m'].now.toFixed(2) + '</b>, ' +
+            '3 months $' + pr['3m'].was.toFixed(2) + ' &rarr; <b>$' + pr['3m'].now.toFixed(2) + '</b>, ' +
+            '6 months $' + pr['6m'].was.toFixed(2) + ' &rarr; <b>$' + pr['6m'].now.toFixed(2) + '</b>.';
+        }
         $('skipped').textContent = d.skipped && d.skipped.length
           ? 'Left out because the address cannot receive mail: ' + d.skipped.join(', ') : '';
       });

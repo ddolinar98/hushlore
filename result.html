@@ -636,8 +636,11 @@
 
           const banner = document.createElement('div');
           banner.className = 'offer-banner';
+          const ends = new Date(d.expires_at);
+          const hoursLeft = Math.max(0, Math.round((ends - Date.now()) / 3600000));
           banner.innerHTML = '<strong>' + d.percent + '% off your first term</strong>' +
-            '<span>Applied below. This link is yours alone and works once.</span>';
+            '<span>Applied below. This link is yours alone, works once, and ends ' +
+            (hoursLeft <= 48 ? 'in ' + hoursLeft + (hoursLeft === 1 ? ' hour' : ' hours') : 'on ' + ends.toLocaleDateString()) + '.</span>';
           const sec = document.querySelector('.pricing-section h2');
           if (sec) sec.insertAdjacentElement('afterend', banner);
         })

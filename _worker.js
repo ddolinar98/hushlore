@@ -636,9 +636,11 @@ const OFFER_PERCENT = 20;
 const OFFER_HOURS   = 120;   // five days: the sequence runs over three
 
 function discounted(cents, percent) {
-  // Rounded to a price that looks like a price, not a division result.
-  const v = Math.round(cents * (100 - percent) / 100);
-  return Math.max(295, Math.round((v - 1) / 100) * 100 + 99) / 100;
+  // Rounded to a price that looks like a price - and always DOWN, to the
+  // nearest .99 at or below the exact figure, so "25% off" is never less
+  // than 25% off. ($21.00 at 25% is $14.99, not $16.99.)
+  const v = Math.floor(cents * (100 - percent) / 100);
+  return Math.max(295, Math.floor((v + 1) / 100) * 100 - 1) / 100;
 }
 
 /** One live discount per person. Minting a fresh token for every message would
@@ -656,6 +658,22 @@ async function makeOffer(env, email, percent) {
     'INSERT INTO offers (token, email, percent, expires_at, created_at) VALUES (?1,?2,?3,?4,?5)'
   ).bind(token, email, percent,
          new Date(Date.now() + OFFER_HOURS * 3600 * 1000).toISOString(), nowISO()).run();
+  return token;
+}
+
+/** A token for a time-limited sale. Reuses only a live token of the same
+    percentage, so an older 20% link is never mistaken for this one. */
+async function makeSaleOffer(env, email, percent, hours) {
+  const existing = await env.DB.prepare(
+    `SELECT token FROM offers
+      WHERE email = ?1 AND percent = ?2 AND used_at IS NULL AND expires_at > ?3
+      ORDER BY created_at DESC LIMIT 1`
+  ).bind(email, percent, nowISO()).first();
+  if (existing) return existing.token;
+  const token = b64url(crypto.randomUUID() + crypto.randomUUID()).slice(0, 32);
+  await env.DB.prepare(
+    'INSERT INTO offers (token, email, percent, expires_at, created_at) VALUES (?1,?2,?3,?4,?5)'
+  ).bind(token, email, percent, new Date(Date.now() + hours * 3600 * 1000).toISOString(), nowISO()).run();
   return token;
 }
 
@@ -1799,7 +1817,37 @@ const DECLINE_TIP = {
            'or use a different card - debit cards go through most often.'
 };
 
+const SALE_PERCENT = 25;
+const SALE_HOURS   = 48;
+
+function salePrices() {
+  const out = {};
+  for (const [k, p] of Object.entries(CCBILL_PLANS)) {
+    out[k] = { was: Number(p.price), now: discounted(Math.round(Number(p.price) * 100), SALE_PERCENT) };
+  }
+  return out;
+}
+
 function outreachMail(kind, person, origin) {
+  if (kind === 'sale') {
+    const pr = salePrices();
+    const ends = new Date(Date.now() + SALE_HOURS * 3600 * 1000).toLocaleString('en-US',
+      { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    const row = (label, k) => label + ': <s style="color:#8a7a84">$' + pr[k].was.toFixed(2) + '</s> <strong>$' + pr[k].now.toFixed(2) + '</strong>';
+    return {
+      subject: SALE_PERCENT + '% off Hushlore - 48 hours only',
+      title: SALE_PERCENT + '% off, for 48 hours',
+      lines: ['Hi,',
+        'For the next 48 hours, every Hushlore membership is <strong>' + SALE_PERCENT + '% off your first term</strong> - the whole library of real voices, recorded for how you like it.',
+        row('1 month', '1m') + '<br>' + row('3 months', '3m') + '<br>' + row('6 months', '6m'),
+        'The price is only on the button below - it is your personal link, and it ends on <strong>' + ends + ' (ET)</strong>. ' +
+        'After the first term the membership renews at the regular price, and you can cancel any time in one click.',
+        'Your bank statement shows CCBill - the word Hushlore never appears.',
+        '- The Hushlore Team'],
+      cta: { href: person.link || (origin + '/result#pricing'), label: 'Claim ' + SALE_PERCENT + '% off' },
+      marketing: true
+    };
+  }
   if (kind === 'declined') {
     return {
       subject: 'Your Hushlore payment did not go through - here is the fix',
@@ -1848,7 +1896,29 @@ async function outreachPeople(env) {
   const declinedSet = new Set(OUTREACH_DECLINED.map(d => d.email));
   const abandoned = [...waiting].filter(e => !declinedSet.has(e) && deliverable(e)).sort().map(e => ({ email: e }));
   const skipped = [...waiting].filter(e => !deliverable(e));
-  return { declined, abandoned, skipped };
+
+  // The sale: everyone we have an address for who has never been a member,
+  // except the people being written to about a declined card.
+  const pool = (await env.DB.prepare(
+    `SELECT email FROM leads WHERE optout IS NULL
+     UNION
+     SELECT email FROM users WHERE email_optout IS NULL`
+  ).all()).results || [];
+  // Members past or present, creators and admins are never sent a sale.
+  const members = new Set(((await env.DB.prepare(
+    `SELECT DISTINCT u.email FROM subscriptions s JOIN users u ON u.id = s.user_id
+     UNION SELECT u.email FROM users u JOIN creators c ON c.user_id = u.id
+     UNION SELECT email FROM users WHERE is_admin = 1`
+  ).all()).results || []).map(r => String(r.email).toLowerCase()));
+  const optedOut = new Set(((await env.DB.prepare(
+    `SELECT email FROM users WHERE email_optout IS NOT NULL UNION SELECT email FROM leads WHERE optout IS NOT NULL`
+  ).all()).results || []).map(r => r.email));
+  const internal = e => /^ddolinar98/i.test(e) || /@(hushlorewhisper\.com|example\.com)$/i.test(e);
+  const sale = [...new Set(pool.map(r => String(r.email || '').toLowerCase()))]
+    .filter(e => validEmail(e) && deliverable(e) && !internal(e) && !members.has(e) && !optedOut.has(e) && !declinedSet.has(e))
+    .sort().map(e => ({ email: e }));
+
+  return { declined, abandoned, skipped, sale };
 }
 
 async function adminOutreach(request, env) {
@@ -1862,7 +1932,7 @@ async function adminOutreach(request, env) {
 
   if (request.method !== 'POST') {
     const view = {};
-    for (const kind of ['declined', 'abandoned']) {
+    for (const kind of ['declined', 'abandoned', 'sale']) {
       const sample = groups[kind][0] || { email: '', name: 'Kyle', reason: 'address' };
       const m = outreachMail(kind, sample, origin);
       view[kind] = {
@@ -1872,21 +1942,39 @@ async function adminOutreach(request, env) {
           preview: kind === 'declined' ? mailShell(outreachMail(kind, p, origin).title, outreachMail(kind, p, origin).lines, outreachMail(kind, p, origin).cta, null) : undefined }))
       };
     }
-    return json({ groups: view, skipped: groups.skipped });
+    return json({ groups: view, skipped: groups.skipped, sale: { percent: SALE_PERCENT, hours: SALE_HOURS, prices: salePrices() } });
   }
 
   const b = await request.json().catch(() => ({}));
-  const kind = b.kind === 'declined' ? 'declined' : b.kind === 'abandoned' ? 'abandoned' : null;
+  const kind = ['declined', 'abandoned', 'sale'].includes(b.kind) ? b.kind : null;
   if (!kind) return json({ error: 'bad_kind' }, 400);
-  let ok = 0, already = 0, failed = 0;
-  for (const person of groups[kind]) {
-    if (sent.has('outreach_' + kind + ':' + person.email)) { already++; continue; }
+  // A batch per request, paced for the mail provider; the page calls again
+  // until nothing is left.
+  const BATCH = 20;
+  let ok = 0, already = 0, failed = 0, done = 0;
+  const todo = groups[kind].filter(p => {
+    if (sent.has('outreach_' + kind + ':' + p.email)) { already++; return false; }
+    return true;
+  });
+  for (const person of todo.slice(0, BATCH)) {
+    if (kind === 'sale') {
+      person.link = origin + '/result?offer=' + await makeSaleOffer(env, person.email, SALE_PERCENT, SALE_HOURS) + '#pricing';
+    }
     const m = outreachMail(kind, person, origin);
-    const done = await sendOnce(env, origin, person.email, 'outreach_' + kind, person.email,
+    const good = await sendOnce(env, origin, person.email, 'outreach_' + kind, person.email,
       m.subject, m.title, m.lines, m.cta, m.marketing, null, WISH_REPLY_TO);
-    if (done) ok++; else failed++;
+    if (good) ok++;
+    else {
+      failed++;
+      // Let a failed send be tried again rather than being blocked as already sent.
+      await env.DB.prepare(
+        'DELETE FROM email_log WHERE email = ?1 AND kind = ?2 AND ref = ?3 AND sent_at IS NULL'
+      ).bind(person.email, 'outreach_' + kind, person.email).run();
+    }
+    done++;
+    await new Promise(r => setTimeout(r, 550));
   }
-  return json({ ok: true, sent: ok, already, failed });
+  return json({ ok: true, sent: ok, already, failed, remaining: Math.max(0, todo.length - done) });
 }
 
 /** The last ten postbacks, for the admin console. */
