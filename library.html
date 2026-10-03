@@ -840,12 +840,16 @@
     /* Which voices can actually be messaged. Loaded once; the offer only appears
        for a voice that has a chat profile, so it can never point at nobody. */
     const dmBySlugName = {};
+    const dmCreator = {};      // display name -> { avatar, aud }
     (function loadChatCreators() {
       const q = listenerAud ? '?aud=' + listenerAud : '';
       fetch('/api/chat/creators' + q, { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (d) {
-          (d.creators || []).forEach(function (c) { dmBySlugName[c.display_name] = c.slug; });
+          (d.creators || []).forEach(function (c) {
+            dmBySlugName[c.display_name] = c.slug;
+            dmCreator[c.display_name] = { avatar: c.avatar || null, aud: c.aud || null };
+          });
         })
         .catch(function () {});
     })();
@@ -858,10 +862,17 @@
         document.getElementById('playerCustom').style.display = 'none';
         return;
       }
-      document.getElementById('playerDmAv').textContent = (s.voice || '?').charAt(0);
+      const info = dmCreator[s.voice] || {};
+      const av = document.getElementById('playerDmAv');
+      av.textContent = info.avatar ? '' : (s.voice || '?').charAt(0);
+      av.style.backgroundImage = info.avatar ? 'url(' + info.avatar + ')' : '';
+      av.style.backgroundSize = 'cover';
+      av.style.backgroundPosition = 'center';
+      // Male voices record for the W and G audiences.
+      const he = info.aud === 'W' || info.aud === 'G';
       document.getElementById('playerDmName').textContent = 'Message ' + s.voice;
       document.getElementById('playerDmSub').textContent =
-        'She recorded this. Tell her what you thought.';
+        he ? 'He recorded this. Tell him what you thought.' : 'She recorded this. Tell her what you thought.';
       el.href = 'chat.html?creator=' + encodeURIComponent(slug);
       el.style.display = 'flex';
 
