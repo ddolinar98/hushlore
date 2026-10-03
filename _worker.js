@@ -2767,18 +2767,27 @@ async function adminPromote(request, env) {
 
 async function adminOverview(request, env) {
   if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
-  const q = async (sql) => (await env.DB.prepare(sql).first()) || {};
-  const users     = await q('SELECT COUNT(*) AS n FROM users');
-  const subs      = await env.DB.prepare(
-    "SELECT COUNT(*) AS n FROM subscriptions WHERE status='active' AND expires_at > ?1").bind(nowISO()).first();
-  const threads   = await q('SELECT COUNT(*) AS n FROM chat_threads');
-  const msgs      = await q("SELECT COUNT(*) AS n FROM chat_messages WHERE sender='user'");
-  const replies   = await q("SELECT COUNT(*) AS n FROM chat_messages WHERE sender='creator'");
-  const spent     = await q("SELECT COALESCE(-SUM(delta),0) AS n FROM chat_ledger WHERE reason='message'");
-  const bought    = await q("SELECT COALESCE(SUM(delta),0) AS n FROM chat_ledger WHERE reason='purchase'");
-  const owed      = await q('SELECT COALESCE(SUM(cents),0) AS n FROM creator_earnings WHERE paid_out = 0');
+  // Real customers only: the owner's test accounts, QA and the processor
+  // review logins are left out, the same as on /growth.
+  const real = 'NOT ' + INTERNAL_EMAIL_SQL.replace(/email/g, 'u.email');
+  const q = async (sql) => (await env.DB.prepare(sql).bind(nowISO()).first()) || {};
+  const accounts  = await q(`SELECT COUNT(*) AS n FROM users u WHERE ${real} AND ?1 IS NOT NULL`);
+  const users     = await q(`SELECT COUNT(DISTINCT s.user_id) AS n FROM subscriptions s JOIN users u ON u.id = s.user_id
+                              WHERE s.source LIKE 'ccbill%' AND ${real} AND ?1 IS NOT NULL`);
+  const subs      = await q(`SELECT COUNT(*) AS n FROM subscriptions s JOIN users u ON u.id = s.user_id
+                              WHERE s.status = 'active' AND s.expires_at > ?1 AND s.source LIKE 'ccbill%' AND ${real}`);
+  const threads   = await q(`SELECT COUNT(*) AS n FROM chat_threads t JOIN users u ON u.id = t.user_id WHERE ${real} AND ?1 IS NOT NULL`);
+  const msgs      = await q(`SELECT COUNT(*) AS n FROM chat_messages m JOIN chat_threads t ON t.id = m.thread_id
+                              JOIN users u ON u.id = t.user_id WHERE m.sender = 'user' AND ${real} AND ?1 IS NOT NULL`);
+  const replies   = await q(`SELECT COUNT(*) AS n FROM chat_messages m JOIN chat_threads t ON t.id = m.thread_id
+                              JOIN users u ON u.id = t.user_id WHERE m.sender = 'creator' AND ${real} AND ?1 IS NOT NULL`);
+  const spent     = await q(`SELECT COALESCE(-SUM(l.delta),0) AS n FROM chat_ledger l JOIN users u ON u.id = l.user_id
+                              WHERE l.reason = 'message' AND ${real} AND ?1 IS NOT NULL`);
+  const bought    = await q(`SELECT COALESCE(SUM(l.delta),0) AS n FROM chat_ledger l JOIN users u ON u.id = l.user_id
+                              WHERE l.reason = 'purchase' AND ${real} AND ?1 IS NOT NULL`);
+  const owed      = await q('SELECT COALESCE(SUM(cents),0) AS n FROM creator_earnings WHERE paid_out = 0 AND ?1 IS NOT NULL');
   return json({
-    users: users.n, active_subs: subs ? subs.n : 0, threads: threads.n,
+    users: users.n, accounts: accounts.n, active_subs: subs.n, threads: threads.n,
     messages_sent: msgs.n, creator_replies: replies.n,
     credits_bought: bought.n, credits_spent: spent.n, creator_owed_cents: owed.n
   });
