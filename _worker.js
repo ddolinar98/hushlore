@@ -926,6 +926,45 @@ async function runEmailJobs(request, env) {
     if (ok) out.winback++;
   }
 
+  /* ── a card was declined: send the fix for that reason ──────────────
+     Waits 15 minutes, because many people simply try again and get
+     through. Skipped if they have paid since, are already a member,
+     opted out, or had a decline email in the last week. */
+  out.decline = 0;
+  const declines = (await env.DB.prepare(
+    `SELECT lower(p.email) AS email, MAX(p.created_at) AS at,
+            json_extract(p.raw, '$.firstName') AS name,
+            COALESCE(json_extract(p.raw, '$.failureReason'), '') || ' ' ||
+            COALESCE(json_extract(p.raw, '$.failureCode'), '') || ' ' ||
+            COALESCE(json_extract(p.raw, '$.reasonForDecline'), '') || ' ' ||
+            COALESCE(json_extract(p.raw, '$.declineReason'), '') || ' ' ||
+            COALESCE(json_extract(p.raw, '$.reasonForDeclineCode'), '') AS reason
+       FROM payment_events p
+      WHERE p.event = 'NewSaleFailure' AND p.email IS NOT NULL
+        AND p.created_at < ?1 AND p.created_at > ?2
+      GROUP BY lower(p.email)
+      LIMIT 30`
+  ).bind(iso(now - 15 * 60 * 1000), iso(now - 24 * 3600 * 1000)).all()).results || [];
+
+  for (const d of declines) {
+    if (!validEmail(d.email) || /^ddolinar98/i.test(d.email) || /@(hushlorewhisper|example)\.com$/i.test(d.email)) continue;
+    const blocked = await env.DB.prepare(
+      `SELECT
+         (SELECT 1 FROM payment_events WHERE event = 'NewSaleSuccess' AND lower(email) = ?1 AND created_at > ?2) AS paid,
+         (SELECT 1 FROM subscriptions s JOIN users u ON u.id = s.user_id
+           WHERE lower(u.email) = ?1 AND s.status = 'active' AND s.expires_at > ?3) AS member,
+         (SELECT 1 FROM users WHERE lower(email) = ?1 AND email_optout IS NOT NULL) AS optout,
+         (SELECT 1 FROM email_log WHERE lower(email) = ?1 AND kind IN ('decline_auto','outreach_declined')
+           AND created_at > ?4) AS recent`
+    ).bind(d.email, d.at, nowISO(), iso(now - 7 * 86400 * 1000)).first();
+    if (blocked && (blocked.paid || blocked.member || blocked.optout || blocked.recent)) continue;
+
+    const m = outreachMail('declined', { name: d.name, reason: declineKind(d.reason) }, origin);
+    const ok = await sendOnce(env, origin, d.email, 'decline_auto', d.email + ':' + String(d.at).slice(0, 10),
+      m.subject, m.title, m.lines, m.cta, false, null, WISH_REPLY_TO);
+    if (ok) out.decline++;
+  }
+
   return json({ ok: true, sent: out });
 }
 
@@ -1818,6 +1857,8 @@ const DECLINE_TIP = {
            'appears on your card statement - same street spelling, apartment number and ZIP code.',
   funds:   'Your bank said there was not enough available on the card at that moment. If you would like to try again, ' +
            'another card - or the same one on another day - usually goes straight through.',
+  input:   'Some of the card details did not go through - most often a mistyped card number, expiry date or security code. ' +
+           'Trying once more, carefully, usually works; if it does not, another card will.',
   blocked: 'Your bank stopped the payment before it reached us. Some banks block the first payment to an online billing ' +
            'company they do not recognise. Two things usually fix it: approve the payment in your bank’s app if it asks, ' +
            'or use a different card - debit cards go through most often.'
@@ -1832,6 +1873,18 @@ function salePrices() {
     out[k] = { was: Number(p.price), now: discounted(Math.round(Number(p.price) * 100), SALE_PERCENT) };
   }
   return out;
+}
+
+/* Which advice fits a decline. CCBill's wording and codes from its decline
+   report: Insufficient Funds (BE-113), AVS Mismatch (BE-129), Invalid Input
+   (BE-140); everything else - Invalid Transaction, Score Decline, Security
+   Violation, Do Not Honor - is the bank or a filter refusing it. */
+function declineKind(text) {
+  const t = String(text || '');
+  if (/insufficient|BE-?113|\bNSF\b/i.test(t)) return 'funds';
+  if (/\bAVS\b|address|BE-?129/i.test(t)) return 'address';
+  if (/invalid input|BE-?140|card number|expir|cvv|cvc|security code/i.test(t)) return 'input';
+  return 'blocked';
 }
 
 function outreachMail(kind, person, origin) {
