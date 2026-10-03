@@ -1808,8 +1808,8 @@ function outreachMail(kind, person, origin) {
         'You tried to join Hushlore, but the payment did not go through - so nothing was charged.',
         DECLINE_TIP[person.reason] || DECLINE_TIP.blocked,
         'Everything is still set up for you. Your account is ready, and the button below takes you straight back to your plan.',
-        'If it still will not go through, just reply to this email and I will sort it out personally.',
-        '- Davor, Hushlore'],
+        'If it still will not go through, just reply to this email and we will sort it out for you.',
+        '- The Hushlore Team'],
       cta: { href: origin + '/result#pricing', label: 'Try again' },
       marketing: false
     };
@@ -1824,7 +1824,7 @@ function outreachMail(kind, person, origin) {
       '<strong>Instant access.</strong> The full library opens the moment the payment goes through.',
       'One tip: enter your billing address exactly as your bank has it. A different address is the most common reason a card is declined.',
       'Any questions at all? Just reply - a person reads every one.',
-      '- Davor, Hushlore'],
+      '- The Hushlore Team'],
     cta: { href: origin + '/result#pricing', label: 'Pick up where you left off' },
     marketing: true
   };
