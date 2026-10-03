@@ -168,6 +168,21 @@
     .cx-left span { font-size:12px; color:var(--muted); }
     .wishStatus { background:var(--bg-elevated); border:1px solid var(--border); border-radius:8px;
       color:var(--cream); font-family:var(--sans); font-size:13px; padding:8px 10px; cursor:pointer; }
+    /* One line per wish until it is opened - the list grows with every member. */
+    details.wish { display:block; padding:0; }
+    details.wish > summary { list-style:none; cursor:pointer; display:flex; align-items:center; gap:12px; padding:12px 0; }
+    details.wish > summary::-webkit-details-marker { display:none; }
+    details.wish > summary::before { content:'›'; color:var(--muted); font-size:18px; width:12px; transition:transform .15s; }
+    details.wish[open] > summary::before { transform:rotate(90deg); }
+    .wish-sum { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; }
+    .wish-sum strong { color:var(--cream); font-weight:600; font-family:var(--sans); font-size:14px; }
+    .wish-sum .pv { font-family:var(--sans); font-size:13px; color:#a98ea3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .wish-tags { display:flex; gap:6px; flex:0 0 auto; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .wtag { font-family:var(--sans); font-size:11.5px; border-radius:20px; padding:2px 9px; border:1px solid var(--border); color:#a98ea3; white-space:nowrap; }
+    .wtag.new { color:#e8c170; border-color:rgba(232,193,112,.4); }
+    .wtag.done { color:#7ddba3; border-color:rgba(125,219,163,.35); }
+    .wish-body { padding:0 0 16px 24px; display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+    .wish-body .cx-left { flex:1 1 420px; }
     .wishReply { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
     .wishReply textarea { width:100%; box-sizing:border-box; background:var(--bg-elevated); border:1px solid var(--border);
       border-radius:8px; color:var(--cream); font-family:var(--sans); font-size:13.5px; line-height:1.5;
@@ -240,6 +255,15 @@
     <div class="cx-head">
       <h2>What listeners want to hear</h2>
       <span class="cx-count" id="wishCount">0</span>
+      <select id="wishFilter" class="wishStatus" style="margin-left:auto">
+        <option value="open">Needs a reply</option>
+        <option value="all">All wishes</option>
+        <option value="new">New</option>
+        <option value="replied">Replied</option>
+        <option value="planned">Planned</option>
+        <option value="recorded">Recorded</option>
+        <option value="declined">Declined</option>
+      </select>
     </div>
     <p class="cx-note">
       Written by people who have already paid, so this is the best guide you have
@@ -358,6 +382,7 @@
   var WISH_STATES = ['new', 'read', 'planned', 'recorded', 'declined'];
   var AUD_LABEL = { M: 'man → woman', W: 'woman → man', L: 'woman → woman', G: 'man → man' };
 
+  var WISHES = [], OPEN_WISH = {};
   function loadWishes() {
     api('/api/admin/wishes').then(function (r) {
       if (!r.ok) return;
@@ -365,12 +390,29 @@
       var fresh = all.filter(function (w) { return w.status === 'new'; });
       $('wishCount').textContent = fresh.length ? fresh.length + ' new' : 'nothing new';
 
-      $('wishList').innerHTML = all.length ? all.map(function (w) {
-        return '<div class="cx-item" data-id="' + esc(w.id) + '">' +
-          '<div class="cx-left">' +
-            '<strong>' + esc(w.email) + '</strong>' +
-            '<span>' + when(w.created_at) +
-              (w.aud && AUD_LABEL[w.aud] ? ' &middot; ' + AUD_LABEL[w.aud] : '') + '</span>' +
+      WISHES = all;
+      var f = $('wishFilter').value;
+      var shown = all.filter(function (w) {
+        if (f === 'all') return true;
+        if (f === 'open') return !w.reply && w.status !== 'declined' && w.status !== 'recorded';
+        if (f === 'replied') return !!w.reply;
+        return w.status === f;
+      });
+      $('wishList').innerHTML = shown.length ? shown.map(function (w) {
+        var preview = String(w.body || '').replace(/\s+/g, ' ');
+        return '<details class="cx-item wish" data-id="' + esc(w.id) + '"' + (OPEN_WISH[w.id] ? ' open' : '') + '>' +
+          '<summary>' +
+            '<div class="wish-sum"><strong>' + esc(w.email) + '</strong>' +
+              '<span class="pv">' + esc(preview) + '</span></div>' +
+            '<div class="wish-tags">' +
+              (w.aud && AUD_LABEL[w.aud] ? '<span class="wtag">' + AUD_LABEL[w.aud] + '</span>' : '') +
+              '<span class="wtag' + (w.status === 'new' ? ' new' : '') + '">' + esc(w.status) + '</span>' +
+              (w.reply ? '<span class="wtag done">replied</span>' : '') +
+              '<span class="wtag">' + when(w.created_at).split(' ')[0] + '</span>' +
+            '</div>' +
+          '</summary>' +
+          '<div class="wish-body"><div class="cx-left">' +
+            '<span>' + when(w.created_at) + (w.aud && AUD_LABEL[w.aud] ? ' &middot; ' + AUD_LABEL[w.aud] : '') + '</span>' +
             '<p style="margin:8px 0 0;white-space:pre-wrap;line-height:1.55">' + esc(w.body) + '</p>' +
             (w.reply ? '<div class="wishSent"><small>You replied &middot; ' + when(w.replied_at) + '</small>' +
               esc(w.reply) + '</div>' : '') +
@@ -381,9 +423,17 @@
           '</div>' +
           '<select class="wishStatus">' + WISH_STATES.map(function (st) {
             return '<option value="' + st + '"' + (st === w.status ? ' selected' : '') + '>' + st + '</option>';
-          }).join('') + '</select>' +
-        '</div>';
-      }).join('') : '<p class="cx-note">Nothing yet.</p>';
+          }).join('') + '</select></div>' +
+        '</details>';
+      }).join('') : '<p class="cx-note">' + (all.length ? 'Nothing here - try another filter.' : 'Nothing yet.') + '</p>';
+
+      // Keep whatever was open across a reload (after a reply or a status change).
+      [].forEach.call($('wishList').querySelectorAll('details.wish'), function (d) {
+        d.addEventListener('toggle', function () {
+          var id = d.getAttribute('data-id');
+          if (d.open) OPEN_WISH[id] = 1; else delete OPEN_WISH[id];
+        });
+      });
 
       [].forEach.call($('wishList').querySelectorAll('.wishStatus'), function (sel) {
         sel.addEventListener('change', function () {
@@ -423,6 +473,7 @@
       });
     });
   }
+  $('wishFilter').addEventListener('change', loadWishes);
   loadWishes();
 
   /* ── cancellations awaiting action at the processor ─────────────── */
