@@ -250,7 +250,8 @@
     if (!append) {
       $('thread').innerHTML =
         '<div class="ch-thread-h"><button class="ch-back" id="back">‹</button>' +
-        '<div class="ch-av">' + esc((c.display_name||'?').charAt(0)) + '</div>' +
+        '<div class="ch-av"' + (c.avatar ? ' style="background-image:url(' + esc(c.avatar) + ')"' : '') + '>' +
+          (c.avatar ? '' : esc((c.display_name||'?').charAt(0))) + '</div>' +
         '<div><div class="n">' + esc(c.display_name) + '</div><div class="s">' + esc(c.reply_hint || '') + '</div></div></div>' +
         '<div class="ch-msgs" id="msgs"></div>' +
         '<div class="ch-blank" id="blank">Say hello to ' + esc(c.display_name) + '.<br />' +
