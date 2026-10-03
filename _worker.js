@@ -690,6 +690,9 @@ async function liveOffer(env, token) {
 async function offerStatus(request, env) {
   const o = await liveOffer(env, new URL(request.url).searchParams.get('token'));
   if (!o) return json({ valid: false });
+  // First time the link is opened - how a campaign's clicks are counted.
+  await env.DB.prepare('UPDATE offers SET viewed_at = ?1 WHERE token = ?2 AND viewed_at IS NULL')
+    .bind(nowISO(), o.token).run();
   const plans = {};
   for (const [k, p] of Object.entries(CCBILL_PLANS)) {
     plans[k] = { was: Number(p.price), now: discounted(Math.round(Number(p.price) * 100), o.percent) };
@@ -1942,6 +1945,42 @@ async function outreachPeople(env) {
   return { declined, abandoned, skipped, sale };
 }
 
+/* What happened after each outreach email: who opened the sale link, who
+   bought (and for how much), who asked to stop. A purchase counts only if it
+   came after that person's email went out. */
+async function outreachResults(env) {
+  const rows = (await env.DB.prepare(
+    `SELECT e.kind, e.email, e.sent_at,
+            (SELECT MIN(o.viewed_at) FROM offers o
+              WHERE o.email = e.email AND o.percent = ?1 AND o.created_at <= e.sent_at
+                AND o.viewed_at IS NOT NULL) AS clicked_at,
+            (SELECT MIN(p.created_at) FROM payment_events p
+              WHERE p.event = 'NewSaleSuccess' AND lower(p.email) = lower(e.email) AND p.created_at > e.sent_at) AS bought_at,
+            (SELECT SUM(CAST(p.amount AS REAL)) FROM payment_events p
+              WHERE p.event = 'NewSaleSuccess' AND lower(p.email) = lower(e.email) AND p.created_at > e.sent_at) AS revenue,
+            (SELECT MIN(p.plan) FROM payment_events p
+              WHERE p.event = 'NewSaleSuccess' AND lower(p.email) = lower(e.email) AND p.created_at > e.sent_at) AS plan,
+            COALESCE((SELECT u.email_optout FROM users u WHERE u.email = e.email AND u.email_optout > e.sent_at),
+                     (SELECT l.optout FROM leads l WHERE l.email = e.email AND l.optout > e.sent_at)) AS unsub_at
+       FROM email_log e
+      WHERE e.kind LIKE 'outreach_%' AND e.sent_at IS NOT NULL
+      ORDER BY e.sent_at`
+  ).bind(SALE_PERCENT).all()).results || [];
+
+  const out = {};
+  for (const r of rows) {
+    const k = r.kind.replace('outreach_', '');
+    const g = out[k] || (out[k] = { sent: 0, clicked: 0, bought: 0, revenue: 0, unsub: 0, people: {} });
+    g.sent++;
+    if (r.clicked_at) g.clicked++;
+    if (r.bought_at) { g.bought++; g.revenue += r.revenue || 0; }
+    if (r.unsub_at) g.unsub++;
+    g.people[r.email] = { sent_at: r.sent_at, clicked_at: r.clicked_at, bought_at: r.bought_at,
+                          plan: r.plan, revenue: r.revenue, unsub_at: r.unsub_at };
+  }
+  return out;
+}
+
 async function adminOutreach(request, env) {
   if (!await requireAdmin(request, env)) return json({ error: 'unauthorized' }, 401);
   const origin = new URL(request.url).origin;
@@ -1963,7 +2002,8 @@ async function adminOutreach(request, env) {
           preview: kind === 'declined' ? mailShell(outreachMail(kind, p, origin).title, outreachMail(kind, p, origin).lines, outreachMail(kind, p, origin).cta, null) : undefined }))
       };
     }
-    return json({ groups: view, skipped: groups.skipped, sale: { percent: SALE_PERCENT, hours: SALE_HOURS, prices: salePrices() } });
+    return json({ groups: view, skipped: groups.skipped, results: await outreachResults(env),
+                  sale: { percent: SALE_PERCENT, hours: SALE_HOURS, prices: salePrices() } });
   }
 
   const b = await request.json().catch(() => ({}));

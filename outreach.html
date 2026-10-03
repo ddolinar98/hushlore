@@ -22,7 +22,14 @@
     .who { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-top: 1px solid rgba(255,255,255,.05); font-size: 13.5px; }
     .who small { color: #8d7684; }
     .chip { font-size: 11.5px; border-radius: 20px; padding: 2px 9px; border: 1px solid var(--border); white-space: nowrap; }
-    .chip.ok { color: #7ddba3; border-color: rgba(125,219,163,.35); }
+    .chip.ok { color: #a98ea3; }
+    .chip.click { color: #e8c170; border-color: rgba(232,193,112,.35); }
+    .chip.buy { color: #7ddba3; border-color: rgba(125,219,163,.45); font-weight: 600; }
+    .chip.bad { color: #e0708f; border-color: rgba(224,112,143,.35); }
+    .sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; margin: 0 0 12px; }
+    .sum div { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
+    .sum b { display: block; font-size: 20px; font-weight: 600; }
+    .sum span { font-size: 11.5px; color: #8d7684; }
     .subj { font-size: 14px; margin: 0 0 10px; } .subj b { color: var(--gold); }
     iframe { width: 100%; height: 640px; border: 0; border-radius: 10px; background: #fff; }
     .send { margin-top: 12px; background: var(--gold); color: #fff; border: 0; border-radius: 10px; font-family: var(--sans);
@@ -64,12 +71,41 @@
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
   var REASON = { address: 'billing address did not match', funds: 'insufficient funds', blocked: 'blocked by the bank' };
 
+  var RESULTS = {};
+  function statusChips(kind, p) {
+    var r = (RESULTS[kind] && RESULTS[kind].people[p.email]) || null;
+    if (!p.sent) return '';
+    if (!r) return '<span class="chip ok">Sent</span>';
+    var c = [];
+    if (r.bought_at) c.push('<span class="chip buy">Bought ' + esc(r.plan || '') + ' $' + Number(r.revenue || 0).toFixed(2) + '</span>');
+    else if (r.clicked_at) c.push('<span class="chip click">Opened link</span>');
+    if (r.unsub_at) c.push('<span class="chip bad">Unsubscribed</span>');
+    if (!c.length) c.push('<span class="chip ok">Sent</span>');
+    return '<span style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">' + c.join('') + '</span>';
+  }
+  function summary(kind) {
+    var r = RESULTS[kind];
+    if (!r || !r.sent) return '';
+    var pct = function (n) { return r.sent ? Math.round(n / r.sent * 100) + '%' : '-'; };
+    return '<div class="sum">' +
+      '<div><b>' + r.sent + '</b><span>sent</span></div>' +
+      (kind === 'sale' ? '<div><b>' + r.clicked + '</b><span>opened link &middot; ' + pct(r.clicked) + '</span></div>' : '') +
+      '<div><b>' + r.bought + '</b><span>bought &middot; ' + pct(r.bought) + '</span></div>' +
+      '<div><b>$' + r.revenue.toFixed(2) + '</b><span>revenue</span></div>' +
+      '<div><b>' + r.unsub + '</b><span>unsubscribed</span></div></div>';
+  }
   function render(kind, g) {
     var box = $(kind), todo = g.people.filter(function (p) { return !p.sent; }).length;
-    var list = g.people.length ? g.people.map(function (p) {
+    // Sent people first, buyers at the very top.
+    var ppl = g.people.slice().sort(function (a, b) {
+      var ra = RESULTS[kind] && RESULTS[kind].people[a.email], rb = RESULTS[kind] && RESULTS[kind].people[b.email];
+      return (rb && rb.bought_at ? 2 : rb && rb.clicked_at ? 1 : 0) - (ra && ra.bought_at ? 2 : ra && ra.clicked_at ? 1 : 0);
+    });
+    var list = ppl.length ? ppl.map(function (p) {
       return '<div class="who"><span>' + esc(p.email) + (p.reason ? '<br><small>' + esc(REASON[p.reason] || p.reason) + '</small>' : '') +
-        '</span>' + (p.sent ? '<span class="chip ok">Sent</span>' : '') + '</div>';
+        '</span>' + statusChips(kind, p) + '</div>';
     }).join('') : '<p class="sub">Nobody in this group.</p>';
+    list = summary(kind) + list;
     var pick = kind === 'declined' && g.people.length
       ? '<select id="pick-' + kind + '">' + g.people.map(function (p, i) { return '<option value="' + i + '">' + esc(p.name + ' - ' + p.email) + '</option>'; }).join('') + '</select>'
       : '';
@@ -111,6 +147,7 @@
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (!d.groups) return;
+        RESULTS = d.results || {};
         render('declined', d.groups.declined);
         render('abandoned', d.groups.abandoned);
         render('sale', d.groups.sale);
